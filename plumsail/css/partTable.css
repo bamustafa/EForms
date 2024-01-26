@@ -1,0 +1,22 @@
+.disabled {
+    /* OPTIONAL pointer-events setting above blocks cursor setting, so set it here */
+    cursor: not-allowed;
+  }
+
+  .instruction {
+    display: flex; /* Display as inline-block to keep the content on the same line */
+    line-height: 1.4; /* Adjust the line height as needed */
+  }
+  
+  .instruction u {
+    text-decoration: underline;
+    display: inline; /* Display the <u> element inline */
+    margin-right: 5px; /* Add some space between the underline and the text */
+  }
+
+  .redColor{
+    color: red !important;
+  }
+  
+  
+  

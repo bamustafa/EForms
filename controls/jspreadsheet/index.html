@@ -1,0 +1,43 @@
+<html>
+<head>
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="expires" content="0" />
+    <meta http-equiv="pragma" content="no-cache" />
+
+    <script src="../../common libs/jquery/jquery-3.6.3.js"></script>
+    <script src="../../common libs/pnp/pnp-3.0.10.js"></script>
+    
+    <script src="https://jspreadsheet.com/v9/jspreadsheet.js"></script>
+    <link rel="stylesheet" href="https://jspreadsheet.com/v9/jspreadsheet.css" type="text/css" />
+
+    <link rel="stylesheet" href="libs/jsuites/jsuites-v4.css" type="text/css" />
+    <script src="libs/jsuites/jsuites-v4.js"></script>
+
+    <script src="ssheet/js/utils.js"></script>
+
+    <!-- <script src="../preloader/jquery-1.9.0-vsdoc.js"></script> -->
+    <!-- <script src="../preloader/jquery-1.9.0.js"></script> -->
+    <script src="../preloader/jquery.dim-background.min.js"></script>
+
+    <link rel="stylesheet" href="ssheet/css/jsscustomstyle.css" type="text/css" />
+</head>
+
+<script>
+  var versionUpdate = (new Date()).getTime();  
+  var script = document.createElement("script"); 
+  script.type = "text/javascript";  
+  script.src = "ssheet/js/spreadsheet.js?v=" + versionUpdate;
+  document.head.appendChild(script);  
+</script>
+
+<body>
+  <div id="spreadsheet"></div>
+  <!-- <img id="loader" src="../../Images/Loading.gif" class="center" /> -->
+  <div class="section">
+    <input id="valid" type="button" value="Validate" class="button1 bouncy" />
+    <input id="subid" type="button" value="Submit" class="disableButton bouncy" disabled= "true" />
+    <input id="cloid" type="button" value="Close" class="button1 bouncy" />
+  </div>
+  <div><label id="counter" style="font-size: 20px;"></label></div>
+</body>
+</html> 

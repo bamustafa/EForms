@@ -1,0 +1,81 @@
+/* div.ControlZone{
+    overflow: auto;
+}  */
+.title-label {
+    font-weight: 600;
+    color: #4e778f !important;
+}
+
+.pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1{
+    margin-left: -200px;
+} 
+
+/* Style for the inner div (your existing styles) */
+#listBoxA,
+#listBoxB {
+    font-size: 13px;
+    font-family: Verdana;
+    float: left;
+    /* Add any other styles you need */
+}
+
+div.col-sm-12 {
+    padding-left: 10px !important;
+}
+
+.fd-form label{
+    display: block;
+}
+
+.fd-form .row>*{
+    margin-top: 10px !important;
+    max-width: 98% !important;
+}
+
+.fd-form .row:nth-child(4) {
+    width: 99% !important;
+}
+
+.fd-form .mb-3{
+    margin-bottom: 0px !important
+}
+
+.customtbl{
+    border: 1px solid black;
+    margin-left: 10px !important;
+    margin-bottom: 10px !important;
+    height: 100% !important;
+    overflow: auto !important;
+}
+
+.ckStyle{
+    display: inline-block; 
+    vertical-align: middle;
+    width:16px;
+    height: 16px;
+}
+
+.lblpropertyStyle{
+   padding: 7px;
+   font-weight: bold;
+   font-size: 13px;
+   color: #4e778f;
+}
+
+.lblcolumnyStyle{
+    font-weight: bold;
+    font-size: 13px;
+    color: #4e778f;
+ }
+
+.borderStyle{
+    border: 1px solid black !important;
+    padding: 7px;
+}
+  
+  
+  
+  
+  
+  
+
