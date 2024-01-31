@@ -10,7 +10,7 @@ var _module = '', _formType = '', Status, taskStatus = '', BIC, _role = '', _par
 
 var element, targetList, targetFilter;
 var counterType, counter;
-var delayTime = 100, retryTime = 10;
+var delayTime = 50, retryTime = 1;
 
 var mTypeItem;
 
@@ -18,6 +18,7 @@ var disableButtons = false; // FOR validateDisciplineAgainstMatrix FUNCTION
 var disableButtonsFNC = false; // FOR setNamingConvention FUNCTION
 
 var onRender = async function (relativeLayoutPath, moduleName, formType, isLead, isPart) {
+
   const startTime = performance.now();
   localStorage.clear();
 
@@ -28,9 +29,11 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
   }
   _layout = relativeLayoutPath;
 
-  var script = document.createElement("script"); // create a script DOM node
-  script.src = _layout + "/plumsail/js/config/configFileRouting.js"; // set its src to the provided URL
-  document.head.appendChild(script);
+  loadScripts();
+
+  //var script = document.createElement("script"); // create a script DOM node
+  //script.src = _layout + "/plumsail/js/config/configFileRouting.js"; // set its src to the provided URL
+  //document.head.appendChild(script);
   _htLibraryUrl  = _layout + '/controls/handsonTable/libs/handsontable.full.min.js';
 
   _module = moduleName;
@@ -78,20 +81,20 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
         for (var i = 0; i < userNames.length; i++) {
           var userName = userNames[i].displayName;
           
-          var isValid = false;
-          var retry = 1;
-          while (!isValid)
-          {
-            try{
-              if(retry >= retryTime) break;
+          //var isValid = false;
+          //var retry = 1;
+          //while (!isValid)
+          //{
+            ////try{
+              //if(retry >= retryTime) break;
             _isAllowedUser = await isUserAllowed(userName);
-            isValid = true;
-            }
-              catch{
-                retry++;
-                await delay(delayTime);
-              }
-          }
+            //isValid = true;
+            //}
+              // catch{
+              //   retry++;
+              //   await delay(delayTime);
+              // }
+          //}
 
           if (_isAllowedUser) {
             _isAllowedUser = true;
@@ -118,12 +121,12 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
         HideFields(hFields, false);
       }
       else if (moduleName == "DPR"){
-        _spComponentLoader.loadScript(_layout + '/plumsail/js/commonUtils.js').then(()=> {
-          _spComponentLoader.loadScript(_layout + '/plumsail/js/customMessages.js').then(async() => {
+        //_spComponentLoader.loadScript(_layout + '/plumsail/js/commonUtils.js').then(()=> {
+          //_spComponentLoader.loadScript(_layout + '/plumsail/js/customMessages.js').then(async() => {
             setFormHeaderTitle();
             await onDPRRender();
-        });
-      });
+       // });
+      //});
       return;
       }
     }
@@ -139,95 +142,91 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
       }
 
       if(_isMain){
-        var isValid = false;
-        var retry = 1;
-        while (!isValid)
-        {
-          try{
-            if(retry >= retryTime) break;
+        // var isValid = false;
+        // var retry = 1;
+        // while (!isValid)
+        // {
+        //   try{
+        //     if(retry >= retryTime) break;
 
             var _value = await getParameter("isDigitalForm");
             if(_value !== '' && _value !== undefined && _value.toLowerCase() === 'yes')
               _isDigitalForm = true;
 
              await setFormHeaderTitle();
-             isValid = true;
+            // isValid = true;
           }
-            catch{
-              retry++;
-              await delay(delayTime);
-            }
-        }
-      }
-
-      if (_isMain || _isLead || _isPart) {
-        //#region CHECK USER IF DAR OR CONTRACTOR
-        var groupName = '';
-
-        var isValid = false;
-        var retry = 1;
-        var mType;
-        while (!isValid)
-        {
-          try{
-            if(retry >= retryTime) break;
-             groupName = await isMultiContractor();
-
-            if(_isMultiContracotr)
-              isContractor = await IsUserInGroup(groupName);
-            else isContractor = await IsUserInGroup('ContractorDC');
-
-            mTypeItem = await getMajorType(_module);
-            mTypeItem = mTypeItem[0];
-            if(_isPart){
-              var codes = mTypeItem.Code;
-              if(codes !== null && codes != '' && codes !== undefined && codes.length > 0)
-                fd.field('Code').widget.dataSource.data(codes);
-            }
-            else{
-              try { _isCompliedWithConvention = mTypeItem.IsCompliedWithConvention; } catch(e){}
-            }
-            isValid = true;
-          }
-          catch{
-            retry++;
-            await delay(delayTime);
-          }
-        }
-        isValid = false;
-        
-        if(isContractor) 
-         isDar = false;
-
-         if (_isMain && formType === "New") {
-          if (moduleName !="MOM" && moduleName !== "SLF" && moduleName !== "DPR") {
-            if (moduleName == "SI" || moduleName == "NCR") 
-               setOldRef("Closed");
-            else setOldRef("Issued to Contractor");
-          }
-        }
-        //#endregion
-      }
-
-      if (moduleName == "SI") 
-        await onSIRender(moduleName, formType, hFields);
-      else if (moduleName == "IR" || moduleName == "MIR"){
-         await onIRRender(moduleName, formType, hFields, isLead, isPart);
-        // const endTime2 = performance.now();
-        // const elapsedTime2 = endTime2 - startTime;
-        // console.log(`Execution time onIRRender: ${elapsedTime2} milliseconds`);
-      }
-      else if (moduleName == "MAT" || moduleName == "SCR")
-        await onMATRender(moduleName, formType, hFields, isLead, isPart);
-      else if (moduleName == "DPR")
-		    await onDPRRender();
-      else if (moduleName == "SLF")
-		    await onSLFRender(hFields, isLead, isPart);
-
-      if(_isMain && _formType === 'New' && _module !== 'SI' && _module !== 'DPR')
-          await validateDisciplineAgainstMatrix();
+            // catch{
+            //   retry++;
+            //   await delay(delayTime);
+            // }
+        //}
     }
 
+    if (_isMain || _isLead || _isPart) {
+      //#region CHECK USER IF DAR OR CONTRACTOR
+      var groupName = '';
+
+      //var isValid = false;
+      //var retry = 1;
+      //var mType;
+      // while (!isValid)
+      // {
+      //   try{
+          //if(retry >= retryTime) break;
+            groupName = await isMultiContractor();
+
+          if(_isMultiContracotr)
+            isContractor = await IsUserInGroup(groupName);
+          else isContractor = await IsUserInGroup('ContractorDC');
+
+          mTypeItem = await getMajorType(_module);
+          mTypeItem = mTypeItem[0];
+          if(_isPart){
+            var codes = mTypeItem.Code;
+            if(codes !== null && codes != '' && codes !== undefined && codes.length > 0)
+              fd.field('Code').widget.dataSource.data(codes);
+          }
+          else{
+            try { _isCompliedWithConvention = mTypeItem.IsCompliedWithConvention; } catch(e){}
+          }
+        //   isValid = true;
+        // }
+        // catch{
+        //   retry++;
+        //   await delay(delayTime);
+        //}
+      //}
+      isValid = false;
+      
+      if(isContractor) 
+        isDar = false;
+
+        if (_isMain && formType === "New") {
+        if (moduleName !="MOM" && moduleName !== "SLF" && moduleName !== "DPR") {
+          if (moduleName == "SI" || moduleName == "NCR") 
+              setOldRef("Closed");
+          else setOldRef("Issued to Contractor");
+        }
+      }
+      //#endregion
+    }
+
+
+    if (moduleName == "SI") 
+      await onSIRender(moduleName, formType, hFields);
+    else if (moduleName == "IR" || moduleName == "MIR")
+        await onIRRender(moduleName, formType, hFields, isLead, isPart);
+    else if (moduleName == "MAT" || moduleName == "SCR")
+      await onMATRender(moduleName, formType, hFields, isLead, isPart);
+    else if (moduleName == "DPR")
+      await onDPRRender();
+    else if (moduleName == "SLF")
+      await onSLFRender(hFields, isLead, isPart);
+
+    if(_isMain && _formType === 'New' && _module !== 'SI' && _module !== 'DPR')
+        await validateDisciplineAgainstMatrix();
+    
     if(_isPart && _formType === 'Edit' && (_isTeamLeader || _IsLeadAction || _partTrade === 'PMC') && moduleName != 'MIR'){
       var listname = "Part Action";
       var byRef = true;
@@ -1840,7 +1839,7 @@ function delay(time) {
 function setToolTipMessages(){
   setButtonToolTip('Save', saveMesg);
   setButtonToolTip('Submit', submitMesg);
-  setButtonToolTip('Preview Form', previewMesg);
+  //setButtonToolTip('Preview Form', previewMesg);
   setButtonToolTip('Reject', rejectMesg);
   setButtonToolTip('Assign', assignMesg);
   setButtonToolTip('Cancel', cancelMesg);
@@ -1848,6 +1847,9 @@ function setToolTipMessages(){
 
   //else addLegend();
   adjustlblText('Comment', ' (Optional)', false);
+  	
+	if($('p').find('small').length > 0)
+    $('p').find('small').remove();
 }
 
 function removePadding(){
@@ -2249,16 +2251,37 @@ var renderTradeResult = async function(leadValue, partValue){
     });
   }
 }
-var hello = 'github Hello World'; 
 
+var loadScripts = async function(){
+  const libraryUrls = [
+    _layout + '/controls/handsonTable/libs/handsontable.full.min.js',
+    _layout + '/controls/preloader/jquery.dim-background.min.js',
+    _layout + "/plumsail/js/buttons.js",
+    _layout + '/plumsail/js/customMessages.js',
+    _layout + '/controls/tooltipster/jquery.tooltipster.min.js',
+    _layout + '/plumsail/js/preloader.js',
+    _layout + '/plumsail/js/commonUtils.js',
+    _layout + '/plumsail/js/utilities.js',
+    _layout + '/plumsail/js/partTable.js',
+    _layout + '/plumsail/js/grid/gridUtils.js',
+    _layout + '/plumsail/js/grid/grid.js'
+  ];
 
+  libraryUrls.map((item)=>{
+    var plugin = item;
+    $('head').append(`<script src= ${plugin} async></script>`);
+  });
 
+  const stylesheetUrls = [
+    _layout + '/controls/tooltipster/tooltipster.css',
+    _layout + '/controls/handsonTable/libs/handsontable.full.min.css',
+    _layout + '/plumsail/css/CssStyle.css',
+    _layout + '/plumsail/css/partTable.css'
+  ];
 
-var xyz= 'raji is the best'
-
-var aliComment = 'welcome ali125555';
-var a= '3';
-var b =2;
-
-var bilalb = 'b2';
+  stylesheetUrls.map((item) => {
+    var stylesheet = item;
+    $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}" async>`);
+  });
+}
 //#endregion

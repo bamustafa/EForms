@@ -1,18 +1,18 @@
 const cacheBusting = `?cache=${Date.now()}`;
 
-const libraryUrls = [
-  _layout + '/controls/handsonTable/libs/handsontable.full.min.js',
-  _layout + '/controls/preloader/jquery.dim-background.min.js',
-  _layout + "/plumsail/js/buttons.js",
-  _layout + '/plumsail/js/customMessages.js',
-  _layout + '/controls/tooltipster/jquery.tooltipster.min.js',
-  _layout + '/plumsail/js/preloader.js',
-  _layout + '/plumsail/js/commonUtils.js',
-  _layout + '/plumsail/js/utilities.js',
-  _layout + '/plumsail/js/partTable.js',
-  _layout + '/plumsail/js/grid/gridUtils.js', // + cacheBusting,
-  _layout + '/plumsail/js/grid/grid.js' // + cacheBusting
-];
+// const libraryUrls = [
+//   _layout + '/controls/handsonTable/libs/handsontable.full.min.js',
+//   _layout + '/controls/preloader/jquery.dim-background.min.js',
+//   _layout + "/plumsail/js/buttons.js",
+//   _layout + '/plumsail/js/customMessages.js',
+//   _layout + '/controls/tooltipster/jquery.tooltipster.min.js',
+//   _layout + '/plumsail/js/preloader.js',
+//   _layout + '/plumsail/js/commonUtils.js',
+//   _layout + '/plumsail/js/utilities.js',
+//   _layout + '/plumsail/js/partTable.js',
+//   _layout + '/plumsail/js/grid/gridUtils.js', // + cacheBusting,
+//   _layout + '/plumsail/js/grid/grid.js' // + cacheBusting
+// ];
 
 const stylesheetUrls = [
   _layout + '/controls/tooltipster/tooltipster.css',
