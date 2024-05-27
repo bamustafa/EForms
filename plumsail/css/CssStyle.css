@@ -229,7 +229,7 @@ html .k-upload,
 }
 
 .autocompleteEditor{
-  height: 150px !important; /* Adjust the desired height here */
+  height: 200px !important; /* Adjust the desired height here */
 }
 
 .handsontable .ClosedRow {
@@ -241,17 +241,36 @@ html .k-upload,
 }
 
 .handsontable .TransparentRow {
-  background: transparent;
+  background: transparent !important;
 }
 
 .handsontable .CancelRow {
-  background: 
-  orange;
+  background: #efa2137a;
 }
 
 .ErrorMesg{
   color: #ed4949 !important;
 }
+
+.handsontable th {
+  white-space: normal !important;
+  vertical-align: middle !important;
+  }
+
+.handsontable span.colHeader {
+    line-height: 1.5 !important
+  }
+
+.htCore td.customClass {
+    color: black;
+    background: #77d1a4;
+}
+
+.disableCheckBox{
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* END HANDSON CSS */
 
 .ControlZone  {
@@ -347,7 +366,6 @@ html .k-upload,
   text-transform: uppercase !important
 }
 
-
 .fd-form .fd-sp-datatable-wrapper>.fd-sp-datatable .fd-inline-editor{
   min-width: 0px !important;
 }
@@ -362,4 +380,11 @@ html .k-upload,
 
 .k-grid table {
   border-collapse: collapse;
+}
+.Dwg-Grid{
+ background-color: transparent !important
+}
+
+.form-check{
+  margin-bottom: 10px !important;
 }

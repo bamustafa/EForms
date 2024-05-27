@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <script src="../../common libs/jquery/jquery-3.6.3.js"></script>
+  <script src="../../common libs/pnp/pnp-3.0.10.js"></script>
+  <script src="https://requirejs.org/docs/release/2.3.6/minified/require.js"></script>
+
+  <!-- <script src="../../controls/handsonTable/libs/handsontable.full.min.js"></script> -->
+  <link rel="stylesheet" href="../../controls/handsonTable/libs/handsontable.full.min.css" type="text/css" />
+
+  <!-- <script src="../../controls/preloader/jquery.dim-background.min.js"></script>
+  <script src="../js/preloader.js"></script>
+  <script src="../js/commonUtils.js"></script> -->
+  
+  <!-- <script src="../DTRD-test.js"></script> -->
+</head>
+
+<body>
+  <div id="dt"><h1>HELLO WORLD</h1></div>
+
+  <script>
+    debugger;
+
+    requirejs.config({
+      paths: {
+        Handsontable: 'https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min'
+      },
+    });
+
+    require(['Handsontable'], function (Handsontable) {
+      var dataTest = [
+        ['', 'Ford123', 'Tesla', 'Toyota', 'Honda'],
+        ['2017', 10, 11, 12, 13],
+        ['2018', 20, 11, 14, 13],
+        ['2019', 30, 15, 12, 13]
+      ];
+      
+      var cont= document.getElementById('dt');
+      var res  = new Handsontable(cont, {
+        data: dataTest,
+        rowHeaders: true,
+        colHeaders: true,
+        filters: true,
+        dropdownMenu: true
+      });
+  });
+
+
+    // $.getScript('https://cdn.jsdelivr.net/npm/handsontable@8.1.0/dist/handsontable.full.min.js')
+    //  .then(function() {
+    //   var dataTest = [
+    //     ['', 'Ford', 'Tesla', 'Toyota', 'Honda'],
+    //     ['2017', 10, 11, 12, 13],
+    //     ['2018', 20, 11, 14, 13],
+    //     ['2019', 30, 15, 12, 13]
+    //   ];
+      
+    //   var cont= document.getElementById('dt1');
+    //   var res  = new Handsontable(cont, {
+    //     data: dataTest,
+    //     rowHeaders: true,
+    //     colHeaders: true,
+    //     filters: true,
+    //     dropdownMenu: true
+    //   });
+    // })
+ 
+  </script>
+</body>
+</html>

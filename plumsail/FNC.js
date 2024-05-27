@@ -1,30 +1,53 @@
-var _layout, _module = '', _formType = '', _acronym = '', _mainList = '';
+var _layout, _module = '', _formType = '', _acronym = '', _mainList = '', _phase ='';
 
-var _Fields = [], _fieldsInernalName = [], _schema = [], selectedFieldsSchema = [], selectedFieldsInternalName = [];
+var _Fields = [], _schema = [], selectedFieldsSchema = [];
+
+var _fieldsInernalName = {}, _displayNames = [];
 var _features =      ['SpanField', 'isList', 'RevStartWith', 'isText', 'textLength', 'AllowedCharacters', 'isOptionalField'];
 var _featuresType =  ['number',    'string', 'string',       'string', 'string',     'string',            'boolean'];
 var _featuresWidth = ['10%',       '16%',    '12%',          '16%',    '12%',        '12%',               '12%'];
 
-var _isNew = false, _isEdit = false;
+var _isNew = false, _isEdit = false, _isDesign = false, _isWithRev = false;
+var _isMain = true, _isPart = false, _isLead = false;
 
 
-var isSort = false, isTblCreated = false, isSpanExist_InSchema = false, isOptionalExist_InSchema = false, disableIsList = false, disableIsText = false;
+var isTblCreated = false, isSpanExist_InSchema = false, isOptionalExist_InSchema = false, disableIsList = false, disableIsText = false, _isMultiContracotr = false;
 
 var listBoxFields = [];
 var validationlistBoxPromises = [];
-var _utilsPath;
+var _fNCLists = [];
+//var _utilsPath;
 
 var onRender = async function (relativeLayoutPath, moduleName, formType){
     _module = moduleName;
     _formType = formType;
     _layout = relativeLayoutPath;
-    
-    _utilsPath = _layout + '/plumsail/js/utilities.js';
 
-    var script = document.createElement("script"); // create a script DOM node
-    script.src = _layout + "/plumsail/js/config/configFileRoutingFNC.js"; // set its src to the provided URL
-    document.head.appendChild(script);
-    await delay(500);
+    $(fd.field('Delimeter').$parent.$el).hide();
+    $(fd.field('Acronym').$parent.$el).hide();
+    $(fd.field('MainList').$parent.$el).hide();
+    $(fd.field('Title').$parent.$el).hide();
+    $(fd.field('Schema').$parent.$el).hide();
+
+    await loadScripts();
+    await setFormHeaderTitle();
+
+    //_utilsPath = _layout + '/plumsail/js/utilities.js';
+
+    // var script = document.createElement("script"); // create a script DOM node
+    // script.src = _layout + "/plumsail/js/config/configFileRoutingFNC.js"; // set its src to the provided URL
+    // document.head.appendChild(script);
+    // await delay(500);
+
+    let paramValue = await getParameter('FNCLists');
+    if(paramValue !== null && paramValue !== undefined && paramValue !== '')
+      _fNCLists = paramValue.split(',');
+
+    await isMultiContractor(); //define var _isMultiContracotr;
+
+    _phase = await getParameter('Phase');
+    if(_phase.toLowerCase() === 'design')
+      _isDesign = true;
 
     if($('.text-muted').length > 0)
      $('.text-muted').remove();
@@ -43,19 +66,44 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
         fd.field('Schema').clear();
 
         var result = await getDeliverableTypes();
+        let _query = '';
         if(result !== undefined && result.length > 0){
-            var _query = '';
-            var isFirstVisit = true;
-            result.map(item =>{
-                if(isFirstVisit){
-                 _query = `Title ne '${item}'`;
-                 isFirstVisit = false;
-                }
-                else _query += ` and Title ne '${item}'`;
-            });
+            // if(_isDesign){
+            //     result.map(item =>{
+            //         $('div.k-list-scroller ul').find('li').each(function(index){
+            //             var element = $(this);
+            //             var _value = $(element).text().trim();
+                    
+            //             if(_value === item){
+            //               $(element).css("pointer-events", "none").css("opacity", "0.6");
+            //               $(element).prop('disabled', true);
+            //             }
+            //         });
+            //     });
+            // }
 
-            fd.field('DeliverableType').filter = _query; //`Title ne 'DWG' and Title ne 'DOC'`;  
-            fd.field('DeliverableType').refresh();
+            //else{
+                var isFirstVisit = true;
+                _query = "IncludeModuleInFNC eq '1' ";
+                result.map(item =>{
+                    if(isFirstVisit){
+                    _query += `and FNCModuleName ne '${item}' and FNCModuleName ne null `; //
+                    isFirstVisit = false;
+                    }
+                    else _query += ` and FNCModuleName ne '${item}'`;
+                });
+                fd.field('DeliverableType').ready().then(() => {
+                    fd.field('DeliverableType').filter = _query; //`Title ne 'DWG' and Title ne 'DOC'`;  
+                    fd.field('DeliverableType').refresh();
+                });
+           // }
+        }
+        else{ //if(!_isDesign)
+             _query = `FNCModuleName ne null and IncludeModuleInFNC eq '1'`;
+             fd.field('DeliverableType').ready().then(() => {
+                fd.field('DeliverableType').filter = _query; //`Title ne 'DWG' and Title ne 'DOC'`;  
+                fd.field('DeliverableType').refresh();
+            });
         }
     }
     else {
@@ -65,9 +113,14 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
         fd.field('DeliverableType').disabled = true;
         fd.field('Delimeter').disabled = true;
 
-        selectedFieldsSchema = _schema.filter(item => {
+        _schema.filter(item => {
             if(item.InternalName !== 'properties'){
-                selectedFieldsInternalName.push(item.InternalName);
+                let fieldTitle = item.Title;
+                if(fieldTitle === undefined || fieldTitle === null)
+                    fieldTitle = '';
+                
+                selectedFieldsSchema.push({'internalName': item.InternalName, 'Title': fieldTitle});
+
                 if(item.isOptionalField === true)
                   isOptionalExist_InSchema = true;
                 else if(item.SpanField !== undefined)
@@ -77,24 +130,25 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
          });
 
          let index = 0;
-         for (let i = 0; i < selectedFieldsInternalName.length; i++) {
+         for (let i = 0; i < selectedFieldsSchema.length; i++) {
             disableIsList = false; 
             disableIsText = false;
-            var value = selectedFieldsInternalName[i]
-            await setHTML_Column_PerRow(index, value, 'Add');
+
+            let displayName = selectedFieldsSchema[i].Title;
+            let internalName = selectedFieldsSchema[i].internalName;
+            
+            await setHTML_Column_PerRow(index, displayName, internalName, 'Add');
             index++;
         }
     }
-
-    $(fd.field('Schema').$parent.$el).hide();
-    $(fd.field('Title').$parent.$el).hide();
 
     var lookupField = fd.field('DeliverableType');
     disableFields();
 
     await getDeliverableMetaInfo(lookupField);
+    setButtons();
 
-    _spComponentLoader.loadScript(_htL_utilsPathibraryUrl).then(setButtons);
+    //_spComponentLoader.loadScript(_utilsPath).then(setButtons);
     //preloader("remove");
 }
 
@@ -109,13 +163,25 @@ var getDeliverableMetaInfo = async function(lookupField){
 
 var getTypeResult = async function(value){
     if (value) {
-        var result = await getMajorType(value.Id, true)
+        var result = '';
+        // if(_isDesign)
+        //   result = await getMajorType(value, false);
+        // else 
+        result = await getMajorType(value.LookupId, true);
+
         if(result.length > 0){
-            _fieldsInernalName = [];
+            _fieldsInernalName = {};
             _Fields = [];
 
           _acronym = result[0].Title;
-          _mainList = result[0].MainList;
+
+          if(_isDesign)
+            _mainList = result[0].LODListName;
+          else {
+            _mainList = result[0].MainList;
+            _isWithRev = Boolean(result[0].isWithRev);
+          }
+
           fd.field('Acronym').value = _acronym;
           fd.field('MainList').value = _mainList;
         
@@ -220,6 +286,9 @@ var getListFields = async function(){
     'TransmittalNo',
     'BIC',
     'SubmitToPMC',
+    'SubmitToPM',
+    'SubmitToSite',
+    'SubmitToCont',
     'GeneralState',
     'PendingCDS',
     'PendingFileName',
@@ -248,24 +317,54 @@ var getListFields = async function(){
     'ReasonofRejection',
     'Box_x0020_ID',
     'Reference',
-    'PartTrades'
+    'PartTrades',
+    'DeliverableType',
+    'Category'
   ];
+
+  //#region EXCLUDE EXTRA COLUMNS PER MODULE
+   if(_mainList !== 'RLOD')
+    excludedFieldNames.push('Discipline');
+//    if(_mainList !== 'RLOD' && _mainList !== 'Material Inspection Request')
+//     excludedFieldNames.push('SubDiscipline');
+
+    if(_mainList === 'Material Inspection Request')
+        excludedFieldNames.push('CountryofOrigin', 'Manufacturer', 'MATReferenceBOQ', 'MaterialSubmittalNo', 'MATReferenceRecDate', 'MATReferenceRecDate', 
+                                'MATReferenceSpecs', 'MATReferenceTitle', 'Quantity', 'SerialNo', 'STORAGELocation', 'ModelNo');
+    else if(_mainList === 'Inspection Request')
+        excludedFieldNames.push('Room','Drawingno','FromStation','ToStation');
+    else if(_mainList === 'Inspection Request')
+        excludedFieldNames.push('Room','Drawingno');
+    else if(_mainList === 'Material Submittal')
+        excludedFieldNames.push('Address', 'Room','Availability','BaseType', 'BOQ', 'Country', 'Drawingref', 'MatDate', 'ArrivalTime', 'Agent', 'Manufacturer', 
+                                'Standards', 'TotalDuration', 'Specs', 'Location');
+    else if(_isDesign && _mainList === 'RLOD')
+       excludedFieldNames.push('Approved', 'Comments', 'by', 'CExtensions', 'CFilename', 'Checked', 'CRevision', 'CScale', 'DAR', 'RejectedComments', 'Release',
+                               'SubmittalRef', 'CPart', 'DarTrade', 'Description');
+    //#endregion
+
+if(!_isMultiContracotr)
+ excludedFieldNames.push('Contractor');
+else excludedFieldNames.push('Sender');
 
   await pnp.sp.web.lists.getByTitle(_mainList).fields.select("Title", "InternalName").orderBy("Title").get()
   .then(fields => {
-    _Fields = fields.filter(field => {
+  _Fields = fields.filter(field => {
         var internalName = field.InternalName;
+        let fieldTitle = field.Title;
         var fieldType = field['odata.type'];
         if(!excludedFieldNames.includes(internalName) && !internalName.includes('_Part') && fieldType !== 'SP.FieldDateTime' && fieldType !== 'SP.FieldUrl' 
             && fieldType !== 'SP.FieldUser' && fieldType !== 'SP.Field')
         {
-          if(!_fieldsInernalName.includes(internalName))
-          {
-            if(_isEdit && selectedFieldsInternalName.includes(internalName))
-                return false;
-            
-            _fieldsInernalName.push(internalName);
-          }
+          //if(!_fieldsInernalName.includes(internalName)){
+            if (!_fieldsInernalName.hasOwnProperty(fieldTitle)) {
+                if(_isEdit && selectedFieldsSchema.find((field)=> field.internalName === internalName))
+                    return false;
+                
+                //_fieldsInernalName.push({"internalName": internalName, "displayName": field.Title});
+                _fieldsInernalName[fieldTitle] = internalName;
+                _displayNames.push(fieldTitle);
+            }
           return !excludedFieldNames.includes(internalName);
         }
       });
@@ -276,99 +375,11 @@ var getListFields = async function(){
     bindHTMLControls();
   })
   .then(() =>{
-    setListBox();
+    setListBox();  
   })
   .catch(error => {
     console.error("Error", error);
   });
-}
-
-function setListBox(){
-    var fieldName = '';
-    var isFieldVisited = false;
-    $("#listBoxA").jqxListBox({ allowDrop: true, allowDrag: true, filterable: true, source: _fieldsInernalName, width: 300, height: 240, 
-        dragStart: function (item) { // item.index can be used
-            //fieldName = item.label;
-            //isFieldVisited = false;
-        },
-        renderer: function (index, label, value) {
-            if (label == "Breve") {
-                return "<span style='color: red;'>" + label + "</span>";
-            }
-            return label;
-        }
-    });
-
-    const listBox = $("#listBoxB");
-    listBox.jqxListBox({ allowDrop: true, allowDrag: true, filterable: true, width: 300, height: 240,
-        dragEnd: function (dragItem, dropItem) {
-            if(dropItem !== null){
-                let position = event.clientX;
-                if(position > 400)
-                  isSort = true;
-                else isSort = false;
-            }
-
-             if(dropItem === null){
-               dropItem = dragItem;
-               isSort = false;
-             }
-             var columnName = dragItem.label;
-             setHTML_Column_PerRow(dragItem.index, columnName, 'remove', dropItem);
-             //console.log('dragEnd[listBoxB]: ' + columnName + ', ' + dragItem.index);
-            
-        },
-        renderer: function (index, label, value, operation) {
-            var lisboxBLength = $('#listBoxContentlistBoxB div div').length;
-             if(lisboxBLength > 0 && index === 0)
-              listBoxFields = [];
-
-              if(!listBoxFields.includes(label))
-                listBoxFields.push(label);
-
-                var _Row = $('#tblColumns').find('tr').filter(function() {
-                    return $(this).find('td:first').attr('id') === label;
-                });
-
-                if(_Row.length === 0){
-                //NOTE:EACH VALUE IT IS RENDERED TWICE UNTIL _Row.length BECAME > 0
-                  if(!isFieldVisited){
-                    isFieldVisited = true;
-                    validationlistBoxPromises.push(setHTML_Column_PerRow(index, label, 'Add'));
-                  }
-                  else isFieldVisited = false;
-                }
-            return label;
-        }
-    });
-
-    $(listBox).on('change', async function (event) {
-        debugger;
-        await Promise.all(validationlistBoxPromises);
-        var lisboxBLength = $('#listBoxContentlistBoxB div div').length;
-        if(listBoxFields.length == lisboxBLength){
-           //REORDER TABLE ROWS
-          if(listBoxFields.length > 0){
-              var tbl = $('#tblColumns tbody');
-              listBoxFields.map(item => {
-                  var _Row = $('#tblColumns').find('tr').filter(function() {
-                      return $(this).find('td:first').attr('id') === item;
-                  });
-                  var nextRow = $(_Row).next();
-
-                  tbl.append(_Row, nextRow);
-              });
-          }
-        }
-    });
-
-    if(_isEdit){
-        var dataLength = selectedFieldsInternalName.length;
-        for (let i = 0; i < dataLength; i++) {
-            var value = selectedFieldsInternalName[i]
-            listBox.jqxListBox('addItem', value);
-        }
-    }
 }
 
 var bindHTMLControls = async function(){
@@ -392,72 +403,210 @@ var bindHTMLControls = async function(){
     //#endregion
 }
 
-var setHTML_Column_PerRow = async function(columnIndex, columnName, operation, dropItem){
+function setListBox(){
+    var fieldName = '';
+    var isFieldVisited = false;
+
+    $("#listBoxA").jqxListBox({ allowDrop: true, allowDrag: true, filterable: true, source: _displayNames, width: 300, height: 240, 
+        renderer: function (index, label, value) {
+            if (label == "Breve") {
+                return "<span style='color: red;'>" + label + "</span>";
+            }
+            return label;
+        }
+    });
+
+    const listBox = $("#listBoxB");
+    listBox.jqxListBox({ allowDrop: true, allowDrag: true, filterable: true, width: 300, height: 240,
+        dragEnd: function (dragItem, dropItem) {
+            let columnName = dragItem.label;
+            let isFound = false;
+                
+            setTimeout(() => {
+                let spanElements = $('#listBoxContentlistBoxB div span.jqx-listitem-state-normal');
+                console.log(spanElements);
+
+                let targetRowIndex;
+                spanElements.map((rowIndex, spanElement) => {
+                    let currentColumn = spanElement.textContent;
+                    if (columnName === currentColumn) {
+                        // if(dropItem.index === undefined || dropItem.index === null){
+                        //     debugger;
+                        //     dropItem.index = rowIndex;
+                        // }
+                        targetRowIndex = rowIndex;
+                        console.log(`map rowIndex: ${rowIndex}, drop Index: ${dropItem.index}, drag Index: ${dragItem.index}, columnName: ${columnName}, Transaction: swap`);
+                        isFound = true;
+                    }
+                });
+
+                // /dropItem.element.parentElement
+
+                let operation = 'swap';
+                if(!isFound || dropItem.element.parentElement.id.includes('listBoxA')){
+                  operation = 'remove';
+                  if(targetRowIndex === undefined){
+                    targetRowIndex = dragItem.index;
+                  }
+
+                //   if(isFound){
+                //     let itemId = `#${dragItem.element.parentElement.id}`;
+                //     $("#listBoxA").jqxListBox('addItem', columnName);
+                //     $(itemId).remove();
+                //     //listBox.jqxListBox('removeAt', targetRowIndex);
+                //   }
+                }
+
+                else if(targetRowIndex === undefined){
+                    if(dropItem !== null)
+                      targetRowIndex = dropItem.index;
+                    else dropItem = dragItem;
+                }
+    
+                let internalName = _fieldsInernalName[columnName];
+                if(internalName === undefined){
+                 let getItem = selectedFieldsSchema.find((field)=> field.Title === columnName)
+                 internalName = getItem.internalName;
+                }
+                setHTML_Column_PerRow(targetRowIndex, columnName, internalName, operation, dropItem);
+               
+            }, 100);
+        },
+        renderer: function (index, label, value, operation) {
+            var lisboxBLength = $('#listBoxContentlistBoxB div div').length;
+
+            let internalName = _fieldsInernalName[label];
+            if(internalName === undefined){
+                let getItem = selectedFieldsSchema.find((field)=> field.Title === label)
+                internalName = getItem.internalName;
+            }
+
+             if(lisboxBLength > 0 && index === 0)
+              listBoxFields = [];
+
+              if(!listBoxFields.includes(internalName))
+                listBoxFields.push(internalName);
+
+                var _Row = $('#tblColumns').find('tr').filter(function() {
+                    return $(this).find('td:first').attr('id') === internalName;
+                });
+
+                if(_Row.length === 0){
+                //NOTE:EACH VALUE IT IS RENDERED TWICE UNTIL _Row.length BECAME > 0
+                  if(!isFieldVisited){
+                    isFieldVisited = true;
+                    console.log(`Index: ${index}, columnName: ${label}, Transaction: add`);
+                    
+                    validationlistBoxPromises.push(setHTML_Column_PerRow(index, label, internalName, 'Add'));
+                  }
+                  else isFieldVisited = false;
+                }
+            return label;
+        }
+    });
+
+    $(listBox).on('change', async function (event) {
+        await Promise.all(validationlistBoxPromises);
+        var lisboxBLength = $('#listBoxContentlistBoxB div div').length;
+        if(listBoxFields.length == lisboxBLength){
+           //REORDER TABLE ROWS
+          if(listBoxFields.length > 0){
+              var tbl = $('#tblColumns tbody');
+              listBoxFields.map(item => {
+                  var _Row = $('#tblColumns').find('tr').filter(function() {
+                      return $(this).find('td:first').attr('id') === item;
+                  });
+
+                  var currentRowIndex = $('#tblColumns').find('tr').index(_Row);
+                  var nextRow = $(_Row).next();
+                  var nextRowIndex = $('#tblColumns').find('tr').index(nextRow);
+
+                //   console.log({'currentRowIndex': currentRowIndex, 
+                //                'currentRow': _Row,
+                //                'nextRowIndex': nextRowIndex, 
+                //                'nextRow': nextRow});
+                  tbl.append(_Row, nextRow);
+              });
+          }
+        }
+    });
+
+    if(_isEdit){
+        var dataLength = selectedFieldsSchema.length;
+        for (let i = 0; i < dataLength; i++) {
+            var value = selectedFieldsSchema[i].Title;
+            listBox.jqxListBox('addItem', value);
+        }
+    }
+}
+
+var setHTML_Column_PerRow = async function(columnIndex, columnName, internalName, operation, dropItem){
 
     var contentElement = $('div.col-sm-12').eq(1);
     var tblId = 'tblColumns';
     var tblElement = $('#' + tblId);
+    var colElement = $(`#${internalName}`);
 
-    if(operation === 'remove')
-    {
-       var colElement = $(`#${columnName}`);
-       if(colElement.length > 0){
+    if(colElement.length > 0){
+        if(operation === 'remove'){
             var closestTr = $(colElement).closest("tr");
             var nextTr = $(closestTr).next();
 
-            if (!isSort)
-            {
-              $(nextTr).remove();
-              $(closestTr).remove();
-            }
-            else{
-                // SWAP THE ITEM TO ITS POSITION
-                tblElement.find('tr').each(function(index) {
-                    if(dropItem !== null && index === dropItem.index)
-                    {
-                        var rowId = columnName + 'col' + columnIndex;
-                        var valueRowId = 'ctlr' + rowId;
+            $(nextTr).remove();
+            $(closestTr).remove();
+        }
+        else if(operation === 'swap'){       
+            // SWAP THE ITEM TO ITS POSITION
+            tblElement.find('tr').each(function(index) {
+                if(columnIndex !== null && index === columnIndex) //dropItem.index)
+                {
+                    var rowId = internalName + 'col' + columnIndex;    //columnName + 'col' + columnIndex;
+                    var valueRowId = 'ctlr' + rowId;
 
-                        var rowToMoveId = $('#' + rowId);
-                        var rowToMove = rowToMoveId[0].parentElement.parentElement;
-                        var rowToMoveIndex = $(rowToMove).index();
+                    var rowToMoveId = $('#' + rowId);
+                    var rowToMove = rowToMoveId[0].parentElement.parentElement;
+                    var rowToMoveIndex = $(rowToMove).index();
 
-                        var rowValueToMoveId = $('#' + valueRowId);
-                        var rowValueToMove = rowValueToMoveId[0].parentElement.parentElement;
+                    var rowValueToMoveId = $('#' + valueRowId);
+                    var rowValueToMove = rowValueToMoveId[0].parentElement.parentElement;
 
-                        var targetRow = 1;
-                        if(index > 0)
-                          targetRow = (index*2) + 1;
+                    var targetRow = 1;
+                    if(index > 0)
+                        targetRow = (index*2) + 1;
+                    console.log(`targetRowIndex: ${targetRow}, row Index: ${index}`);
 
-                        var newPositionRow = $(tblElement).find('tr:nth-child(' + targetRow + ')');
-                        var newPositionRowIndex = $(newPositionRow).index();
-                        var newPositionControlsRow = $(tblElement).find('tr:nth-child(' + (targetRow+1) + ')');
+                    var newPositionRow = $(tblElement).find('tr:nth-child(' + targetRow + ')');
+                    var newPositionRowIndex = $(newPositionRow).index();
+                    var newPositionControlsRow = $(tblElement).find('tr:nth-child(' + (targetRow+1) + ')');
 
-                        if(rowToMoveIndex < newPositionRowIndex){
-                            $(rowToMove).insertAfter(newPositionControlsRow);
-                            $(rowValueToMove).insertAfter(rowToMove);
-                        }
-                        else{
-                            $(rowToMove).insertBefore(newPositionRow);
-                            $(rowValueToMove).insertAfter(rowToMove);
-                        }
-                        return;
+                    if(rowToMoveIndex < newPositionRowIndex){
+                        $(rowToMove).insertAfter(newPositionControlsRow);
+                        $(rowValueToMove).insertAfter(rowToMove);
                     }
-                });
-            }
-       }
+                    else{
+                        $(rowToMove).insertBefore(newPositionRow);
+                        $(rowValueToMove).insertAfter(rowToMove);
+                    }
+                    return;
+                }
+            });
+        }
 
-       if($(tblElement).find('tr').length === 0)
-         $(tblElement).remove();
-      return;
+        if(operation === 'remove' || operation === 'swap'){
+            if($(tblElement).find('tr').length === 0){
+                $(tblElement).remove();
+                isTblCreated = false;
+            }
+            return;
+        }
     }
 
     if(!isTblCreated){
         isTblCreated = true;
         var tbl = "<table id='" + tblId + "' width='100%' class='customtbl'>";
 
-        var ticksRow = await renderFeaturesTicks(columnName);
-        var controlsRow= await renderFeaturesControls(columnName);
+        var ticksRow = await renderFeaturesTicks(columnName, internalName);
+        var controlsRow= await renderFeaturesControls(internalName);
 
         tbl += ticksRow + controlsRow;
         tbl += "</table>";
@@ -465,8 +614,8 @@ var setHTML_Column_PerRow = async function(columnIndex, columnName, operation, d
     }
     else{
         //append row into html table
-        var ticksRow = await renderFeaturesTicks(columnName);
-        var controlsRow= await renderFeaturesControls(columnName);
+        var ticksRow = await renderFeaturesTicks(columnName, internalName);
+        var controlsRow= await renderFeaturesControls(internalName);
         const newRow = ticksRow + controlsRow;
         $(tblElement).append(newRow);
     }
@@ -475,14 +624,14 @@ var setHTML_Column_PerRow = async function(columnIndex, columnName, operation, d
   //$(tbl).insertAfter("#contentId");
 }
 
-var renderFeaturesTicks = async function(columnName){
+var renderFeaturesTicks = async function(columnName, internalName){
     
     var row = "<tr>";
-        row += "<td id='" + columnName + "' rowspan='2' width='10%' class='borderStyle'><label class='lblcolumnyStyle'>" + columnName + "</label></td>";
+        row += "<td id='" + internalName + "' rowspan='2' width='10%' class='borderStyle'><label class='lblcolumnyStyle'>" + columnName + "</label></td>";
 
     for(var i =0; i < _features.length; i++){
-        var checkBoxId = columnName + 'col' + i; //columnIndex is the rowIndex
-        var controlId = 'ctlr' + columnName + 'col' + i;
+        var checkBoxId = internalName + 'col' + i; //columnIndex is the rowIndex
+        var controlId = 'ctlr' + internalName + 'col' + i;
         var featureName = _features[i];
 
         if(featureName === 'isOptionalField')
@@ -491,7 +640,7 @@ var renderFeaturesTicks = async function(columnName){
                     
              row += "<input type='checkbox' id='" + checkBoxId + "' onclick='checkFeature(this)' name='" + checkBoxId + "' class='ckStyle' refId='" + controlId + "'";
 
-             row += await setFeatureCheckBoxes(featureName, columnName);
+             row += await setFeatureCheckBoxes(featureName, columnName, internalName);
 
              row += "<span for='" + checkBoxId + "' class='lblpropertyStyle'>" + featureName + "</span>" +
          "</td>" ;
@@ -500,7 +649,7 @@ var renderFeaturesTicks = async function(columnName){
     return row;
 }
 
-var setFeatureCheckBoxes = async function(featureName, columnName){
+var setFeatureCheckBoxes = async function(featureName, columnName, internalName){
     var row = '';
     var result = false;
 
@@ -510,7 +659,7 @@ var setFeatureCheckBoxes = async function(featureName, columnName){
        else{ 
         if(!_isNew){
 
-            result = await isFeatureFound(columnName, featureName);
+            result = await isFeatureFound(internalName, featureName);
             if(result.isFound)
               row += ' checked';
         }
@@ -519,7 +668,7 @@ var setFeatureCheckBoxes = async function(featureName, columnName){
     }
     else if(featureName === 'RevStartWith' || featureName === 'SpanField'){
         if(!_isNew){
-            result = await isFeatureFound(columnName, featureName);
+            result = await isFeatureFound(internalName, featureName);
             if(result.isFound) 
                 row += ' checked>';
             else row += ' disabled>';
@@ -528,7 +677,7 @@ var setFeatureCheckBoxes = async function(featureName, columnName){
     }
     else {
         if(!_isNew){
-            result = await isFeatureFound(columnName, featureName);
+            result = await isFeatureFound(internalName, featureName);
             if(result.isFound){
               row += ' checked';
               if(featureName === 'isList')
@@ -560,22 +709,31 @@ var setFeatureCheckBoxes = async function(featureName, columnName){
     return row;
 }
 
-var renderFeaturesControls = async function(columnName){
+var renderFeaturesControls = async function(internalName){
     var row = "<tr>";
+    let padding = 'padding: 5px;';
     for(var i =0; i < _features.length; i++){
-        var controlId = 'ctlr' + columnName + 'col' + i;
+        var controlId = 'ctlr' + internalName + 'col' + i;
         var columnType = _featuresType[i];
         var featureName = _features[i];
 
         if(columnType !== 'boolean'){
             row += "<td class='borderStyle'>";
-             row += "<input type='" + columnType + "' id='" + controlId + "' style='width: 100% !important;";// display:none;'>";
+
+             let isDDL = false;
+             if(featureName === 'isList' && _fNCLists.length > 0)
+                isDDL = true;
+
+             if(isDDL){
+              row += `<select id='${controlId}' style='width: 100% !important; ${padding}; border-radius: 4px; border: solid 1px;`;
+             }
+             else row += "<input type='" + columnType + "' id='" + controlId + "' style='width: 100% !important;";// display:none;'>";
             
                 if(!_isNew){
                     var isFound = false;
                     var _controlValue = '';
                     _schema.map(item => {
-                        if(item.InternalName === columnName && item.hasOwnProperty(featureName)){
+                        if(item.InternalName === internalName && item.hasOwnProperty(featureName)){
                             isFound = true;
                             _controlValue = item[featureName];
                             return;
@@ -583,10 +741,30 @@ var renderFeaturesControls = async function(columnName){
                     });
 
                     if(!isFound)
-                    row += "display:none;'>";
-                    else row += "' value='" + _controlValue + "'>";
+                      row += "display:none;'>";
+                    else {
+                        // if(isDDL)
+                        //     row += "'>";
+                        //else 
+                        row += "' value='" + _controlValue + "'>";
+                    }
                 }
                 else row += "display:none;'>";
+
+
+                if(isDDL){
+                    if(_isNew)
+                      row += `<option style='${padding}' value='' selected></option>`;
+                    else _controlValue = _controlValue.split('|')[0];
+                    
+                    for (const element of _fNCLists) {
+                        row += `<option value='${element}'`;
+                         if(!_isNew && element === _controlValue)
+                          row += ' selected';
+                        row += `>${element}</option>`;
+                    }
+                    row += "</select>";
+                }
             }
             row += "</td>";
      }
@@ -616,10 +794,10 @@ var isCorrect = async function(){
     else return true;
 }
 
-var isFeatureFound = async function(columnName, featureName){
+var isFeatureFound = async function(internalName, featureName){
     var isFound = false, disableFeature = false;
     _schema.map(item => {
-        if(item.InternalName === columnName ){
+        if(item.InternalName === internalName ){
             if(item.hasOwnProperty(featureName))
                 isFound = true;
             
@@ -659,7 +837,6 @@ var disableFields = async function(){
     fd.field('Acronym').disabled = true;
     fd.field('MainList').disabled = true;
     
-
     fd.field("DeliverableType").$on("change", function (value) {
         if(value !== null)
          fd.field('DeliverableType').disabled = true;
@@ -674,7 +851,7 @@ function delay(time) {
 }
 
 var checkColumnsFeatureSelection = async function(isOptional, tickedFieldRefId, isTicked){
-    var haveError = false;
+    var haveError = false, containsRev = false;
     var _message = '';
 
     var validationPromises = [];
@@ -684,6 +861,9 @@ var checkColumnsFeatureSelection = async function(isOptional, tickedFieldRefId, 
         {
             var td = $(this).children();
             var columnName = td[0].id;
+
+            if(columnName === 'Revision' || columnName === 'Rev')
+              containsRev = true;
 
             if(isOptional === true){
               var tdColumnName = td[(td.length-1)];
@@ -721,38 +901,42 @@ var checkColumnsFeatureSelection = async function(isOptional, tickedFieldRefId, 
                         haveError = true;    
                       }
                       else if(featureName === 'isList'){
-                        if(!controlValue.includes('|')){
-                            _message += `${columnName}: value should be set as Listname|Fieldname for ${featureName} feature <br/><br/>`;  
-                            haveError = true;
-                        }
-                        else {
-                            var splitValue = controlValue.split('|');
-                            var listname = splitValue[0];
-                            var fieldname = splitValue[1];
+                        if(_fNCLists.length > 0){
 
-                            if(splitValue.length > 2 || listname === '' || fieldname === ''){
+                        }
+                        else{
+                            if(!controlValue.includes('|')){
                                 _message += `${columnName}: value should be set as Listname|Fieldname for ${featureName} feature <br/><br/>`;  
                                 haveError = true;
                             }
                             else {
-                                var result = isListValidation(listname, fieldname)
-                                            .then(function (result) {
-                                                if (!result.isListExist) {
-                                                    _message += `${columnName}: listname ${listname} is not found for ${featureName} feature <br/><br/>`;
-                                                    haveError = true;
-                                                } else if (!result.isFieldExist) {
-                                                    _message += `${columnName}: Fieldname ${fieldname} is not found for ${featureName} feature <br/><br/>`;
-                                                    haveError = true;
-                                                }
-                                            })
-                                            .catch(function (error) {
-                                            });
-                                 validationPromises.push(result);
+                                var splitValue = controlValue.split('|');
+                                var listname = splitValue[0];
+                                var fieldname = splitValue[1];
+
+                                if(splitValue.length > 2 || listname === '' || fieldname === ''){
+                                    _message += `${columnName}: value should be set as Listname|Fieldname for ${featureName} feature <br/><br/>`;  
+                                    haveError = true;
+                                }
+                                else {
+                                    var result = isListValidation(listname, fieldname)
+                                                .then(function (result) {
+                                                    if (!result.isListExist) {
+                                                        _message += `${columnName}: listname ${listname} is not found for ${featureName} feature <br/><br/>`;
+                                                        haveError = true;
+                                                    } else if (!result.isFieldExist) {
+                                                        _message += `${columnName}: Fieldname ${fieldname} is not found for ${featureName} feature <br/><br/>`;
+                                                        haveError = true;
+                                                    }
+                                                })
+                                                .catch(function (error) {
+                                                });
+                                    validationPromises.push(result);
+                                }
                             }
                         }
                       }
                       else if(featureName === 'textLength'){
-                        debugger;
                         var lengthArray = [];
 
                         if(controlValue.includes(','))
@@ -776,6 +960,11 @@ var checkColumnsFeatureSelection = async function(isOptional, tickedFieldRefId, 
 
    if(haveError)
     set_FNC_ErrorMessage(_message, false);
+   else if(!_isDesign && _isWithRev && !containsRev){
+    set_FNC_ErrorMessage('Revision is Required field at the end of the filename', false);
+    haveError = true;
+   }
+   
    return haveError;
 }
 
@@ -906,6 +1095,9 @@ var setFilename_Schema  =async function(){
         if(!isPropertySet){
            //#region ADD SCHEMA PROPERTIES
            rowData['InternalName'] = 'properties';
+        //    if(_isDesign)
+        //     rowData['DeliverableType'] = fd.field("DeliverableType").value;
+        //    else 
            rowData['DeliverableType'] = fd.field("DeliverableType").value.LookupValue;
            rowData['Acronym'] = fd.field("Acronym").value;
            rowData['MainList'] = fd.field("MainList").value;
@@ -915,8 +1107,7 @@ var setFilename_Schema  =async function(){
            //#endregion
         }
 
-        if(index % 2 === 0)
-        {
+        if(index % 2 === 0){
             rowData  = {};
             var td = $(this).children();
             var firstVisit = false;
@@ -924,10 +1115,17 @@ var setFilename_Schema  =async function(){
 
             td.each(function(row, column){
               if(!firstVisit){
-                internalName = column.id;
+                //internalName = column.id;
+                internalName = _fieldsInernalName[column.innerText];
+                if(internalName === undefined){
+                    let getItem = selectedFieldsSchema.find((field)=> field.Title === column.innerText);
+                    internalName = getItem.internalName;
+                }
+                //gfhfghfh
                 if(internalName === 'Revision' || internalName === 'Rev' )
                  containsRev = true;
                 rowData['InternalName'] = internalName;
+                rowData['Title'] = column.innerText;
                 firstVisit = true;
               }
               else{
@@ -949,6 +1147,13 @@ var setFilename_Schema  =async function(){
                         if(controlValue !== null && controlValue !== undefined && controlValue !== ''){
                            if( featureName === 'SpanField')
                              rowData[featureName] = parseInt(controlValue);
+                           else if( featureName === 'isList' && _fNCLists.length > 0){
+                             let mappingColumn = 'Title';
+                             if(controlValue === 'Discipline')
+                               mappingColumn = 'Acronym';
+
+                             rowData[featureName] = `${controlValue.trim()}|${mappingColumn}`;
+                           }
                            else rowData[featureName] = controlValue.trim();
                         }
                    }
@@ -969,13 +1174,15 @@ const getDeliverableTypes = async function(){
       await pnp.sp.web.lists
 			.getByTitle("FNC")
 			.items
-			.select("Title")
-			//.filter(`Title eq '${  key  }'`)
+			.select("DeliverableType/FNCModuleName")
+            .expand("DeliverableType")
+			//.filter("Title ne 'GEN'")
 			.get()
 			.then((items) => {
 				if(items.length > 0)
                   items.map(item => {
-                    result.push(item.Title);
+                   if(item.DeliverableType !== undefined)
+                    result.push(item.DeliverableType.FNCModuleName);
                   });
 				  
 				});
@@ -1040,6 +1247,50 @@ var isListValidation = async function(listname, listFieldName){
         isFieldExist: isFieldExist
     };
 }
+
+var loadScripts = async function(){
+    const libraryUrls = [
+        _layout + '/controls/preloader/jquery.dim-background.min.js',
+        _layout + '/plumsail/js/customMessages.js',
+        _layout + '/plumsail/js/commonUtils.js',
+        _layout + '/plumsail/js/utilities.js',
+        _layout + '/plumsail/js/preloader.js',
+        
+        
+        // _layout + '/controls/jqwidgets/scripts/jquery-1.11.1.min.js',
+        _layout + '/controls/jqwidgets/scripts/demos.js',
+        _layout + '/controls/jqwidgets/jqxcore.js',
+        _layout + '/controls/jqwidgets/jqxlistbox.js',
+        _layout + '/controls/jqwidgets/jqxscrollbar.js',
+        _layout + '/controls/jqwidgets/jqxbuttons.js',
+        _layout + '/controls/jqwidgets/jqxexpander.js',
+        _layout + '/controls/jqwidgets/jqxvalidator.js',
+        _layout + '/controls/jqwidgets/jqxinput.js',
+        _layout + '/controls/jqwidgets/jqxdragdrop.js'
+    ];
+  
+    const cacheBusting = `?v=${Date.now()}`;
+      libraryUrls.map(url => { 
+          $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
+        });
+        
+    const stylesheetUrls = [
+        _layout + '/plumsail/css/CssStyle.css',
+        _layout + '/plumsail/css/FNC.css',
+        _layout + '/controls/jqwidgets/styles/jqx.base.css'
+    ];
+  
+    stylesheetUrls.map((item) => {
+      var stylesheet = item;
+      $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
+    });
+}
 //#endregion
 
 
+var getInternalNameColumn_notused = async function(displayName){
+    let field = _fieldsInernalName.find(field => {
+      return field.displayName === displayName
+    });
+    return field.internalName;
+}

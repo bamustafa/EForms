@@ -14,6 +14,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 	        class: 'btn-outline-primary',
 	        text: text,
 	        click: async function() {
+			 debugger;
 			 if(text == "Close" || text == "Cancel")
 			 {
 				 
@@ -205,8 +206,10 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 							var _fiedlValue = obj[key];
 							var valType = typeof _fiedlValue;
 
-							if( valType !== 'boolean' && valType !== 'number'){
-							  _fiedlValue = _fiedlValue.trim().replace(' ', '');
+							if(valType !== 'boolean' && valType !== 'number'){
+								if( key !== 'Title' && key !== 'DeliverableType' && key !== 'MainList')
+							      _fiedlValue = _fiedlValue.trim().replace(' ', '');
+								else _fiedlValue = _fiedlValue.trim();
 							  multiLineString += '\"' + key + '\": \"' + _fiedlValue + '\"';
 							}
 							else multiLineString += '\"' + key + '\": ' + _fiedlValue + '';
@@ -243,6 +246,8 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 					set_FNC_ErrorMessage('One field at least must be selected', false);
 					return;
 				}
+
+				
 				fd.field("Title").value = _acronym;
 				fd.save();
 			 }

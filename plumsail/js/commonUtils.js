@@ -6,6 +6,13 @@ var getCurrentWebUrl = async function() {
     });
 }
 
+const GetCurrentUser = async function(){
+	return await pnp.sp.web.currentUser.get()
+		         .then(async (user) =>{
+					return user;
+	 });
+}
+
 var getDesign_GridSchema = async function(_web, webURL, key){
     var _colArray = [];
     var targetList;
@@ -48,7 +55,7 @@ function getFileExtension(filePath) {
     return null;
 }
 
-var addLegend = async function (lblId, _text, parentElement, step){
+var addLegend = async function (lblId, _text, parentElement, step, ignoreCss){
 	if(lblId !== undefined){
 		jQueryId = '#' + parentElement;
 		if(step === 'same'){
@@ -65,10 +72,12 @@ var addLegend = async function (lblId, _text, parentElement, step){
 			  html: _text
 			});
 			//label.css('color', '#3cdbc0');
-			label.css('color', '#4e778f');
-			label.css('font-weight', 'bold');
-			label.css('font-size', '16px');
-			label.css('width', '1350px');
+			if(!ignoreCss){
+				label.css('color', '#4e778f');
+				label.css('font-weight', 'bold');
+				label.css('font-size', '16px');
+				label.css('width', '1350px');
+			}
 			//label.css('text-decoration', 'underline');
 			//label.css('text-align', 'center'); 
 	  
@@ -107,6 +116,7 @@ var addLegend = async function (lblId, _text, parentElement, step){
 }
 
 var setFormHeaderTitle = async function(){
+	let moduleTitle = '';
 	  if(_isPart)
        addLegend('partlblId', partTaskHeaderTitle, 'partTitle', 'same');
       else if(_isLead)
@@ -134,7 +144,32 @@ var setFormHeaderTitle = async function(){
 		  moduleTitle  = dtrdHeaderTitle;
 		else if(_module === 'DPR')
 		  moduleTitle  = dprHeaderTitle;
-		await addLegend('modulelblId', moduleTitle, 'moduleTitle', 'same');
+		else if(_module === 'FNC')
+		  moduleTitle  = fncHeaderTitle;
+		else if(_module === 'CKD')
+		  moduleTitle  = ckdHeaderTitle;
+		else if(_module === 'MAP')
+		  moduleTitle  = mapHeaderTitle;
+		else if(_module === 'AUS')
+		  moduleTitle  = ausHeaderTitle;
+		else if(_module === 'INS')
+		  moduleTitle  = insHeaderTitle;
+     }
+	 await addLegend('modulelblId', moduleTitle, 'moduleTitle', 'same');
+}
+
+function clearStoragedFields(fields){
+
+	for (const field in fields) {
+
+		var fieldproperties = fd.field(field);
+
+		var fieldDefaultVal = fieldproperties._fieldCtx.schema.DefaultValue;
+		//var fieldType = fieldproperties._fieldCtx.schema.FieldType;
+	
+		if (fieldDefaultVal !== undefined && fieldDefaultVal !== null) {}	
+		else			  
+			fd.field(field).clear(); 
 	}
 }
 
@@ -151,7 +186,35 @@ var getParameter = async function(key){
 				  result = items[0].Value;
 				});
 	 return result;
- }
+}
+
+var getCounter = async function(web, type, doUpdate){
+	let listname = 'Counter';
+	let query = `Title eq '${type}'`;
+
+	return await web.lists.getByTitle(listname).items.select("Id, Title, Counter").filter(query).get()
+	.then(async items=>{
+		let counterValue = 1;
+		if(items.length === 0){
+			if(doUpdate){
+				await web.lists.getByTitle(listname).items.add({
+					Title: type,
+					Counter: counterValue.toString()
+				});       
+			}          
+		}
+		else{
+			let item = items[0];
+			counterValue = parseInt(item.Counter) + 1;
+			if(doUpdate){
+				await pnp.sp.web.lists.getByTitle(listname).items.getById(item.Id).update({
+					Counter: counterValue.toString()
+				}); 
+			}
+		}
+		return counterValue;
+	})
+}
 
 var isMultiContractor = async function(){
 	
@@ -220,13 +283,18 @@ var IsUserInGroup = async function(group){
 }
 
 var getMajorType = async function(key, byId){
-	  let result = "";
+	  let result = '';
+	  //let listname = 'SchemaConfig';
       var query = `Title eq '${  key  }'`;
+	  
      if(byId !== undefined && byId === true)
-	   query = `ID eq ${  key  }`;
+	    query = `ID eq ${  key  }`;
+
+	 listname = 'MajorTypes';
+
 
       await pnp.sp.web.lists
-			.getByTitle("MajorTypes")
+			.getByTitle(listname)
 			.items
 			//.select("Title,Value")
 			.filter(query)
@@ -238,16 +306,25 @@ var getMajorType = async function(key, byId){
 	 return result;
 }
 
-var getGridMType = async function(_web, webURL, key){
+var getGridMType = async function(_web, webURL, key, isDesign){
     //var _itemArray = {};
     var _colArray = [];
     var targetList, targetFilter, revNumStart, updateTitle;
+    let listname = 'MajorTypes';
+	let columns = 'HandsonTblSchema,LODListName,LODFilterColumn,RevNumStart,UpdateTitle';
+	if(_module === 'AUS')
+	  columns = 'HandsonTblSchema,ListName,FilterColumns';
+
+	// if(isDesign === true){
+	//    listname = 'SchemaConfig';
+	//    columns = 'HandsonTblSchema,ListName,LODFilterColumn,RevNumStart,UpdateTitle';
+	// }
 
     var result = "";
     await _web.lists
-          .getByTitle("MajorTypes")
+          .getByTitle(listname)
           .items
-          .select("HandsonTblSchema,LODListName,LODFilterColumn,RevNumStart,UpdateTitle")
+          .select(columns)
           .filter("Title eq '" + key + "'")
           .get()
           .then(async function (items) {
@@ -255,25 +332,32 @@ var getGridMType = async function(_web, webURL, key){
                 //for (var i = 0; i < items.length; i++) {
                   var item = items[0];
                   var HandsonTblSchema = item.HandsonTblSchema;
-                  targetList = item.LODListName;
-                  targetFilter = item.LODFilterColumn;
-				  targetFilter = item.LODFilterColumn;
-				  revNumStart = item.RevNumStart;
-				  updateTitle = item.UpdateTitle;
 
+				  if(_module === 'AUS'){
+					targetList = item.LODListName;
+					targetFilter = item.LODFilterColumn;
+				  }
+				  else{
+					targetList = item.LODListName;
+					targetFilter = item.LODFilterColumn;
+					revNumStart = item.RevNumStart;
+					updateTitle = item.UpdateTitle;
+  
+				  }
+				
                     var fetchUrl = webURL + HandsonTblSchema;
                     await fetch(fetchUrl)
                         .then(response => response.text())
                         .then(async data => {
                           _colArray = JSON.parse(data); 
 
-                        //   for (const obj of _colArray) {
-                        //     if (obj.renderer === "incrementRenderer"){
-                        //       obj.renderer = incrementRenderer;
-                        //     }
-                        //     else if (obj.source === "getDropDownListValues"){
-                        //       obj.source = await getDropDownListValues(obj.listname, obj.listColumn);
-                        //     }
+                           for (const obj of _colArray) {
+                            if (obj.renderer === "customDropdownRenderer"){
+                              obj.renderer = customDropdownRenderer;
+                            }
+                        if (obj.source === "getDropDownListValues"){
+                              obj.source = await getDropDownListValues(obj.listname, obj.listColumn);
+                            }
                         //     else if (obj.validator === "validateDateRequired"){
                         //       obj.validator = validateDateRequired;
                         //     }
@@ -283,7 +367,7 @@ var getGridMType = async function(_web, webURL, key){
                         //     else if (obj.validator === "preventEdit"){
                         //       obj.validator = preventEdit;
                         //     }
-                        //   }
+                           }
                     });
               });
    return {
@@ -295,6 +379,23 @@ var getGridMType = async function(_web, webURL, key){
   };
 }
 
+var getDropDownListValues = async function(_listname, _column){
+	var _colArray = [];
+  
+	await pnp.sp.web.lists
+		  .getByTitle(_listname)
+		  .items
+		  .select(_column)
+		  .filter(_column + " ne null")
+		  .get()
+		  .then(async function (items) {
+			  if(items.length > 0)
+				for (var i = 0; i < items.length; i++) {
+					_colArray.push(items[i][_column]);
+				}
+			  });
+   return _colArray;
+}
 
 function fixTextArea (){
 	$("textarea").each(function(index){
@@ -330,7 +431,7 @@ function setIframeHeight(iframe){
 	}
 }
 
-var getSoapRequest = async function(method, serviceUrl, isAsync, soapContent, getParams){
+var getSoapRequest = async function(method, serviceUrl, isAsync, soapContent){
 	var xhr = new XMLHttpRequest(); 
 
     xhr.open(method, serviceUrl, isAsync); 
@@ -548,13 +649,17 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 
 			if(item.RevStartWith !== undefined){
 				if (!filenamePartValue.startsWith(item.RevStartWith)) 
-				  errorMesg += `revision must start with ${item.RevStartWith} for ${fieldname} <br>`;
+				  errorMesg += `revision must start with ${item.RevStartWith}<br>`; //for ${fieldname} field
 			}
 
 			if(_module === 'LOD'){
-				if(_revNumStart !== filenamePartValue.replace(item.RevStartWith,'')){
-				 errorMesg += `revision number must be ${_revNumStart}<br>`;
-			    }
+				if(_revNumStart !== undefined){
+					if(isAllDigits(_revNumStart))
+					 _revNumStart = parseInt(_revNumStart);
+
+					 if(_revNumStart != filenamePartValue.replace(item.RevStartWith,''))
+						errorMesg += `revision number must be ${_revNumStart}<br>`;
+				}
 		    }
 	   }
 
@@ -598,11 +703,11 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 		else if(item.isList !== undefined){
           var splitValue = item.isList.split('|');
 		  var listname = splitValue[0];
-		  var listField = splitValue[1];	
+		  var listField = splitValue[1];
 
           var descField = 'Title';
 		  var descValue;
-		  if(listname === 'SubDiscipline')	
+		  if(listname === 'SubDiscipline')
 		    descField = 'Acronym';
 		  var viewFields = listField + ',' + descField;
 		  
@@ -615,6 +720,43 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 			.select('Id,' + viewFields)
 			//.filter(`Title eq '${  listValue  }'`)
 			.get();
+
+			if(items < 1){
+				errorMesg += `${listname} list is Empty. Contact the admin.<br>`;
+				position++;
+				continue;
+			}
+
+			if(_module === 'LOD'){
+				let listitem = localStorage.getItem(listname);
+				if(listitem !== undefined && listitem !== null && listitem !== ''){
+
+				}
+				else{
+					items.map(item => {
+						var itemValue = item[listField];
+						if (!_listDictionary.includes(itemValue))
+						 _listDictionary.push(itemValue);
+
+						if(itemValue === filenamePartValue){
+						itemId = item.Id;
+						descValue = item[descField];
+						isFound = true;
+						return;
+						}
+						else{
+							if(rowValue < 4){
+								listValuesMesg += itemValue + ',';
+								rowValue++;
+							}
+						}
+					});
+					localStorage.setItem(listname, listname);
+				}
+				let item = _listDictionary.find(item => item === filenamePartValue);
+				if(item !== undefined && item !== null && item !== '')
+				   isFound = true;
+			}
 
 			if(items.length > 0){
 				var rowValue = 0;
@@ -638,32 +780,52 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 					var queryString = window.location.search;
 					var urlParams = new URLSearchParams(queryString);
 					var FolderName = urlParams.get('rf');
-
+                    let ignoreCheck = false;
 					if(_isEdit){
-						folderUrl = urlParams.get('source');
-						urlParams = new URL(folderUrl);
-						const searchParams = urlParams.searchParams;
-						FolderName = searchParams.get('RootFolder');
+                        if(FolderName !== undefined && FolderName !== null && FolderName !== '' && FolderName.includes('/')){
+							//IF NOT SITE ADMIN IT COMES HERE
+							FolderName = FolderName.substring(FolderName.lastIndexOf('/')+1);
+							if(filenamePartValue.toUpperCase() !== FolderName.toUpperCase())
+                                errorMesg += `Contractor name must be ${FolderName}<br>`;
+							ignoreCheck = true;;
+						}
+						else{
+							folderUrl = urlParams.get('source');
+							urlParams = new URL(folderUrl);
+							const searchParams = urlParams.searchParams;
+							FolderName = searchParams.get('RootFolder');
+						}
 					}
 					 
-					if(FolderName !== null){
-						FolderName = FolderName.split("/")[5];
-						if(filenamePartValue.toUpperCase() !== FolderName.toUpperCase())
-						  errorMesg += `Contractor name must be ${FolderName}<br>`;
+					if(!ignoreCheck){
+						if(FolderName !== null){
+							FolderName = FolderName.split("/")[5];
+							if(filenamePartValue.toUpperCase() !== FolderName.toUpperCase())
+							errorMesg += `Contractor name must be ${FolderName}<br>`;
+						}
+						else if(!isFound)
+						errorMesg += `${fieldname} must be one of the following: ${listValuesMesg} etc..<br>`;
+						else errorMesg += `Select a contractor name folder to submit your deliverables<br>`;
 					}
-					else if(!isFound)
-					  errorMesg += `${fieldname} must be one of the following: ${listValuesMesg} etc..<br>`;
-					else errorMesg += `Select a contractor name folder to submit your deliverables<br>`;
-				 }
+				}
 				 else{
 					if(!isFound)
 					  errorMesg += `${fieldname} must be one of the following: ${listValuesMesg} etc..<br>`;
 					else{
 						try{
-							var obj = {  LookupId: itemId,
-										 LookupValue: descValue
-									  };
-							fd.field(fieldname).value = obj;						 
+							if(fieldname === 'Contractor')
+							  fd.field(fieldname).value = descValue;
+							else{
+								var obj = {  LookupId: itemId,
+											LookupValue: descValue
+										};
+								if(fieldname === 'Discipline_x003a_Acronym')
+								  fieldname = 'Discipline';
+								else if(fieldname === 'SubDiscipline_x003a_Title')
+								  fieldname = 'SubDiscipline';
+								fd.field(fieldname).value = obj;	
+								fd.field(fieldname).disabled = true;
+							}
 						}
 						catch{}
 					}
@@ -673,9 +835,22 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 
 		else if(item.isText !== undefined){
 			var isTextValue = item.isText.toUpperCase();
+			var lengthArray = [];
 
-			if(isTextValue !== filenamePartValue.toUpperCase())
-			  errorMesg += `text must be ${isTextValue} instead of ${filenamePartValue} for ${fieldname} <br>`;
+			if(isTextValue.includes(','))
+				lengthArray = isTextValue.split(',').map(item => item.trim()).filter(item => item !== '');
+			else lengthArray.push(isTextValue);
+
+			var isValid = false;
+			for (var i = 0; i < lengthArray.length; i++){
+				var value = lengthArray[i]; // Parse the substring as an integer
+				if (filenamePartValue.toUpperCase() === value){
+					isValid = true;
+					break;
+				}
+			}
+			if(!isValid)
+			   errorMesg += `text must be ${isTextValue.replace(',', ' Or ')} instead of ${filenamePartValue} for ${fieldname} <br>`;
 		}
 
 		else if(item.textLength !== undefined){
@@ -702,9 +877,11 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 			 errorMesg += `${fieldname} must be a text field having ${textLength.replace(',', ' Or ')} characters<br>`;
             else{
 			 var AllowedCharacters = item.AllowedCharacters;
-			 var isAllowed = await isAllowedCharacters(filenamePartValue, AllowedCharacters);
-				if (!isAllowed)
-				  errorMesg += `${fieldname} must be a text field with characters from ${AllowedCharacters}<br>`;
+				if(AllowedCharacters !== undefined){
+					var isAllowed = await isAllowedCharacters(filenamePartValue, AllowedCharacters);
+						if (!isAllowed)
+						errorMesg += `${fieldname} must be a text field with characters from ${AllowedCharacters}<br>`;
+				}
 			}
 		}
 	
@@ -724,3 +901,161 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 	return errorMesg;
 }
 //#endregion
+
+const _sendEmail = async function(ModuleName, emailName, query, ApprovalTradeCC, notificationName, rootFolder){
+	let webUrl = _spPageContextInfo.siteAbsoluteUrl;
+	let siteUrl = new URL(webUrl).origin;
+    let CurrentUser = await GetCurrentUser();
+    let serviceUrl = `${siteUrl}/AjaxService/DarPSUtils.asmx?op=SEND_EMAIL_TEMPLATE`;
+    let soapContent = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                        <soap:Body>
+                            <SEND_EMAIL_TEMPLATE xmlns="http://tempuri.org/">
+                                <WebURL>${webUrl}</WebURL>
+                                <Email_Name>${emailName}</Email_Name>
+                                <Query><![CDATA[${query}]]></Query>
+                                <UserDisplayName>${CurrentUser.Title}</UserDisplayName>
+                                <CurrentUserEmail>${CurrentUser.Email}</CurrentUserEmail>
+                                <ApprovalCC>${ApprovalTradeCC}</ApprovalCC>
+                                <CheckPageRootFolder>${rootFolder}</CheckPageRootFolder>
+                                <ModuleName>${ModuleName}</ModuleName>
+                                <Notification_Name>${notificationName}</Notification_Name>
+                            </SEND_EMAIL_TEMPLATE>
+                        </soap:Body>
+                    </soap:Envelope>`
+    let res = await getSoapResponse('POST', serviceUrl, true, soapContent, 'SEND_EMAIL_TEMPLATEResult');
+}
+
+var getSoapResponse = async function(method, serviceUrl, isAsync, soapContent, getResultTag){
+	var xhr = new XMLHttpRequest(); 
+    xhr.open(method, serviceUrl, isAsync); 
+    xhr.onreadystatechange = async function() 
+    {
+        if (xhr.readyState == 4) 
+        {   
+            try 
+            {
+                if (xhr.status == 200 && getResultTag !== '')
+                {                
+                    const obj = this.responseText;
+                    var xmlDoc = $.parseXML(this.responseText),
+                    xml = $(xmlDoc);
+					
+                    var value= xml.find(getResultTag);
+                    if(value.length > 0){
+                        text = value.text();
+                        //_layout = value[0].children[0].textContent;
+                        //_rootSite = value[0].children[1].textContent;
+                    }
+                }
+                else console.log(`status ${xhr.status} - ${xhr.statusText} `);          
+            }
+            catch(err) 
+            {
+                console.log(err + "\n" + text);             
+            }
+        }
+    }
+	xhr.setRequestHeader('Content-Type', 'text/xml');
+	if(soapContent !== '')
+      xhr.send(soapContent);
+	else xhr.send();
+}
+
+var getSoapResponse1 = async function(method, serviceUrl, isAsync, soapContent, getResultTag){
+	return new Promise((resolve, reject) => {
+        var xhr = new XMLHttpRequest();
+        xhr.open(method, serviceUrl, isAsync);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                try {
+                    if (xhr.status == 200 && getResultTag !== '') {
+                        const response = this.responseText;
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(response, "text/xml");
+                        resolve(xmlDoc); // Resolve the promise with the parsed XML document
+                    } else {
+                        reject(new Error('Failed to get valid response'));
+                    }
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        };
+        xhr.setRequestHeader('Content-Type', 'text/xml');
+        if (soapContent !== '') 
+		  xhr.send(soapContent);
+        else xhr.send();
+    });
+}
+
+function setPSErrorMesg(errMesg){
+
+	function checkForErrors() {
+	  var errorElement = $('.errors[data-v-386d995a]');
+	  if (errorElement.length > 0) {
+		  clearInterval(intervalId);
+		  handleErrors(errorElement, errMesg);
+	  }
+  
+	  $('button').hover(
+		  function () {
+			  // Mouseenter event handler
+			  $(this).css('color', 'white');
+		  },
+		  function () {
+			  // Mouseleave event handler
+			  $(this).css('color', 'black');
+		  }
+	  );
+	}
+  
+	function handleErrors(element, errorMessage) {
+	  if (errorMessage !== '') {
+		  element.css({
+			  'height': 'auto',
+			  'opacity': '1'
+		  });
+		  errorMessage = '<br/>' + errorMessage;
+		  var mesgElement = $('#customErrorId');
+		   if(mesgElement.length === 0)
+			$('p.alert-heading').append(`<p id='customErrorId'>${errorMessage}</p>`);
+		   else mesgElement.html(errorMessage);
+		  //$('span').filter(function () { return $(this).text() == buttonText; }).parent().css('color', '#737373').attr("disabled", "disabled");
+	  } else {
+		  element.css({
+			  'height': '0',
+			  'opacity': '0'
+		  });
+		  $('#customErrorId').remove();
+		  $('.alert-errors[data-v-386d995a]').addClass('errors');
+		  //$('span').filter(function () { return $(this).text() == buttonText; }).parent().css('color', '#444').removeAttr('disabled');
+	  }
+	}
+  
+	$('button.close').on('click', () => {
+	  $('div.alert').css({
+		'height': '0',
+		'opacity': '0'
+	  });
+	});
+  
+	var intervalId = setInterval(checkForErrors, 100);
+}
+
+const chckRequiredFields = async function(){
+    let mesg = '';
+    for (const fieldname in fd.spForm.fields) {
+        let field = fd.field(fieldname);
+        let isRequired = field.required;
+        let val = field.value;
+        if(isRequired && (val === undefined || val === null || val === ''))
+            mesg += `${fieldname} is required <br/>` 
+       
+    }
+
+    if(mesg !== ''){
+        setPSErrorMesg(mesg);
+        return false
+    }
+    else return true
+}

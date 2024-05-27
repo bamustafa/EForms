@@ -1,5 +1,4 @@
-var _layout, _htLibraryUrl; // = "/_layouts/15/PCW/General/EForms";
-//_layout = "/_layouts/15/PCW/General/EForms";
+var _layout, _htLibraryUrl;
 
 var isAllowed = false, _isLead = false, _isPart = false, _isMain = false, isContractor = false, isDar = true, _isTeamLeader = false, _isPMC = false
    _isMultiContracotr = false, _IsLeadAction = false, _isDigitalForm = false, _isSiteAdmin = false, _isAutoAssign = false, _AllowManualAssignment = false,
@@ -10,30 +9,35 @@ var _module = '', _formType = '', Status, taskStatus = '', BIC, _role = '', _par
 
 var element, targetList, targetFilter;
 var counterType, counter;
-var delayTime = 50, retryTime = 1;
+var delayTime = 50, retryTime = 10;
 
 var mTypeItem;
 
 var disableButtons = false; // FOR validateDisciplineAgainstMatrix FUNCTION
 var disableButtonsFNC = false; // FOR setNamingConvention FUNCTION
 
+
 var onRender = async function (relativeLayoutPath, moduleName, formType, isLead, isPart) {
 
   const startTime = performance.now();
-  localStorage.clear();
-
   if (formType !== "Display")
   { 
     fd.toolbar.buttons[0].style = "display: none;";
     fd.toolbar.buttons[1].style = "display: none;";
-  }
+  }  
+
   _layout = relativeLayoutPath;
 
-  loadScripts();
+  await loadScripts();
 
-  //var script = document.createElement("script"); // create a script DOM node
-  //script.src = _layout + "/plumsail/js/config/configFileRouting.js"; // set its src to the provided URL
-  //document.head.appendChild(script);
+  if(formType == "New"){
+    await LimitDateTimeSubmission();
+    clearStoragedFields(fd.spForm.fields);
+  }
+
+  // var script = document.createElement("script"); // create a script DOM node
+  // script.src = _layout + "/plumsail/js/config/configFileRouting.js"; // set its src to the provided URL
+  // document.head.appendChild(script);
   _htLibraryUrl  = _layout + '/controls/handsonTable/libs/handsontable.full.min.js';
 
   _module = moduleName;
@@ -64,8 +68,12 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
     
     var Trans = "A";
     if (_isMain || _isLead){
-      if (formType == "New") 
+      if (formType == "New"){
           Status = "Initiated";
+          
+          try {fd.field('ORFI').clear();}
+          catch{}
+      }
       else Status = fd.field("Status").value;
     }
       
@@ -85,11 +93,11 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
           //var retry = 1;
           //while (!isValid)
           //{
-            ////try{
+            //try{
               //if(retry >= retryTime) break;
             _isAllowedUser = await isUserAllowed(userName);
-            //isValid = true;
-            //}
+            // isValid = true;
+            // }
               // catch{
               //   retry++;
               //   await delay(delayTime);
@@ -125,7 +133,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
           //_spComponentLoader.loadScript(_layout + '/plumsail/js/customMessages.js').then(async() => {
             setFormHeaderTitle();
             await onDPRRender();
-       // });
+         //});
       //});
       return;
       }
@@ -154,31 +162,34 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
               _isDigitalForm = true;
 
              await setFormHeaderTitle();
-            // isValid = true;
-          }
-            // catch{
-            //   retry++;
-            //   await delay(delayTime);
-            // }
-        //}
+        //      isValid = true;
+        //   }
+        //     catch{
+        //       retry++;
+        //       await delay(delayTime);
+        //     }
+        // }
     }
 
     if (_isMain || _isLead || _isPart) {
       //#region CHECK USER IF DAR OR CONTRACTOR
       var groupName = '';
 
-      //var isValid = false;
-      //var retry = 1;
-      //var mType;
+      // var isValid = false;
+      // var retry = 1;
+      // var mType;
       // while (!isValid)
       // {
-      //   try{
-          //if(retry >= retryTime) break;
-            groupName = await isMultiContractor();
+         //try{
+      //     if(retry >= retryTime) break;
 
-          if(_isMultiContracotr)
-            isContractor = await IsUserInGroup(groupName);
-          else isContractor = await IsUserInGroup('ContractorDC');
+          if (_isMain){
+              groupName = await isMultiContractor();
+
+              if(_isMultiContracotr)
+                isContractor = await IsUserInGroup(groupName);
+              else isContractor = await IsUserInGroup('ContractorDC');
+          }
 
           mTypeItem = await getMajorType(_module);
           mTypeItem = mTypeItem[0];
@@ -195,9 +206,9 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
         // catch{
         //   retry++;
         //   await delay(delayTime);
-        //}
+        // }
       //}
-      isValid = false;
+      //isValid = false;
       
       if(isContractor) 
         isDar = false;
@@ -237,8 +248,14 @@ var onRender = async function (relativeLayoutPath, moduleName, formType, isLead,
 
     await setButtons(moduleName, formType, Trans, Status, isLead, isPart);
 
-    setToolTipMessages();
+    //_spComponentLoader.loadScript(_layout + '/plumsail/js/customMessages.js').then(async() => {
+       setToolTipMessages();
+    //});
     fixTextArea();
+    }
+
+    // if(_isMain && _isCompliedWithConvention)
+    //   await renderFieldsOnForm();
   }
   
   catch (e) {
@@ -1040,13 +1057,43 @@ function setCascadedValues() {
   clearDDL();
 
   fd.field("Discipline").ready()
-    .then(function () {
+    .then(async function () {
       fd.field("Discipline").orderBy = { field: "Title", desc: false };
       fd.field("Discipline").refresh();
       //filter Products when Category changes
-      fd.field("InspType").$on("change", function (value) {
+      fd.field("InspType").$on("change", async function (value) {
+        
         filterDiscipline(value);
-        fd.field("Discipline").value = null;
+
+        //if fnc enabled
+        if(_isCompliedWithConvention === true){
+          debugger;
+          
+          let discField = fd.field("Discipline");
+          let currentDiscipline = discField.value.LookupValue;
+            if(currentDiscipline !== null){
+              let query = `Title eq '${currentDiscipline}' and InspType/Id eq '${value.LookupId}'`
+              let item = await pnp.sp.web.lists.getByTitle('Discipline').items.select("Title").filter(query).get();
+              var refId = $("#null");
+              if(item.length === 0){
+                let inspType = value.LookupValue;
+                let mesg = `${currentDiscipline} is not allowed under ${inspType}`;
+                $(refId).html(mesg).attr('style', 'color: red !important');
+
+                setDimonButton('Save', true);
+                setDimonButton('Submit', true);
+                fd.field('Reference').disabled = false;
+              }
+              else{
+                $(refId).html('filename matches naming convention').attr('style', 'color: green !important');
+                setDimonButton('Save', false);
+                setDimonButton('Submit', false);
+                fd.field('Reference').disabled = true;
+              }
+          }
+        }
+        else fd.field("Discipline").value = null;
+
         fd.field("InspDesc").value = null;
         fd.field("InspPurpose").value = null;
 
@@ -1355,6 +1402,7 @@ function setMATMetaInfo(formType) {
     }
   });
   fd.field("Discipline").orderBy = { field: "Title", desc: false };
+  fd.field("Discipline").refresh();
 }
 //#endregion
 
@@ -1373,10 +1421,12 @@ function setMATCascadedValues(formType) {
     });
 }
 
-function clearMATDDL(formType) {
+function clearMATDDL(formType){
   if (formType == "New") {
-    fd.field("Discipline").value = null;
-    fd.field("SubDiscipline").value = null;
+    fd.field("Discipline").orderBy = { field: "Title", desc: false };
+    fd.field("Discipline").refresh();
+    fd.field("SubDiscipline").filter = "Discipline/Id eq " + null;
+    fd.field("SubDiscipline").refresh();
   }
 }
 
@@ -1555,7 +1605,7 @@ async function getZoneCount(){
 }
 //#endregion
 
-//#region PR FUNCTIONS
+//#region DPR FUNCTIONS
 var getTemplateItems = async function(targetList, colsInternal){
   var itemArray = [];
   
@@ -1654,6 +1704,12 @@ var setData = async function(){
 //#endregion
 
 //#region GENERAL FUNCTIONS
+const setDimonButton = async function(text, isDisabled){
+  if(isDisabled)
+    $('span').filter(function () { return $(this).text() == text; }).parent().css('color', '#737373').attr("disabled", "disabled");
+  else $('span').filter(function () { return $(this).text() == text; }).parent().css('color', '#444').removeAttr('disabled');
+}
+
 var setButtons = async function (moduleName, formType, Trans, Status, isLead, isPart) {
   if(!_isSiteAdmin && (Status == "Closed" || Status === 'Issued to Contractor' || Status === 'Completed')){
     await customButtons("ChromeClose", "Cancel", false);
@@ -1839,7 +1895,7 @@ function delay(time) {
 function setToolTipMessages(){
   setButtonToolTip('Save', saveMesg);
   setButtonToolTip('Submit', submitMesg);
-  //setButtonToolTip('Preview Form', previewMesg);
+  setButtonToolTip('Preview Form', previewMesg);
   setButtonToolTip('Reject', rejectMesg);
   setButtonToolTip('Assign', assignMesg);
   setButtonToolTip('Cancel', cancelMesg);
@@ -1895,23 +1951,6 @@ function handleHardCopyDate(fields, hfield){
   }
 }
 
-//fd.field('ORFI').ready().then(function(field) {
-//   var field = $("input[title='Old Reference']");
-//   var listId = field.attr('aria-controls');
-
-//   var usedNames = {};
-//   var listSelector = '#' + listId + ' li';
-
-//   $(listSelector).each(function (index, li) {
-//       var text = li.textContent.trim(); // Trim to remove leading/trailing whitespaces
-//       if (usedNames[text]) {
-//           $(this).remove();
-//       } else {
-//           usedNames[text] = true;
-//       }
-//   });
-// });
-
 function setOldRef(_status){
   fd.field('ORFI').ready().then(() => {
    //fd.field('ORFI').filter = "Reference ne null";  
@@ -1942,7 +1981,7 @@ function setOldRef(_status){
 }
 
 var setNamingConvention = async function(referenceField){
-  let delimeter, schema, scheamResult, filenameText = '', schemaFields = '';
+  let delimeter, schema, scheamResult, filenameText = '', schemaFields = '', listname = '';
   let schemFieldsLength = 0;
   var refId = $("input[title='Reference']");
   refId.css('text-transform', 'uppercase');
@@ -1965,23 +2004,28 @@ var setNamingConvention = async function(referenceField){
             schema = schema.replace(/&nbsp;/g, '');
             schema = JSON.parse(schema);
 
+            await renderFieldsOnForm(schema);
             scheamResult = await setFilenameText(schema, delimeter);
             
              if(scheamResult.filenameText !== ''){
               schemaFields = scheamResult.schemaFields.slice(0, -1);
               filenameText = scheamResult.filenameText.slice(0, -1);
-              fd.field('Reference').placeholder = filenameText;
+              listname = scheamResult.listname;
+
+              fd.field('Reference').placeholder = filenameText
+                                                 .replace('Discipline_x003a_Acronym','Discipline Acronym')
+                                                 .replace('SubDiscipline_x003a_Title','SubDiscipline Acronym');
 
               if(refId.length === 0){
                 refId = $(`input[title='${filenameText}']`);
-                var filename = fd.field('ORFI').value.LookupValue;
+                var filename = fd.field('Reference').value;
                 await checkFileName(_module, delimeter, schema, filenameText, filename, true, false);
               }
               else $("input[title='Reference']").attr('title', filenameText);
             }
 
             $(refId).on('change', async function(value) {
-              if(fd.field('ORFI').value === undefined){
+              //if(fd.field('ORFI').value === undefined){
                 var filename = this.value;
 
                 if(filenameText === '' || filenameText === undefined){
@@ -1998,11 +2042,19 @@ var setNamingConvention = async function(referenceField){
                   disableButtonsFNC = true;
                  await setErrorMesg(refId, result, null, true);
                 }
-                else {
-                  disableButtonsFNC = false;
-                  await setErrorMesg(refId, '', null, true);
+                else{
+                  result = await isFilenameExist(listname, filename);
+
+                  if(result !==  ''){
+                    disableButtonsFNC = true;
+                   await setErrorMesg(refId, result, null, true);
+                  }
+                  else {
+                    disableButtonsFNC = false;
+                    await setErrorMesg(refId, '', null, true);
+                  }
                 }
-              }
+              //}
             });
           }
           else {
@@ -2010,6 +2062,35 @@ var setNamingConvention = async function(referenceField){
             await setErrorMesg(refId, 'Naming convention is not defined, contact your administrator.', null, true);
           }
 		});
+}
+
+var isFilenameExist = async function(listname, filename){
+  let mesg = '';
+  var _query = "Reference eq '" + filename + "' and IsLatestRev eq '1'";
+
+   const list = pnp.sp.web.lists.getByTitle(listname);
+   const items = await list.items.select("Id, Rev, Status").filter(_query).top(1).get();
+   if (items.length > 0){
+     let item = items[0];
+     let rev = (item['Rev'] !== undefined && item['Rev'] !== null) ? item['Rev'] : '';
+     if(rev !== ''){
+      let status = (item['Status'] !== undefined && item['Status'] !== null) ? item['Status'] : '';
+      if(status !== "Issued to Contractor" && status !== "Closed")
+        mesg = "Can't submit new revision as previous one is under review.";
+      else{
+        var obj = {  LookupId: item['Id'],
+                     LookupValue: filename
+                  };
+
+        $(fd.field('ORFI').$parent.$el).show();
+        fd.field('ORFI').value = obj;
+        fd.field('ORFI').disabled = true;
+      }
+     }
+     else mesg = "filename is already exist.";
+   }
+   else $(fd.field('ORFI').$parent.$el).hide();
+   return mesg;
 }
 
 var setErrorMesg = async function(inputElement, mesg, elementErrorId, isFNC){
@@ -2087,7 +2168,7 @@ var delayshowHideFunction = async function(){
 }
 
 var setFilenameText = async function(schema, delimeter){
-  var filenameText = '', schemaFields = '';
+  var filenameText = '', schemaFields = '', listname = '';
   schema.filter(item => {
     var fieldName = item.InternalName;
     if(fieldName === 'Rev' || fieldName === 'Revision'){
@@ -2099,18 +2180,20 @@ var setFilenameText = async function(schema, delimeter){
       schemaFields += fieldName + delimeter;
       filenameText += fieldName + delimeter;
 
-       try {
-        fd.field(fieldName).value;
-        fd.field(fieldName).disabled = true;
+       //try {
+       // fd.field(fieldName).value;
+        //fd.field(fieldName).disabled = true;
         //fd.field(fieldName).required = false;
         //$(fd.field(fieldName).$parent.$el).hide();
-      }
-      catch(e){}
+      //}
+      //catch(e){}
     }
+    else listname = item.MainList;
    });
    return {
     filenameText: filenameText,
-    schemaFields: schemaFields
+    schemaFields: schemaFields,
+    listname: listname
   };
 }
 
@@ -2267,11 +2350,12 @@ var loadScripts = async function(){
     _layout + '/plumsail/js/grid/grid.js'
   ];
 
-  libraryUrls.map((item)=>{
-    var plugin = item;
-    $('head').append(`<script src= ${plugin} async></script>`);
-  });
 
+  const cacheBusting = `?v=${Date.now()}`;
+    libraryUrls.map(url => { 
+        $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
+      });
+      
   const stylesheetUrls = [
     _layout + '/controls/tooltipster/tooltipster.css',
     _layout + '/controls/handsonTable/libs/handsontable.full.min.css',
@@ -2281,7 +2365,94 @@ var loadScripts = async function(){
 
   stylesheetUrls.map((item) => {
     var stylesheet = item;
-    $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}" async>`);
+    $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
   });
 }
+
+var LimitDateTimeSubmission = async function(){
+
+  var EnableWorkHours = await getParameter("EnableWorkHours"); 
+
+  if (EnableWorkHours.toLowerCase() === "yes") {
+
+    var WorkWeek = await getParameter("workWeek");
+    var WorkStartTime = await getParameter("WorkStartTime");
+    var WorkEndTime = await getParameter("WorkEndTime");
+
+    const workWeek = WorkWeek.split(',');
+    const workday = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+    const mesg = ''
+    if (workWeek.includes(workday)) {
+          const arrayWorkStartTime = WorkStartTime.split(',');
+          const arrayWorkEndTime = WorkEndTime.split(',');
+
+          if (arrayWorkStartTime.length > 0 && arrayWorkEndTime.length > 0) {
+              var workStartTime = new Date();
+              workStartTime.setHours(arrayWorkStartTime[0], arrayWorkStartTime[1], arrayWorkStartTime[2], 0);
+              var workEndTime = new Date();
+              workEndTime.setHours(arrayWorkEndTime[0], arrayWorkEndTime[1], arrayWorkEndTime[2], 0);
+              const now = new Date();              
+
+              if (now > workStartTime && now < workEndTime) { /* Submit Normally*/ }
+              else {
+                alert('Please note that you are not allowed to submit after working hours');      
+                fd.close();
+              }          
+          }
+    } 
+    else {
+      alert('Please note that you are not allowed to submit on Weekend.');        
+      fd.close();
+    }
+    
+  }
+}
 //#endregion
+
+var renderFieldsOnForm = async function(schema){
+  var _fieldsToShow = '';
+  
+ if(_module === 'IR')
+   _fieldsToShow = 'Package, Phase, Location';
+ else if(_module === 'MAT')
+   _fieldsToShow = 'Building, Package, Phase, Location, Station, Zone, Road';
+
+   if(_fieldsToShow !== ''){
+
+    let fields = fd.spForm.fields;
+    let splitMatchingFields = _fieldsToShow.trim().split(',');
+
+      if(schema !== ''){
+        for (const field in fields){
+
+          let fieldProp = fd.field(field);
+          let isFound = false;
+
+          for (const item of schema){
+            let fieldname = item.InternalName;
+            let isList = item.isList !== undefined ? true : false;
+
+            if(isList && field === fieldname){
+              isFound = true
+              fd.field(field).required = true;
+              $(fieldProp.$parent.$el).show();
+              break;
+            }
+          }
+          if(!isFound){
+              let item = splitMatchingFields.filter(fld =>{
+                return fld.trim() === field.trim()
+              })
+
+              if(item.length > 0){
+                fd.field(field).required = false;
+                $(fieldProp.$parent.$el).hide();
+              }
+          }
+        }
+      }
+
+    }
+
+}

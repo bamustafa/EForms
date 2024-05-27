@@ -5,10 +5,6 @@ var countryURL = 'https://4ce.dar.com/sites/CountryCodes';
 
 var _OutProceed = 0, _Proceed = 0;
 
-var script = document.createElement("script"); // create a script DOM node
-script.src = _layout + "/plumsail/js/config/configFileRoutingRACI.js"; // set its src to the provided URL
-document.head.appendChild(script);
-
 var BASEURL = location.protocol + "//" + location.host;
 var SERVICE_URL = BASEURL + "/AjaxService/XMLService.asmx?op=CallCountryCodesService";
 var International_SERVICE_URL = BASEURL + "/AjaxService/XMLService.asmx?op=CallInternationalCountryCodesService";
@@ -20,39 +16,45 @@ var saveMesg = "Click 'Save' to store your progress and keep your work as a draf
 var submitMesg = "Click 'Submit' to finalize and send officially.";
 var cancelMesg = "Click 'Cancel' to discard changes and exit without saving.";
 
-var onRender = async function (moduleName, formType){	
+var onRender = async function (moduleName, formType, relativeLayoutPath){
 
-	localStorage.clear();
-	fixTextArea();
+	try {	
 
-    _modulename = moduleName;
-    _formType = formType;
-    if(moduleName == 'CL')
-         await onCLRender(formType);
-    else if(moduleName == 'RR')
-         await onRRender(formType);
-    else if(moduleName == 'DCR')
-         await onDCRender(formType);
-	else if(moduleName == 'TQ')
-         await onTQRender(formType);	
+		if(relativeLayoutPath !== undefined && relativeLayoutPath !== null && relativeLayoutPath !== '')
+		_layout = relativeLayoutPath;
 
-	var isValid = false;
-	var retry = 1;
-	while (!isValid)
-	{
-		try{
-			if(retry >= 7) break;
-	
-			await setButtonToolTip('Save', saveMesg);
-			await setButtonToolTip('Submit', submitMesg);
-			await setButtonToolTip('Cancel', cancelMesg);
+		await PreloaderScripts();		
+		await loadScripts();
+		
+		fixTextArea();
 
-			isValid = true;
+		_modulename = moduleName;
+		_formType = formType;
+		if(_formType === 'New'){
+			clearStoragedFields(fd.spForm.fields);
 		}
-		catch{
-			retry++;
-			await delay(1000);
-		}
+		if(moduleName == 'CL')
+			await onCLRender(formType);
+		else if(moduleName == 'RR')
+			await onRRender(formType);
+		else if(moduleName == 'DCR')
+			await onDCRender(formType);
+		else if(moduleName == 'TQ')
+			await onTQRender(formType);
+		else if(moduleName === "DDSInitiate")
+			await onDDSRender(formType);
+
+		await setButtonToolTip('Save', saveMesg);
+		await setButtonToolTip('Submit', submitMesg);
+		await setButtonToolTip('Submit for Approval', submitMesg);
+		await setButtonToolTip('Cancel', cancelMesg);
+
+		preloader("remove");
+	}
+	catch (e) {
+		alert(e);
+		console.log(e);		
+		preloader();
 	}
 }
 
@@ -73,9 +75,9 @@ var onCLRender = async function (formType){
         ChangeLogPMFullPermission = await getParameterRACI("ChangeLogPMFullPermission");
         
         if(ChangeLogPMFullPermission.toLowerCase() == "yes") 
-            showHideFields("yes", currentUser.Title);
+            await showHideFields("yes", currentUser.Title);
         else				
-			showHideFields("no", currentUser.Title);
+			await showHideFields("no", currentUser.Title);
     }
     else if(formType == 'New'){
 
@@ -83,7 +85,7 @@ var onCLRender = async function (formType){
         $(fd.field('Reviewed').$parent.$el).hide();
         $(fd.field('WorkflowStatus').$parent.$el).hide();
         
-        fd.toolbar.buttons[0].style = "display: none;";
+        fd.toolbar.buttons[0].style = "display: none;";
         fd.toolbar.buttons[1].icon = 'Cancel';
         fd.toolbar.buttons[1].text = "Cancel";
 
@@ -152,10 +154,7 @@ var onCLRender = async function (formType){
 var onRRender = async function (formType){
     try
 	{
-        if(formType == 'New'){
-         //#region SET NEW LOGIC
-
-        //  addLegend();
+        if(formType == 'New'){    
 
          var prob = "<table cellspacing='0' cellpadding='0' width='100%' border='1' style='border-collapse:collapse; font-size:11px;'>" +
          "<tr><td width='10%' style='text-align:center; background-color:lightgrey; font-weight:bold'>Rating</td><td width='20%' style='background-color:lightgrey; font-weight:bold;text-align:center'>Description</td><td style='background-color:lightgrey; font-weight:bold'>Definition</td></tr>" +
@@ -195,7 +194,7 @@ var onRRender = async function (formType){
 		fd.toolbar.buttons[1].icon = 'Cancel';
         fd.toolbar.buttons[1].text = "Cancel";
 
-		fd.toolbar.buttons[0].style = "display: none;";
+		fd.toolbar.buttons[0].style = "display: none;";
 
         //$(fd.field('Approval_x0020_Status').$parent.$el).hide();
         fd.field('Approval_x0020_Status').value = "Pending";	
@@ -204,7 +203,7 @@ var onRRender = async function (formType){
         await RR_IsUserInGroupNew('PM');
         //#endregion
         }
-        else if(formType == 'Edit'){ 
+        else if(formType == 'Edit'){ 			
 			await RR_editForm();
         }
 	}
@@ -249,10 +248,11 @@ fd.spBeforeSave(function()
 });
 
 //#region CHANGE LOG FUNCTIONS
-function disableAllFields(GroupName)
+async function disableAllFields(GroupName)
 {     
-	fd.toolbar.buttons[0].style = "display: none;";
+	fd.toolbar.buttons[0].style = "display: none;";
 	fd.toolbar.buttons[1].text = "Cancel";
+	fd.toolbar.buttons[1].icon = 'Cancel';
 		
 	fd.field('Title').disabled = true;
 	fd.field('Description').disabled = true;
@@ -284,6 +284,14 @@ function disableAllFields(GroupName)
 	fd.field('WE').disabled = true;
 	fd.field('TR').disabled = true;
 
+	await pnp.sp.web.lists.getByTitle("Change Log").get().then(()=>{
+		return pnp.sp.web.lists.getByTitle("Change Log").fields.getByInternalNameOrTitle('DSS').get().then(field => {
+			fd.field('DSS').disabled = true;
+		});
+	})
+	.catch(function(err) {		
+	});	
+
 	fd.field('Communications').disabled = true;
 	fd.field('OutsideServices').disabled = true;
 	fd.field('PrintingandDispatch').disabled = true;
@@ -312,9 +320,8 @@ function disableAllFields(GroupName)
 	}
 }
 
-function disablePMFields()
+async function disablePMFields()
 { 
-	debugger;
     fd.field('Title').disabled = true;
 	var elem = $("textarea")[0];
 	$(elem).prop("readonly", true);
@@ -353,6 +360,14 @@ function disablePMFields()
 	fd.field('QM').disabled = true;
 	fd.field('WE').disabled = true;
 	fd.field('TR').disabled = true;
+	
+	await pnp.sp.web.lists.getByTitle("Change Log").get().then(()=>{
+		return pnp.sp.web.lists.getByTitle("Change Log").fields.getByInternalNameOrTitle('DSS').get().then(field => {
+			fd.field('DSS').disabled = true;
+		});
+	})
+	.catch(function(err) {		
+	});	
 
 	fd.field('Communications').disabled = true;
 	fd.field('OutsideServices').disabled = true;
@@ -362,7 +377,7 @@ function disablePMFields()
 	fd.field('Comments').disabled = true;
 }
 
-function SetDisabledForPM(ChangeLogPMFullPermission) 
+async function SetDisabledForPM(ChangeLogPMFullPermission) 
 {			
 	if(ChangeLogPMFullPermission.toLowerCase() == "no") 
 	{		
@@ -381,8 +396,9 @@ function SetDisabledForPM(ChangeLogPMFullPermission)
 		var spanPDElement = document.querySelector('.PDSection');
 		spanPDElement.style.display = 'none';	
 		
-		fd.toolbar.buttons[0].style = "display: none;";
+		fd.toolbar.buttons[0].style = "display: none;";
 		fd.toolbar.buttons[1].text = "Cancel"; 
+		fd.toolbar.buttons[1].icon = 'Cancel';
 		
 		fd.toolbar.buttons.push({
 	        icon: 'Save',
@@ -402,7 +418,7 @@ function SetDisabledForPM(ChangeLogPMFullPermission)
     	});
 		
 		fd.toolbar.buttons.push({
-	        icon: 'Submit',
+	        icon: 'Accept',
 	        class: 'btn-outline-primary',
 	        text: 'Submit',
 		        click: function() {							
@@ -420,7 +436,7 @@ function SetDisabledForPM(ChangeLogPMFullPermission)
 	}		
 }
 
-function SetDisabledForReturnToPM(ChangeLogPMFullPermission) 
+async function SetDisabledForReturnToPM(ChangeLogPMFullPermission) 
 {		
 	disablePMFields();	
 			
@@ -440,8 +456,9 @@ function SetDisabledForReturnToPM(ChangeLogPMFullPermission)
 		$(fd.field('AreaFeedbackDate').$parent.$el).hide();
 		fd.field('Attachments').disabled = false;
 		
-		fd.toolbar.buttons[0].style = "display: none;";
+		fd.toolbar.buttons[0].style = "display: none;";
 		fd.toolbar.buttons[1].text = "Cancel"; 
+		fd.toolbar.buttons[1].icon = 'Cancel';
 		
 		fd.toolbar.buttons.push({
 	        icon: 'Save',
@@ -458,7 +475,7 @@ function SetDisabledForReturnToPM(ChangeLogPMFullPermission)
     	});
 		
 		fd.toolbar.buttons.push({
-	        icon: 'Submit',
+	        icon: 'Accept',
 	        class: 'btn-outline-primary',
 	        text: 'Submit to Area',
 		        click: function() {							
@@ -511,7 +528,7 @@ function SetDisabledForReturnToPM(ChangeLogPMFullPermission)
 	}		
 }
 
-function SetDisabledForPD(currentUser) 
+async function SetDisabledForPD(currentUser) 
 {				
 	fd.field('AreaApproval').disabled = true; 		
 	fd.field('AreaOfficeRemarks').disabled = true; 
@@ -523,10 +540,9 @@ function SetDisabledForPD(currentUser)
 	disablePMFields();	
 	SetAttachmentToReadOnly();	
 	
-	fd.toolbar.buttons[0].style = "display: none;";
+	fd.toolbar.buttons[0].style = "display: none;";
 	fd.toolbar.buttons[1].text = "Cancel";
-	//fd.toolbar.buttons[0].text = "Submit to Area";
-	//fd.control('Button1').text = "Submit to Area";
+	fd.toolbar.buttons[1].icon = 'Cancel';
 	
 	fd.toolbar.buttons.push({
 	        icon: 'Save',
@@ -543,7 +559,7 @@ function SetDisabledForPD(currentUser)
     });
 	
 	fd.toolbar.buttons.push({
-	        icon: 'Submit',
+	        icon: 'Accept',
 	        class: 'btn-outline-primary',
 	        text: 'Submit',
 	        click: function() {							
@@ -564,7 +580,7 @@ function SetDisabledForPD(currentUser)
 			fd.field('ReviewedByPD').value = currentUser;
 			$(fd.field('ReviewedByPD').$parent.$el).hide();
 			
-			var date = new Date();
+			var date = new Date();
 		    fd.field('PDApprovalDate').value = date;
 			
 			fd.field('ProjectDirectorApproval').addValidator({
@@ -583,7 +599,7 @@ function SetDisabledForPD(currentUser)
     });				
 }
 
-function SetDisabledForAD(currentUser) 
+async function SetDisabledForAD(currentUser) 
 {	    
 	fd.field('ProjectDirectorApproval').disabled = true;	
 	fd.field('DirectorRemarks').disabled = true; 
@@ -593,13 +609,14 @@ function SetDisabledForAD(currentUser)
 	$(fd.field('ApprovedMM').$parent.$el).hide();
 	
 	var ADSectionHideElement = document.querySelector('.ADSectionHide');
-	ADSectionHideElement.style.display = 'none';
+	ADSectionHideElement.style.display = 'none';	
 
 	disablePMFields();
 	SetAttachmentToReadOnly();
 	
-	fd.toolbar.buttons[0].style = "display: none;";
-	fd.toolbar.buttons[1].text = "Cancel";       
+	fd.toolbar.buttons[0].style = "display: none;";
+	fd.toolbar.buttons[1].text = "Cancel"; 
+	fd.toolbar.buttons[1].icon = 'Cancel';      
 	
 	fd.toolbar.buttons.push({
 	        icon: 'Save',
@@ -616,7 +633,7 @@ function SetDisabledForAD(currentUser)
     });
 	
 	fd.toolbar.buttons.push({
-	        icon: 'Submit',
+	        icon: 'Accept',
 	        class: 'btn-outline-primary',
 	        text: 'Submit',
 	        click: function() {		
@@ -635,7 +652,7 @@ function SetDisabledForAD(currentUser)
 			fd.field('ReviewedByAD').value = currentUser;
 			$(fd.field('ReviewedByAD').$parent.$el).hide();
 			
-			var date = new Date();
+			var date = new Date();
 		    fd.field('AreaFeedbackDate').value = date;
 			
 			fd.field('AreaApproval').addValidator({
@@ -654,7 +671,7 @@ function SetDisabledForAD(currentUser)
     });			
 }
 
-function SetDisabledForReturnedAD() 
+async function SetDisabledForReturnedAD() 
 {	    
 	fd.field('ProjectDirectorApproval').disabled = true;	
 	fd.field('DirectorRemarks').disabled = true; 
@@ -668,8 +685,9 @@ function SetDisabledForReturnedAD()
 	disablePMFields();	
 	SetAttachmentToReadOnly();	
 	
-	fd.toolbar.buttons[0].style = "display: none;";
+	fd.toolbar.buttons[0].style = "display: none;";
 	fd.toolbar.buttons[1].text = "Cancel"; 
+	fd.toolbar.buttons[1].icon = 'Cancel';
 	
 	fd.field('ClaimStatus').$on('change',ClaimStatushideOrShow);
 	ClaimStatushideOrShow();      
@@ -689,7 +707,7 @@ function SetDisabledForReturnedAD()
     });
 	
 	fd.toolbar.buttons.push({
-	        icon: 'Submit',
+	        icon: 'Accept',
 	        class: 'btn-outline-primary',
 	        text: 'Submit',
 	        click: function() {	
@@ -698,7 +716,7 @@ function SetDisabledForReturnedAD()
 			fd.field('WorkflowStatus').value = WorkflowStatus;
 			fd.field('Reviewed').value = true;
 			
-			var date = new Date();
+			var date = new Date();
 		    fd.field('AreaFeedbackDate').value = date;				
 			
 			fd.field('ClaimStatus').addValidator({
@@ -729,8 +747,8 @@ async function showHideFields(ChangeLogPMFullPermission, currentUser)
 		
         var userId = _spPageContextInfo.userId;
         var userGroups = [];
-        pnp.sp.web.siteUsers.getById(userId).groups.get()
-        .then(function(groupsData){
+        await pnp.sp.web.siteUsers.getById(userId).groups.get()
+        .then(async function(groupsData){
             for (var i = 0; i < groupsData.length; i++) {
                 userGroups.push(groupsData[i].Title);
             }
@@ -739,42 +757,42 @@ async function showHideFields(ChangeLogPMFullPermission, currentUser)
             var GroupName = "";
             if (userGroups.indexOf('Owners') >= 0) isAdmin = true;
 
-            if (!isAdmin) {                    
+            if (!isAdmin) { 			
 
                 if (userGroups.indexOf('PM') >= 0 && wfStatus === "Pending") {
                     GroupName = "PM";
-                    SetDisabledForPM(ChangeLogPMFullPermission);
+                    await SetDisabledForPM(ChangeLogPMFullPermission);
                 }
                 else if (userGroups.indexOf('PM') >= 0 && wfStatus === "Returned to PM") {
                     GroupName = "PM";
-                    SetDisabledForReturnToPM(ChangeLogPMFullPermission);
+                    await SetDisabledForReturnToPM(ChangeLogPMFullPermission);
                 }
                 else if (userGroups.indexOf('PD') >= 0 && wfStatus === "Submitted to PD") {
                     GroupName = "PD";							
-                    SetDisabledForPD(currentUser);
+                    await SetDisabledForPD(currentUser);
                 }
                 else if (userGroups.indexOf('Area') >= 0 && wfStatus === "Submitted to Area") {
                     GroupName = "Area";							
-                    SetDisabledForAD(currentUser);
+                    await SetDisabledForAD(currentUser);
                 }
                 else if (userGroups.indexOf('AD') >= 0 && wfStatus === "Submitted to Area") {
                     GroupName = "Area";	
-                    SetDisabledForAD(currentUser);
+                    await SetDisabledForAD(currentUser);
                 }
                 else if (userGroups.indexOf('Area') >= 0 && wfStatus === "Returned to Area") {
                     GroupName = "Area";	
-                    SetDisabledForReturnedAD();
+                    await SetDisabledForReturnedAD();
                 }
                 else if (userGroups.indexOf('AD') >= 0 && wfStatus === "Returned to Area") {
                     GroupName = "Area";	
-                    SetDisabledForReturnedAD();
+                    await SetDisabledForReturnedAD();
                 }
                 else
                 {                       
                     if (userGroups.indexOf('Area') >= 0 || userGroups.indexOf('AD') >= 0)
                         GroupName = "Area";
 
-                    disableAllFields(GroupName);                      	
+					await disableAllFields(GroupName);                      	
                 }					
             }
 
@@ -817,7 +835,7 @@ function showHideFieldsDisplay()
                 } 
                 
                 if(wfStatus == "Submitted")                
-                    fd.toolbar.buttons[0].style = "display: none;";             
+                    fd.toolbar.buttons[0].style = "display: none;";             
                 
                 fd.toolbar.buttons[1].text = "Cancel";
             }
@@ -860,13 +878,13 @@ const getParameterRACI = async function(key){
  
 //#region RISK REGISTER FUNCTIONS
 
-function RR_IsUserInGroupNew(group) 
+async function RR_IsUserInGroupNew(group) 
 {
     var IsPMUser = false
 		try{
-			pnp.sp.web.currentUser.get()
-	         .then(function(user){
-				pnp.sp.web.siteUsers.getById(user.Id).groups.get()
+			await pnp.sp.web.currentUser.get()
+	         .then(async function(user){
+				await pnp.sp.web.siteUsers.getById(user.Id).groups.get()
 				 .then(function(groupsData){
 					for (var i = 0; i < groupsData.length; i++) {
 					
@@ -911,13 +929,13 @@ function RR_IsUserInGroupNew(group)
 		return IsPMUser;
 }
 
-function RR_IsUserInGroup(group) 
+async function RR_IsUserInGroup(group) 
 {
     var IsPMUser = false
 		try{
-			pnp.sp.web.currentUser.get()
-	         .then(function(user){
-				pnp.sp.web.siteUsers.getById(user.Id).groups.get()
+			await pnp.sp.web.currentUser.get()
+	         .then(async function(user){
+				await pnp.sp.web.siteUsers.getById(user.Id).groups.get()
 				 .then(function(groupsData){
 					for (var i = 0; i < groupsData.length; i++) 
 					{					
@@ -992,7 +1010,7 @@ function RR_IsUserInGroup(group)
 					}
 					else if(fd.field('Status').value == "Open" && IsPMUser && fd.field('Approval_x0020_Status').value == 'Approved')
 					{
-						//fd.toolbar.buttons[0].style = "display: none;";
+						//fd.toolbar.buttons[0].style = "display: none;";
 						
 						fd.toolbar.buttons.push({
 							icon: 'Accept',
@@ -1076,14 +1094,16 @@ async function RR_editForm(){
 
         if(status == "Sent for Approval")
 		{
-		   fd.toolbar.buttons[0].style = "display: none;";		   
+		   fd.toolbar.buttons[0].style = "display: none;";		   
 		}
 		else if(status == "Approved" || status == "Rejected")
-		{	      
+		{
+			fd.toolbar.buttons[0].icon = 'Save';
+
 		   if(fd.field('Status').value == "Open") {				   
 		   }
 		   else { 
-				   fd.toolbar.buttons[0].style = "display: none;";				
+				   fd.toolbar.buttons[0].style = "display: none;";				
 				   fd.field('Status').disabled = true;
 				   
 				   fd.field('Risk_x0020_Category').disabled = true;
@@ -1114,131 +1134,127 @@ async function RR_editForm(){
 		   //return;
 		}
 
-        RR_IsUserInGroup('PM');
+        await RR_IsUserInGroup('PM');
 }
 //#endregion
 
 //#region DESIGN CODES AND REGULATIONS FUNCTIONS
 
-var GetAllLocalCodesbyCountry = async function(Country) 
-{		
-	var xhr = new XMLHttpRequest();
-	var soapRequest = "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">"
-					+ "<soap:Body>"
-					+ "<CallCountryCodesService xmlns=\"http://dargroup.com/\">"
-						+ "<country>" + Country + "</country>"
-					+ "</CallCountryCodesService>"
-					+ "</soap:Body>"
-					+ "</soap:Envelope>";
-				
-	xhr.open("POST", SERVICE_URL, true);	
-	
-	xhr.onreadystatechange = async function() 
-	{
-		if (xhr.readyState == 4) 
-		{ 	
-			var text;
+var GetAllLocalCodesbyCountry = async function(Country){		
+	return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        var soapRequest = "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">"
+            + "<soap:Body>"
+            + "<CallCountryCodesService xmlns=\"http://dargroup.com/\">"
+            + "<country>" + Country + "</country>"
+            + "</CallCountryCodesService>"
+            + "</soap:Body>"
+            + "</soap:Envelope>";
 
-			try 
-			{
-				if (xhr.status == 200)
-				{													
-					var xmlDoc = $.parseXML( xhr.responseText );
-					$xml = $( xmlDoc );
-                    $value= $xml.find("CallCountryCodesServiceResult");
+        xhr.open("POST", SERVICE_URL, true);
 
-					text = $value.text();		
+        xhr.onreadystatechange = async function() {
+            if (xhr.readyState == 4) {
+                var text;
+                try {
+                    if (xhr.status == 200) {
+                        var xmlDoc = $.parseXML(xhr.responseText);
+                        $xml = $(xmlDoc);
+                        $value = $xml.find("CallCountryCodesServiceResult");
 
-					const obj =  await JSON.parse(text, async function (key, value) {
-						var _columnName = key;
-						var _value = value;					
+                        text = $value.text();
 
-						if(_columnName === 'Title'){
-							if(!CodeArr.includes(_value))							
-						       CodeArr.push(_value);						
-						}						
-					});
+                        const obj = await JSON.parse(text, async function(key, value) {
+                            var _columnName = key;
+                            var _value = value;
 
-					var response = JSON.parse(text);
-					CodeObjectArray.push(response.d.results);
+                            if (_columnName === 'Title') {
+                                if (!CodeArr.includes(_value))
+                                    CodeArr.push(_value);
+                            }
+                        });
 
-					fd.field('DropDownCC').widget.setDataSource({data: CodeArr}) 
-					//console.log(CodeArr);
-				}
-				else
-					console.log('Request failed with status code:', xhr.status);
-			}
-			catch(err) 
-			{
-				console.log(err + "\n" + text);				
-			}
-		}
-	}			
+                        var response = JSON.parse(text);
+                        CodeObjectArray.push(response.d.results);
 
-	xhr.setRequestHeader('Content-Type', 'text/xml');
-	xhr.send(soapRequest);
+                        fd.field('DropDownCC').widget.setDataSource({
+                            data: CodeArr
+                        })
+                        resolve(CodeArr);
+                    } else {
+                        console.log('Request failed with status code:', xhr.status);
+                        reject('Request failed with status code:', xhr.status);
+                    }
+                } catch (err) {
+                    console.log(err + "\n" + text);
+                    reject(err + "\n" + text);
+                }
+            }
+        }
+
+        xhr.setRequestHeader('Content-Type', 'text/xml');
+        xhr.send(soapRequest);
+    });
 }
 
-var GetAllInternationalCodes = async function() 
-{	
-	var xhr = new XMLHttpRequest();
-	var soapRequest = "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">"
-					+ "<soap:Body>"
-					+ "<CallInternationalCountryCodesService  xmlns=\"http://dargroup.com/\" />"					
-					+ "</soap:Body>"
-					+ "</soap:Envelope>";
-				
-	xhr.open("POST", International_SERVICE_URL, true);	
-	
-	xhr.onreadystatechange = async function() 
-	{
-		if (xhr.readyState == 4) 
-		{ 	
-			var text;
+var GetAllInternationalCodes = async function(){	
+	return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        var soapRequest = "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">"
+            + "<soap:Body>"
+            + "<CallInternationalCountryCodesService xmlns=\"http://dargroup.com/\" />"
+            + "</soap:Body>"
+            + "</soap:Envelope>";
 
-			try 
-			{
-				if (xhr.status == 200)
-				{	
-					debugger;												
-					var xmlDoc = $.parseXML( xhr.responseText );
-					$xml = $( xmlDoc );
-                    $value= $xml.find("CallInternationalCountryCodesServiceResult");
+        xhr.open("POST", International_SERVICE_URL, true);
 
-					text = $value.text();		
+        xhr.onreadystatechange = async function() {
+            if (xhr.readyState == 4) {
+                var text;
+                try {
+                    if (xhr.status == 200) {
+                        var xmlDoc = $.parseXML(xhr.responseText);
+                        $xml = $(xmlDoc);
+                        $value = $xml.find("CallInternationalCountryCodesServiceResult");
 
-					const obj =  await JSON.parse(text, async function (key, value) {
-						var _columnName = key;
-						var _value = value;					
+                        text = $value.text();
 
-						if(_columnName === 'Title'){
-							if(!CodeArr.includes(_value))							
-						       CodeArr.push(_value);						
-						}						
-					});
+                        const obj = await JSON.parse(text, async function(key, value) {
+                            var _columnName = key;
+                            var _value = value;
 
-					var response = JSON.parse(text);
-					CodeObjectArray.push(response.d.results);
+                            if (_columnName === 'Title') {
+                                if (!CodeArr.includes(_value))
+                                    CodeArr.push(_value);
+                            }
+                        });
 
-					fd.field('DropDownCC').widget.setDataSource({data: CodeArr})					
-				}
-				else
-					console.log('Request failed with status code:', xhr.status);
-			}
-			catch(err) 
-			{
-				console.log(err + "\n" + text);				
-			}
-		}
-	}			
+                        var response = JSON.parse(text);
+                        CodeObjectArray.push(response.d.results);
 
-	xhr.setRequestHeader('Content-Type', 'text/xml');
-	xhr.send(soapRequest);
+                        fd.field('DropDownCC').widget.setDataSource({
+                            data: CodeArr
+                        });
+                        resolve(CodeArr);
+                    } else {
+                        console.log('Request failed with status code:', xhr.status);
+                        reject('Request failed with status code:', xhr.status);
+                    }
+                } catch (err) {
+                    console.log(err + "\n" + text);
+                    reject(err + "\n" + text);
+                }
+            }
+        }
+
+        xhr.setRequestHeader('Content-Type', 'text/xml');
+        xhr.send(soapRequest);
+    });
 }
 
 async function populateCountryCodes()
 { 
-    $(fd.field('IsCodeAvailable').$parent.$el).hide();    
+    $(fd.field('IsCodeAvailable').$parent.$el).hide(); 	
    
 	var country = fd.field('Country').value; //"Lebanon";//
 	if(country === "") return;
@@ -2862,7 +2878,7 @@ function SetAttachmentToReadOnly(){
 		DisableAttachment();
 }
 
-async function DCR_IsUserInGroup(formType, group) 
+async function DCR_IsUserInGroup(formType) 
 {
     var IsPMUser = "Trade";
 	try{
@@ -2870,58 +2886,89 @@ async function DCR_IsUserInGroup(formType, group)
 		await pnp.sp.web.siteUsers.getById(userId).groups.get().then(function(groupsData)
 		{
 			for (var i = 0; i < groupsData.length; i++) 
-			{				
-				if(group === "PM" || group === "Area")
+			{			
+				if(groupsData[i].Title === 'PM' || groupsData[i].Title === 'Area')
 				{
-					if(groupsData[i].Title === group)
-					{
-						IsPMUser = group;
+					IsPMUser = groupsData[i].Title;
 
-						fd.toolbar.buttons[0].icon = 'Save';
-						fd.toolbar.buttons[0].text = "Save";
-						
+					fd.toolbar.buttons[0].style = "display: none;";
+					// fd.toolbar.buttons[0].icon = 'Save';
+					// fd.toolbar.buttons[0].text = "Save";
+
+					// fd.toolbar.buttons.push({
+					// 	icon: 'Save',
+					// 	class: 'btn-outline-primary',
+					// 	text: 'Save',
+					// 	click: function() {
+					// 		fd.field('Status').value = 'Pending';
+					// 		AttachFiles();
+					// 		fd.save();
+					// 	}
+					// }); 
+					
+					fd.toolbar.buttons.push({
+						icon: 'DocumentApproval',
+						class: 'btn-outline-primary',
+						text: 'Authorized',
+						click: function() {
+							
+							$(fd.field('Status').$parent.$el).show();
+							fd.field('Status').value = 'Authorized';
+							$(fd.field('Status').$parent.$el).hide();
+
+							if(formType == 'Edit'){
+								$(fd.field('Reviewed').$parent.$el).show();
+								fd.field('Reviewed').value = false;
+								$(fd.field('Reviewed').$parent.$el).hide();
+							}
+
+							AttachFiles();
+							fd.save();
+							//setTimeout(function(){ fd.save(); }, 300);
+						}
+					});					
+
+					if(formType == 'Edit')
+					{
 						fd.toolbar.buttons.push({
 							icon: 'DocumentApproval',
 							class: 'btn-outline-primary',
-							text: 'Authorized',
+							text: 'Unauthorized',
 							click: function() {
-								fd.field('Status').value = 'Authorized';
+								$(fd.field('Status').$parent.$el).show();
+								fd.field('Status').value = 'Unauthorized';
+								$(fd.field('Status').$parent.$el).hide();
+
+								$(fd.field('Reviewed').$parent.$el).show();
+								fd.field('Reviewed').value = false;
+								$(fd.field('Reviewed').$parent.$el).hide();
+
 								AttachFiles();
 								fd.save();
 								//setTimeout(function(){ fd.save(); }, 300);
 							}
-						});                        
-						if(formType == 'Edit')
-						{
-							fd.toolbar.buttons.push({
-								icon: 'DocumentApproval',
-								class: 'btn-outline-primary',
-								text: 'Unauthorized',
-								click: function() {
-									fd.field('Status').value = 'Unauthorized';
-									AttachFiles();
-									fd.save();
-									//setTimeout(function(){ fd.save(); }, 300);
-								}
-							});
-						}	
-				    }
-				}				
+						});
+					}	
+				}								
 			}
 				//alert("IsPMUser = " + IsPMUser);
 		});	
-		
-		if(group === "Trade" && formType === 'Edit')
+		 
+		//IsPMUser === "Trade" && 
+		if(formType === 'Edit'){
+			fd.field('Country').disabled = true;	   
+			fd.field('Title').disabled = true;
+			fd.field('Description').disabled = true;
+			$(fd.field('Status').$parent.$el).show();
+			fd.field('Status').disabled = true;
+
+			SetAttachmentToReadOnly();
+		}
+		else if(IsPMUser === "Trade" && formType === 'New')
 		{
-			fd.toolbar.buttons.push({
-				icon: 'Accept',
-				class: 'btn-outline-primary',
-				text: 'Submit',
-				click: function() {					
-					fd.save();
-					//setTimeout(function(){ fd.save(); }, 300);
-				}
-			});
+			$(fd.field('Status').$parent.$el).show();
+			fd.field('Status').value = 'Pending';
+			$(fd.field('Status').$parent.$el).hide();
 		}
     }
 	catch(e){alert(e);}
@@ -3069,32 +3116,37 @@ async function DCR_editForm(formType){
     var Status = fd.field('Status').value;
 	var Reviewed = fd.field('Reviewed').value;   
 
+	$(fd.field('Title').$parent.$el).show();
 	$(fd.field('Status').$parent.$el).hide();
 	$(fd.field('Reviewed').$parent.$el).hide();
+	$(fd.field('CodeType').$parent.$el).hide();
+	$(fd.field('DropDownCC').$parent.$el).hide();
+	$(fd.field('ApprovalDate').$parent.$el).hide();
+	$(fd.field('ApprovedBy').$parent.$el).hide();
+
+	fd.field('Title').title = 'Title';
 
     //fd.field('IsCodeAvailable').$on('change',CodeAvailable);	
 	
 	if(Status == 'Pending' || Status == '')
-	{ 
-		fd.toolbar.buttons[0].style = "display: none;";
-	    var PMUser = await DCR_IsUserInGroup(formType, 'PM');		
-		if(PMUser !== "PM")	
-			PMUser = await DCR_IsUserInGroup(formType, 'Area');
-		if(PMUser !== "Area")	
-		    await DCR_IsUserInGroup(formType, 'Trade');
+	{ 		
+		fd.toolbar.buttons[0].style = "display: none;";
+	    await DCR_IsUserInGroup(formType);
 
 	    $(fd.field('ApprovalDate').$parent.$el).hide();
 	    $(fd.field('ApprovedBy').$parent.$el).hide();	   
     }
     else
     {
-        fd.field('Country').disabled = true;
-	    fd.field('CodeType').disabled = true;
-	    fd.field('DropDownCC').disabled = true;
+		fd.toolbar.buttons[0].style = "display: none;";
+		
+        fd.field('Country').disabled = true;	   
 	    fd.field('Title').disabled = true;
 	    fd.field('Description').disabled = true;
-	    fd.field('ApprovalDate').disabled = true;
-	    fd.field('ApprovedBy').disabled = true;
+		$(fd.field('Status').$parent.$el).show();
+		fd.field('Status').disabled = true;
+
+		SetAttachmentToReadOnly();
     }
 }
 
@@ -3104,7 +3156,7 @@ function edit_beforeSaveDCR(){
 		
 		if(Status == "Valid" || Status == "Invalid")
 		{
-		  var date = new Date();
+		  var date = new Date();
 	      var todayDate = String(date.getDate()).padStart(2, '0') + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + date.getFullYear();
 		  fd.field('ApprovalDate').value = todayDate;
 		  fd.field('ApprovedBy').value = _spPageContextInfo.userDisplayName;
@@ -3238,3 +3290,89 @@ function fixTextArea(){
 	});
 }
 //#endregion
+
+var loadScripts = async function(){
+	const libraryUrls = [
+		_layout + '/plumsail/js/commonUtils.js',
+		//_layout + '/controls/preloader/jquery.dim-background.min.js',
+		_layout + "/plumsail/js/customMessages.js",
+		_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
+		//_layout + '/plumsail/js/preloader.js',
+		_layout + '/plumsail/js/utilities.js'
+	];
+  
+	const cacheBusting = `?v=${Date.now()}`;
+	  libraryUrls.map(url => { 
+		  $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
+		});
+		
+	const stylesheetUrls = [
+		_layout + '/controls/tooltipster/tooltipster.css',
+		_layout + '/plumsail/css/CssStyle.css',
+		_layout + '/plumsail/css/CssStyleRACI.css'
+	];
+  
+	stylesheetUrls.map((item) => {
+	  var stylesheet = item;
+	  $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
+	});
+}
+
+var onDDSRender = async function (formType){
+	if(formType == 'New' || formType == 'Edit'){
+        fd.toolbar.buttons[0].icon = 'Accept';
+        fd.toolbar.buttons[0].text = "Submit";
+        fd.toolbar.buttons[1].icon = 'Cancel';
+        fd.toolbar.buttons[1].text = "Cancel";
+
+		let query = `Title ne null and IsDeliverableModule eq '1'`;
+	
+		let result = await pnp.sp.web.lists.getByTitle('Trades').items.select('IsDeliverableModule').get()
+		.catch(err =>{
+			query = 'Title ne null'
+		});
+
+		fd.field('Trades').ready().then(() => {
+			fd.field('Trades').filter = query
+			fd.field('Trades').orderBy = { field: 'Title', desc: false };
+			fd.field('Trades').refresh();
+		});
+	}
+    
+	if(formType == 'Edit'){
+		const Status = await GetColumnValueByID('Status');
+		fd.field('Stat').value = Status;
+		fd.field('Stat').disabled = true;
+
+		const Reference = await GetColumnValueByID('Reference');
+		fd.field('Ref').value = Reference;
+		fd.field('Ref').disabled = true;
+		
+		if(Status !== "Reviewed"){}
+		else
+		{
+			fd.toolbar.buttons[0].style = "display: none;";
+			fd.field('Trades').disabled = true;
+			fd.field('DueDate').disabled = true;
+			fd.field('Comment').disabled = true;
+		}
+    }    
+    if(formType == 'Display'){     
+        fd.toolbar.buttons[1].icon = 'Cancel';
+        fd.toolbar.buttons[1].text = "Cancel"; 
+
+		const Status = await GetColumnValueByID('Status');
+		fd.field('Stat').value = Status;
+		fd.field('Stat').disabled = true;
+
+		const Reference = await GetColumnValueByID('Reference');
+		fd.field('Ref').value = Reference;
+		fd.field('Ref').disabled = true;
+    }
+}
+
+var PreloaderScripts = async function(){
+    await _spComponentLoader.loadScript(_layout + '/controls/preloader/jquery.dim-background.min.js');
+    await _spComponentLoader.loadScript(_layout + '/plumsail/js/preloader.js');
+    preloader();
+}

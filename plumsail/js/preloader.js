@@ -1,10 +1,12 @@
 var preTimeOut;
 var iscurtainRemoved = false, isloaderRemoved = false;
+var mainDimmerElement = 'pageLayout_5a558a10,pageLayoutDesktop_5a558a10';
+
 //var preloader_btn = async function(){
-var  preloader_btn = async function(isCC){
+var  preloader_btn = async function(isCC, ignoreImage){
 	try {
 		var targetControl = 'div.ControlZone';
-		var mainDimmerElement = 'pageLayout_5a558a10,pageLayoutDesktop_5a558a10'; //'div.ControlZone-control'//'div.fd-toolbar-primary-commands';
+		 //'div.ControlZone-control'//'div.fd-toolbar-primary-commands';
 		
 		var webUrl = '';
 		var darknessFloat = 0.8;
@@ -27,14 +29,16 @@ var  preloader_btn = async function(isCC){
 					darkness: 0.7
 				}, function () {});
 
-				$("<img id='loader' src='" + ImageUrl + "' />")
-					.css({
-						"position": "absolute",
-						"top": top,
-						"left": left,
-						"width": "100px",
-						"height": "100px"
-					}).insertAfter(targetControl);
+				if(!ignoreImage){
+					$("<img id='loader' src='" + ImageUrl + "' />")
+						.css({
+							"position": "absolute",
+							"top": top,
+							"left": left,
+							"width": "100px",
+							"height": "100px"
+						}).insertAfter(targetControl);
+				}
 			//$('#loader').css("visibility", "visible").dimBackground({ darkness: darknessFloat });
 	}
    catch(err) { console.log(err.message); }
@@ -73,27 +77,35 @@ function preloader(isDefaultClose, isCC){
 }
 
 //var Remove_Pre = async function(){
-function Remove_Pre(){
-
-	if(!iscurtainRemoved){
-		console.log('Removing curtain...');
-		if($('div.dimbackground-curtain').length > 0){
-          $('div.dimbackground-curtain').remove();
-		  iscurtainRemoved = true;
-		}
+function Remove_Pre(ignoreImage){
+ if(ignoreImage){
+	let control = $('div.dimbackground-curtain');
+	if(control.length > 0){
+	  control.remove();
+	  //clearInterval(preTimeOut);
 	}
-
-	if(!isloaderRemoved){
-		console.log('Removing loader...');
-		if($('#loader').length > 0){
-          $('#loader').remove();
-		  isloaderRemoved = true;
+ }
+ else{
+		if(!iscurtainRemoved){
+			console.log('Removing curtain...');
+			if($('div.dimbackground-curtain').length > 0){
+			$('div.dimbackground-curtain').remove();
+			iscurtainRemoved = true;
+			}
 		}
-	}
-	console.log('im here');
-	if(iscurtainRemoved && isloaderRemoved){
-		console.log('Both curtain and loader removed');
-		clearInterval(preTimeOut);
+
+		if(!isloaderRemoved){
+			console.log('Removing loader...');
+			if($('#loader').length > 0){
+			$('#loader').remove();
+			isloaderRemoved = true;
+			}
+		}
+		console.log('im here');
+		if(iscurtainRemoved && isloaderRemoved){
+			console.log('Both curtain and loader removed');
+			clearInterval(preTimeOut);
+		}
 	}
       
 }

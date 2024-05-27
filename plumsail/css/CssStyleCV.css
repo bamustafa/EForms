@@ -1,0 +1,264 @@
+ /* #region Hide Navigator */
+  .SPCanvas, .commandBarWrapper{
+    padding-left: 24px;
+  }
+
+  .ms-FocusZone, .ms-searchux-searchbox{
+      display: none;
+  } 
+ 
+  /* */
+ .pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1 { 
+  margin-left: -200px;
+  }  
+  /* #endregion */
+
+.ControlZone  {
+ box-sizing: border-box;
+ background: url('../css/Images/ImgCV.jpg') no-repeat center center fixed;
+ -webkit-background-size: auto;
+ -moz-background-size: cover;
+ -o-background-size: cover;
+ background-size: cover;
+}
+
+.tabset, .tabs-top, .fd-grid, .container-fluid {
+    background: rgba(233, 233, 233, 0.5) !important;
+    backdrop-filter: blur(0px) !important;
+    border-radius: 4px !important;
+	/*height: 700px;*/
+}
+
+.fd-grid .container-fluid .CanvasZone {
+   width: 100% !important;
+ }
+
+ b[data-v-386d995a]{
+  color:red !important;
+ }
+
+ p[data-v-386d995a]{
+  padding-top: 5px;
+ }
+
+ .alert-heading{
+  color: #ce830e !important;
+ }
+
+ .homePageContent_39ae25bf, .SPCanvas-canvas, .CanvasZone{
+    max-width: 98% !important; 
+	margin-left: 71px;
+ }
+
+ .fd-form-container .container-fluid{
+	float: left !important; 
+ } 
+
+ .FormTitle{
+  color: #4e778f;
+  font-weight: bold;
+  font-size: 25px;
+  text-align: center;
+  padding-bottom: 15px !important;
+	 /* position: relative; left: 42%;  520px */
+ }
+ 
+ .fd-form-container .container-fluid{
+	float: left !important; 
+ }
+
+.fd-form .row > .fd-field-title {
+  font-weight: bold;
+  color: #4e778f ;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+  /* overflow: hidden; */
+  /* width: 190px; */
+}
+
+.fd-field-title{
+  font-weight: bold;
+  color: #4e778f;
+}
+
+.k-multiselect-wrap li.k-button {
+  float: left;
+  border-style: none;
+  border-radius: 4px !important;
+}
+
+input, span.k-picker-wrap.k-state-default, span.k-dropdown-wrap.k-state-default {
+  border-radius: 4px !important;
+}
+
+.k-numeric-wrap.k-state-default,
+input.k-formatted-value,
+textarea.form-control.fd-textarea,
+.k-state-default input,
+span.k-picker-wrap.k-state-default,
+.fd-form .k-dropdown-wrap .k-input,
+span.k-dropdown-wrap.k-state-default,
+html .k-upload, 
+.k-datepicker .k-picker-wrap,
+.k-timepicker .k-picker-wrap,
+.k-datetimepicker .k-picker-wrap,
+.k-multiselect-wrap {
+  border-radius: 4px !important;
+}
+
+.fd-form .col {
+  flex-basis: 0;
+  flex-grow: 1;
+  max-width: 100%;
+  border-top-right-radius: 6px;
+  margin-bottom: 3px;
+  border-bottom-right-radius: 6px;
+}
+
+.fd-form .form-group {
+  margin-bottom: 0px;
+}
+
+.fd-form .nav {
+  display: flex;
+  flex-wrap: wrap;
+  padding-left: 0;
+  margin-bottom: 0;
+  list-style: none;
+  border-top-right-radius: 6px;
+  border-top-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.fd-form .nav-tabs .nav-item {
+  margin-bottom: -1px;
+  font-weight: bold;
+  font-size: 95%;
+  font-family: Verdana;
+}
+
+.fd-form .btn-outline-primary {
+  color: #444;
+  background-color: #fdfdfd;
+  border: 1px solid #ababab;
+  padding: 5px 30px;
+  display: inline-block;
+  margin: 2px 2px;
+  border-radius: 6px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.95em;
+  font-weight: bold;
+  width: max-content;
+}
+
+.fd-form .btn-primary {
+  color: #444;
+  background-color: #fdfdfd;
+  border: 1px solid #ababab;
+  padding: 5px 30px;
+  display: inline-block;
+  margin: 2px 2px;
+  border-radius: 6px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.95em;
+  font-weight: bold;
+  width: max-content;
+}
+
+.fd-toolbar-primary-commands > button[data-v-6a812612] {
+  margin-right: 5px;
+}
+
+.fd-form {
+  font-size: 0.95em;
+  box-sizing: border-box;
+  background-color: transparent !important;
+  font-family: Arial, Helvetica, sans-serif;
+  /* overflow: hidden !important; Removed Recently due to SPUser group not works fine
+  padding-right: ''; */
+}
+
+.CanvasZone:not(.CanvasZone--fullWidth) .ControlZone {
+  padding: 0px;
+}
+
+.CanvasSection--read .ControlZone {
+  margin-top: 0px;
+}
+
+.center {
+  position: absolute;
+  top: 400px;
+  left: 900px;
+  width: 100px;
+  height: 100px;
+  visibility: hidden;
+}
+
+.fd-form p{
+  margin-bottom: 0px !important;
+}
+
+.ms-compositeHeader-topWrapper{
+  height: 0px !important;
+}
+
+.ms-compositeHeader{
+  padding-bottom: 0px !important;
+}
+
+.fd-form.k-animation-container {
+  background-image: none !important;
+}
+
+.fd-form h1{
+  font-size: min(6.5vw, 2.34375rem) !important;
+  text-align:center !important;
+}
+
+.fd-form h4 {
+  display: flex !important;
+  flex-direction: row !important;
+}
+
+.fd-form h4:before, .fd-form h4:after{
+  content: '';
+  flex: 1 1;
+  border-bottom: 1px solid;
+  margin: auto;
+}
+
+.fd-grid, .container-fluid{
+  padding-left: 10px !important;
+}
+
+.col, .d-md-block{
+/*padding: 5px 10px 0px 10px !important;*/
+}
+
+.CanvasComponent{
+  padding-top: 0.7%;
+  padding-left: 0.5%;
+}
+
+.k-upload .k-dropzone .k-dropzone-hint {
+  color: #868e96;
+  text-align: left;
+  padding-left: 10px;
+}
+
+.custom-tooltip {
+  color: #fff;
+  border-radius: 4px;
+  top: -30px; /* Adjust this value to position the tooltip */
+  left: 0;
+}
+
+.imageValidator {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 15.5%;
+  left: 80%;
+}

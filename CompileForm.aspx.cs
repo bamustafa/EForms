@@ -477,8 +477,23 @@ public partial class CompileForm : System.Web.UI.Page
 
             if (!IsPostBack)
             {
-                #region IS ALLOWED TO CLOSE THE TASK
-                DateClosed = (RIWItem["SentToContractorDate"] != null) ? (DateTime)RIWItem["SentToContractorDate"] : DateTime.Now;
+                #region IS ALLOWED TO CLOSE THE TASK 
+
+                if (RIWItem == null)
+                {
+                    if (LeadItem != null)
+                    {
+                        MessageAndRedirect("This " + LeadItem["Reference"].ToString() + " has issues. Please Contact PWS Administrator.", SPContext.Current.Web.Url + redirectURL);
+                        SendErrorEmail(objweb, "Project Link: " + objweb.Url + "<br/>Page Load Error: <br/><br/> User " + SPContext.Current.Web.CurrentUser.Name + "<br/><br/> RIW Ref: " + LeadItem["Reference"].ToString(), ErrorSubject);
+                    }
+                    else
+                        MessageAndRedirect("This item has issues. Please Contact PWS Administrator.", SPContext.Current.Web.Url + redirectURL);
+
+                    return;
+                }
+                else
+                    DateClosed = (RIWItem["SentToContractorDate"] != null) ? (DateTime)RIWItem["SentToContractorDate"] : DateTime.Now;
+
                 if (LeadItem != null)
                 {
                     SPFieldUserValueCollection AssignedToLead = (LeadItem["AssignedTo"] != null) ? new SPFieldUserValueCollection(objweb, LeadItem["AssignedTo"].ToString()) : null;
@@ -761,7 +776,7 @@ public partial class CompileForm : System.Web.UI.Page
             DateTime Start1 = DateTime.Now;
             if (int.TryParse(RIWQueryStrID, out RIWItemID))
             {
-                RIWItemID = int.Parse(RIWQueryStrID);
+                //RIWItemID = int.Parse(RIWQueryStrID);
 
                 SPQuery _query = new SPQuery();
                 _query.Query = "<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>" + RIWItemID + "</Value></Eq></Where>";
@@ -796,10 +811,8 @@ public partial class CompileForm : System.Web.UI.Page
             if (int.TryParse(LeadQueryStrID, out LeadItemID))
             {
                 {
-                    LeadItemID = int.Parse(LeadQueryStrID);
-                    LeadItem = objlistLeadTasks.GetItemById(LeadItemID);
-
-                    //if (!IsPostBack)
+                    //LeadItemID = int.Parse(LeadQueryStrID);
+                    LeadItem = objlistLeadTasks.GetItemById(LeadItemID);               
 
                     StrFullRef = (LeadItem["Reference"] != null) ? LeadItem["Reference"].ToString() : "";
                     Discipline = (LeadItem["Trade"] != null) ? LeadItem["Trade"].ToString() : "";
@@ -3666,8 +3679,7 @@ public partial class CompileForm : System.Web.UI.Page
                                 }
                                 #endregion
                             }
-                            else
-                                if (field.Type == SPFieldType.URL)
+                            else if (field.Type == SPFieldType.URL)
                             {
                                 #region SPFieldType.URL
                                 if (RLODitem[ColumnName] != null)
@@ -3699,8 +3711,7 @@ public partial class CompileForm : System.Web.UI.Page
                                 }
                                 #endregion
                             }
-                            else
-                              if (field.Type == SPFieldType.DateTime)
+                            else if (field.Type == SPFieldType.DateTime)
                             {
                                 #region SPFieldType.DateTime
                                
@@ -3719,8 +3730,7 @@ public partial class CompileForm : System.Web.UI.Page
                                 }
                                 #endregion
                             }
-                            else
-                             if (field.Type == SPFieldType.Lookup)
+                            else if (field.Type == SPFieldType.Lookup)
                             {
                                 #region SPFieldType.Lookup
                                 value = "";
@@ -3756,8 +3766,7 @@ public partial class CompileForm : System.Web.UI.Page
                                 }
                                 #endregion
                             }
-                            else
-                             if (field.Type == SPFieldType.User)
+                            else if (field.Type == SPFieldType.User)
                             {
                                 #region SPFieldType.User
                                 SPFieldUserValueCollection users = (RLODitem[ColumnName] != null) ? new SPFieldUserValueCollection(web, RLODitem[ColumnName].ToString()) : null;
@@ -3789,8 +3798,7 @@ public partial class CompileForm : System.Web.UI.Page
 
                                 #endregion
                             }
-                            else
-                             if (field.Type == SPFieldType.MultiChoice)
+                            else if (field.Type == SPFieldType.MultiChoice)
                             {
                                 #region SPFieldType.MultiChoice
                                 if (RLODitem[ColumnName] != null)
@@ -3816,8 +3824,7 @@ public partial class CompileForm : System.Web.UI.Page
                                 }
                                 #endregion
                             }
-                            else
-                              if (field.Type == SPFieldType.Attachments)
+                            else if (field.Type == SPFieldType.Attachments)
                             {
                                 #region SPFieldType.Attachments
                                 for (int i = 0; i < RLODitem.Attachments.Count; i++)
@@ -3829,6 +3836,26 @@ public partial class CompileForm : System.Web.UI.Page
                                 }
                                 if (Key == "Subject")
                                     EmailSubject = EmailSubject.Replace(ColumnInBrackets, value);
+                                else
+                                {
+                                    if (isMulti)
+                                        ConcatEditedChunk();
+                                    else
+                                        EmailBody = EmailBody.Replace(ColumnInBrackets, value);
+                                }
+                                #endregion
+                            }
+                            else if (field.Type == SPFieldType.Calculated)
+                            {
+                                #region SPFieldType.Calculated
+                                value = (RLODitem[ColumnName] != null) ? RLODitem[ColumnName].ToString() : "";
+                                if (value.Contains('#'))
+                                    value = value.Split('#')[1].ToString();
+
+                                if (Key == "Subject")
+                                {
+                                    EmailSubject = EmailSubject.Replace(ColumnInBrackets, value);
+                                }
                                 else
                                 {
                                     if (isMulti)

@@ -2,15 +2,14 @@ var _layout = "/_layouts/15/PCW/General/EForms";
 
 var _modulename = "", _formType = "";
 
-var script = document.createElement("script"); // create a script DOM node
-script.src = _layout + "/plumsail/js/config/configFileRoutingDeliverablesTasks.js"; // set its src to the provided URL
-document.head.appendChild(script);
+// var script = document.createElement("script"); // create a script DOM node
+// script.src = _layout + "/plumsail/js/config/configFileRoutingDeliverablesTasks.js"; // set its src to the provided URL
+// document.head.appendChild(script);
 
 
 var onRender = async function (moduleName, formType){
 
-	localStorage.clear();
-
+	await loadScripts();
     _modulename = moduleName;
     _formType = formType;
 
@@ -151,4 +150,29 @@ function removePadding(){
 	var mainContent = $('#spPageChromeAppDiv div').next();
 	var targetElement = mainContent[2];
 	targetElement.style.marginLeft = '-200px';
-  }
+}
+
+var loadScripts = async function(){
+	const libraryUrls = [
+		_layout + '/controls/preloader/jquery.dim-background.min.js',
+		_layout + "/plumsail/js/customMessages.js",
+		_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
+		_layout + '/plumsail/js/preloader.js',
+		_layout + '/plumsail/js/utilities.js'
+	  ];
+  
+	const cacheBusting = `?v=${Date.now()}`;
+	  libraryUrls.map(url => { 
+		  $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
+		});
+		
+	const stylesheetUrls = [
+		_layout + '/controls/tooltipster/tooltipster.css',
+		_layout + '/plumsail/css/CssStyle.css'
+		];
+  
+	stylesheetUrls.map((item) => {
+	  var stylesheet = item;
+	  $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
+	});
+}
