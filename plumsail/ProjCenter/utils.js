@@ -488,7 +488,7 @@ function fixTableCols(dtName){
 }
 //#endregion
 
-//TabNames is an OBJECT ARRAY
+//#region TabNames is an OBJECT ARRAY
 const enable_Disable_Tabs = async function(TabNames, isDisabled){
 	TabNames.map(tabName=>{
 	  let susIndex = getTabIndex(tabName.title, tabName.tooltip, isDisabled);
@@ -528,6 +528,7 @@ function getTabIndex(tabTitle, tabTooltip, isDisabled){
 	return index
 }
 //#endregion
+
 
 const getCurrentUserRole = async function (){
   let currentUser = await GetCurrentUser();

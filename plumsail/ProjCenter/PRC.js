@@ -348,10 +348,10 @@ var setMainRules = async function(){
   let categoryField = fd.field('Category')
   let category = categoryField.value !== undefined && categoryField.value !== null ? categoryField.value.LookupValue : '';
   if(category !== ''){
-    let isDisabled = false;
+    let isDisabled = true;
     if(category === 'Buildings'){
       _isBuilding = true;
-      isDisabled = true;
+      isDisabled = false;
     }
     await enable_Disable_Tabs(tabs, isDisabled);
     categoryField.disabled = true
