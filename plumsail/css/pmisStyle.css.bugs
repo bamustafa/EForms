@@ -1,0 +1,337 @@
+:root{
+  --darkgreen: #14987e94;
+  --lightgreen: #5dc7b2b0;
+  --lightgray: #b5b5b54d;
+  --white: white;
+  --bordercolor: #ffffff24;
+  --btnborder: #ababab;
+  --black: black;
+  --boxshadow: rgba(0, 0, 0, 0.1);
+  --sucat-color: #2c3e507a ;
+  --modernized-Title: #c9c2d1;
+  --modernized-Buttons: #c9c2d1;
+  --modernized-Buttons-Hover: #c9c2d180;
+}
+
+/* FOR MOBILE */
+@media (max-width: 768px){
+  /* FOR BILAL */
+  .ctlStyle{ width: 100% !important; }
+
+  .vsb-main{ width: 100% !important; }
+
+  /* FOR ALI */
+  .SPCanvas, .commandBarWrapper{ padding-left: 200px; }
+
+  .pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1 { margin-left: 0px; }
+
+  .fd-form .justify-content-end { justify-content: flex-start !important; /* Overrides to flex-start */ }  
+
+  .fd-form .row {  display: block; }
+
+  .moveup { margin-top: 0px !important; }
+  
+  .btn-primary, .btn-outline-primary { width: 100% !important; height: 100% !important; }
+
+  .fd-form-toolbar[data-v-68f8f33f]{ height: 50px; }
+
+  label{ float: none !important; }
+
+  .ms-siteHeader-siteName { text-align: center; }
+
+  .col-sm-2, .col-sm-4, .col-sm-6 { width: 100% !important } 
+}
+
+/* Start vanillaSelectBox */
+.vsb-main{
+  width: 40%;
+  box-shadow: 0 4px 14px var(--boxshadow);
+}
+
+.vsb-js-search-zone{
+  position: relative !important;
+  width: 100% !important;
+}
+/* end vanillaSelectBox */
+
+
+/* START CLASSIFICATION TABLE */
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Arial', sans-serif; 
+  box-shadow: 0 2px 10px var(--boxshadow);
+  background-color: #f9f9f98a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.modern-table th {
+  color: var(--black);
+  font-size: 12px;
+  font-weight: bold;
+  padding-left: 10px;   
+}
+.modern-table td {
+  border-bottom: 1px solid var(--bordercolor);
+  font-size: 14px;
+  background-color: #d6dcdd47;
+  color: var(--darkgreen);
+  font-weight: bold;
+  padding: .5rem 1rem;  
+}
+.modern-table tr:last-child td {
+  border-bottom: none;
+}
+.ctlStyle{
+  width: 40%;
+  height: 30px;
+  box-shadow: 0 4px 14px var(--boxshadow);
+  border: 0px solid var(--white);
+}
+.border{
+  border-radius: 4px !important;
+  box-shadow: 0 2px 4px var(--boxshadow);
+  padding-left: 8px !important;
+}
+/*For Toggle (used in Showw all Subcategories)*/
+.form-check.form-switch{
+  margin-left: -55px;
+}
+/* END CLASSIFICATION TABLE */
+
+
+/* START BACKGROUND INFO */
+.accordion-button { 
+  background-color: var(--sucat-color) !important;
+  color: var(--white) !important; 
+  font-weight: bold !important;
+  display: flow !important;
+}
+/* END BACKGROUND INFO */
+
+
+/* START DATATABLE */
+.fd-sp-datatable-wrapper{  border: 0px !important }
+
+.k-grid-header-wrap { background-color: var(--lightgray); }
+
+.fd-form .fd-sp-datatable-wrapper .fd-sp-datatable-toolbar { padding: 6px; }
+
+.fd-form .fd-sp-datatable-wrapper>.fd-sp-datatable {border: 1px solid var(--bordercolor) !important}
+/* END DATATABLE */
+
+
+
+/* START TABS */
+.fd-form .nav{
+  padding-left: 7px !important;
+}
+
+.fd-form .nav-tabs .nav-item {
+  margin-bottom: 5px;
+  width: 190px;
+  text-align: center;
+}
+
+.fd-form .nav-tabs .active.nav-link {
+  background-color: var(--modernized-Buttons); /* Modern teal color */
+  border-color: var(--darkgreen); /* Matching border color */
+  color: var(--white); /* White text for better contrast */
+  box-shadow: 0 2px 4px var(--boxshadow); /* Adding a subtle shadow for depth */
+
+  font-weight: bold;
+  font-size: 13px;
+  font-family: 'Arial';
+  border-top-right-radius: 6px;
+  border-top-left-radius: 6px;
+}
+
+.fd-form .nav-tabs .nav-link {  
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-color: var(--bordercolor);
+  background-color: #ffffff24;
+  color: var(--black);
+  border-radius: 2px;
+  box-shadow: 0 2px 4px var(--boxshadow);
+
+  font-size: 13px;
+  font-family: 'Arial';
+  border-top-right-radius: 6px;
+}
+
+.fd-form .nav-tabs .nav-link:hover {
+  background-color: var(--modernized-Buttons-Hover);
+  color: var(--white);
+  border-color: var(--bordercolor);
+
+  font-size: 13px;
+  font-family: 'Arial';
+  border-top-right-radius: 6px;
+}
+
+.tabset, .tabs-top, .fd-grid, .container-fluid {
+  /* background: #ce0b0b4a !important; */
+  /* background: linear-gradient(to right, #f0e8f6, #f4e9f4, #f4e9f4); */
+  background: linear-gradient(to right, #f0e8f6, #f2e9f5, #f4e9f4);
+  /* backdrop-filter: blur(0.5px) !important; 
+  border-radius: 4px !important;*/
+}
+
+.fd-form .tabset { margin-bottom: 0px !important; }
+/*END TABS */
+
+
+/* START BUTTONS */
+.fd-form-toolbar{ margin-top: 20px !important; }
+
+.btn-primary, .btn-outline-primary {
+  background-color: var(--white) !important; 
+  color: var(--black) !important;
+  border: 1px solid var(--btnborder) !important;
+  /* padding: 10px 20px !important; */
+  cursor: pointer !important;
+  width: 150px !important;
+  height: 100% !important;
+
+  margin: 2px 2px !important;
+  border-radius: 6px !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+}
+
+.btn-primary:hover, .btn-outline-primary:hover {
+  background-color: var(--darkgreen) !important;
+  color: var(--white) !important;
+}
+
+.lbldummyStyle{
+  background-color: var(--sucat-color) !important;
+  color: var(--white) !important;
+}
+/* END BUTTONS */
+
+
+/* START GENERAL */
+.fd-form { background-color: transparent !important; }
+
+.fd-sp-field-text input{ box-shadow: 0 2px 4px var(--boxshadow); }
+
+.fd-form-container .container-fluid{ padding: 15px 12px 0px 12px; }
+
+.fd-form a:not(.nav-link):not(.disabled) { color: blue !important; font-weight: 500; }
+
+
+/* START ROOT HEADER (LOGO WITH TITLE) */
+.ms-compositeHeader{ padding-bottom: 0px !important; }
+
+.ms-compositeHeader-topWrapper{ height: 5px !important; }
+
+.ms-compositeHeader-mainLayout { height: 45px; }
+
+.title-75 { font-size: 22px; }
+ /* End ROOT HEADER */
+
+.col, .d-md-block{ padding: 10px 10px 0 10px !important; }
+
+.CanvasComponent{ padding: 0.7% 0 0 0.5% !important; }
+
+.ControlZone  {
+  box-sizing: border-box;
+  /* background: url('../css/Images/VanSchendel-Construction.jpg') no-repeat center center fixed;    */
+  /* background-image: linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%); */
+  /* background: linear-gradient(to right, #ff7e5f, #feb47b, #ff7e5f, #ff6a00, #ff0000, #ff512f); */
+  -webkit-background-size: auto;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+} 
+
+.fd-title-wrap{
+  font-weight: bold;
+  font-size: 13px !important;
+  font-family: Arial;
+  color:var(--black);
+}
+
+.fd-form .fd-field-control:not(.col-sm)>.col-form-label {
+  font-size: 13px;
+  color: var(--black);
+}
+
+.fd-form .form-check .form-check-input{
+  margin-left: 19px !important;
+}
+
+ /* HEADER TITLE  var(--darkgreen); */
+.dumTitle{  
+  padding: 4px;
+  text-align: center;
+  font-size: 20px;
+  font-family: 'Roboto', 'Arial', 'Helvetica', sans-serif;
+  font-weight: 700;
+  color: black; /* White */
+  background-color: var(--modernized-Title); /* Dark Blue */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
+}
+
+.FormTitle{
+  color: #4e778f;
+  font-weight: bold;
+  font-size: 25px;
+  text-align: center;
+  padding-bottom: 15px !important;
+	 /* position: relative; left: 42%;  520px */
+ }
+
+ /* ATTACHMENT FIELD */
+.k-upload .k-dropzone .k-dropzone-hint { text-align: left; padding-left: 10px; }
+
+.k-numeric-wrap.k-state-default,
+input.k-formatted-value,
+textarea.form-control.fd-textarea,
+.k-state-default input,
+span.k-picker-wrap.k-state-default,
+.fd-form .k-dropdown-wrap .k-input,
+span.k-dropdown-wrap.k-state-default,
+html .k-upload, 
+.k-datepicker .k-picker-wrap,
+.k-timepicker .k-picker-wrap,
+.k-datetimepicker .k-picker-wrap,
+.k-multiselect-wrap{
+  border-radius: 4px !important;
+  box-shadow: 0 2px 4px var(--boxshadow);
+}
+/* END GENERAL */
+
+
+ /* Start NAVIGATOR */
+.ms-FocusZone, .ms-searchux-searchbox{ display: none; }
+.pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1 { 
+  margin-left: -200px; 
+}
+ /* End NAVIGATOR */
+
+
+/* START ERROR MESSAGES */
+b[data-v-386d995a]{ color:red !important; }
+.alert-heading{ color: #ce830e !important; }
+/* END ERROR MESSAGES */
+
+
+/* START OTHERS */
+.moveup { margin-top: -22px; }
+
+/* Hide the default browser tooltip */
+.custom-tooltip {
+  color: var(--white);
+  border-radius: 4px;
+  top: -30px; /* Adjust this value to position the tooltip */
+  left: 0;
+}
+
+::placeholder { font-weight: 500; font-size: 13px; }
+/* END OTHERS */

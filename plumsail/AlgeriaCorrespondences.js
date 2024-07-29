@@ -13,8 +13,10 @@ var saveMesg = "Click 'Save' to store your progress and keep your work as a draf
 var submitMesg = "Click 'Submit' to finalize and send officially.";
 var cancelMesg = "Click 'Cancel' to discard changes and exit without saving.";
 
+const itemsToRemove = ['Status', 'State', 'Code', 'WorkflowStatus'];
+
 var onRender = async function (moduleName, formType, relativeLayoutPath){
-	//localStorage.clear();	
+	// localStorage.clear();	
 	try {	
 
 		if(relativeLayoutPath !== undefined && relativeLayoutPath !== null && relativeLayoutPath !== '')
@@ -22,6 +24,9 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 
 		await PreloaderScripts();		
 		await loadScripts();
+
+		clearLocalStorageItemsByField(itemsToRemove);
+
 		fixTextArea();
 
 		_modulename = moduleName;
@@ -625,13 +630,17 @@ async function updateCounter() {
 
             var _item = items[0];
 
-			if(_isManualEntry) 
-				value = parseInt(value) + 1;
-			else            
+			if(_isManualEntry){
+				if(parseInt(_item.Counter) > parseInt(value)){}
+				else					
+					value = parseInt(value) + 1;
+			}
+			else           
 				value = parseInt(_item.Counter) + 1;
-
-            _cols["Counter"] = value.toString();                   
-            await pnp.sp.web.lists.getByTitle(listname).items.getById(_item.Id).update(_cols); 
+            	
+			_cols["Counter"] = value.toString();                   
+			await pnp.sp.web.lists.getByTitle(listname).items.getById(_item.Id).update(_cols); 
+			
 		}                   
          
     });	
@@ -680,18 +689,19 @@ var loadScripts = async function(){
 		_layout + "/plumsail/js/customMessages.js",
 		_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
 		//_layout + '/plumsail/js/preloader.js',
-		_layout + '/plumsail/js/utilities.js'
+		_layout + '/plumsail/js/utilities.js',
+		_layout + '/plumsail/js/commonUtils.js'
 	];
   
-	const cacheBusting = `?v=${Date.now()}`;
+	const cacheBusting = '?t=' + new Date().getTime();
 	  libraryUrls.map(url => { 
 		  $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
 		});
 		
 	const stylesheetUrls = [
 		_layout + '/controls/tooltipster/tooltipster.css',
-		_layout + '/plumsail/css/CssStyle.css',
-		_layout + '/plumsail/css/CssStyleRACI.css'
+		_layout + '/plumsail/css/CssStyle.css'
+		// _layout + '/plumsail/css/CssStyleRACI.css'
 	];
   
 	stylesheetUrls.map((item) => {

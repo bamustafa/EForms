@@ -46,7 +46,8 @@ var onSPartRender = async function (formType){
 
 		fd.field('Status').disabled = true;
 		$(fd.field('AttachFiles').$parent.$el).hide();
-		$(fd.field('FullRefs').$parent.$el).hide();
+		try { $(fd.field('FullRefs').$parent.$el).hide(); }
+		catch{}
 
 		var isSiteAdmin = _spPageContextInfo.isSiteAdmin; 
 		var AssignedToUsers = fd.field('AssignedTo').value;	
@@ -101,9 +102,11 @@ var onSPartRender = async function (formType){
 							fd.field('AttachFiles').value = "U" + "," + NCountofATT + "," + OCountofATT;
 							$(fd.field('AttachFiles').$parent.$el).hide();
 							
+							try {
 							$(fd.field('FullRefs').$parent.$el).show();
 							fd.field('FullRefs').value = "|";
 							$(fd.field('FullRefs').$parent.$el).hide();
+							} catch{}
 							
 							fd.field('Status').disabled = false;
 							fd.field('Status').value = "Completed";

@@ -19,7 +19,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 			 {
 				 
 				 //debugger;
-				 //preloader(true);
+				 //preloader(true);			
 				 fd.validators.length = 0;
 				 fd.close();
 			 }
@@ -74,12 +74,14 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 			 }
 			 else if(text == "Preview Form")
 			 {
+				debugger;
 				 fd.validators.length = 0;
 				 const params = {
 					             ID: fd.itemId,
 								 ListId: fd.spFormCtx.ListAttributes.Id
 							    };
-				 const webUrl = `${window.location.protocol}/${window.location.host}${_spPageContextInfo.siteServerRelativeUrl}`;
+				 //const webUrl = `${window.location.protocol}/${window.location.host}${_spPageContextInfo.siteServerRelativeUrl}`;
+				 const webUrl = _spPageContextInfo.siteAbsoluteUrl;
 				 const Pageurl = `${webUrl + _layout}/PrintView.aspx?${$.param(params)}`;
                  window.open(Pageurl,"_blank"); 
 				 return;

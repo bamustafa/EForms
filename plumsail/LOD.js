@@ -411,7 +411,7 @@ async function performAfterChangeActions(callback) {
                                 let result = await isFilenameExist('', filename);
                                 if(result.isFound === true){
                                     if(result.rlodItem.Status === 'Cancelled')
-                                    mesg = 'filename is already Cancelled. Contact IT admin to re-open';
+                                      mesg = 'filename is already Cancelled. Contact IT admin to re-open';
                                 }
                                 return{
                                     rowIndex: rowIndex,
@@ -550,9 +550,10 @@ async function performAfterChangeActions(callback) {
                 else{
                     const mesgColumnIndex = _hot.propToCol('Mesg');
                     var mesgValue = _hot.getDataAtCell(result.rowIndex, mesgColumnIndex);
-                    if(mesgValue !== null && mesgValue !== '' && !mesgValue.includes(itemExistMesg) )
+                    if(mesgValue.includes(itemExistMesg)){}
+                    else if(mesgValue !== null && mesgValue !== '')
                       addError(result.rowIndex, '');
-                      else{
+                    else{
                         const statusColumnIndex = _hot.propToCol('Status');
                         var mesgValue = _hot.getDataAtCell(result.rowIndex, mesgColumnIndex);
                         if(mesgValue === null || mesgValue === '' || mesgValue.includes(itemExistMesg)){
@@ -663,7 +664,7 @@ const setButtonActions = async function(icon, text){
            if(text == "Submit"){
             detailedLoader(null, null, true);
             if(_isNew){
-              _lodRef = 'LOD-' + await getCounter(_web, "LOD");
+              _lodRef = 'LOD-' + await get_Counter(_web, "LOD");
               fd.field('Title').value = _lodRef;
               fd.field('Status').value = 'Submitted';
             }
@@ -986,7 +987,7 @@ function remove_preloader(){
          $('#loader').remove();
 }
 
-var getCounter = async function(_web, key){
+var get_Counter = async function(_web, key){
     var value = 1;
     var listname = 'Counter';
 

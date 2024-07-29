@@ -69,9 +69,10 @@ public partial class PrintView : System.Web.UI.Page
             Guid newGuid = new Guid(ListId);
             SPList list = web.Lists[newGuid];
             SPListItem item = list.GetItemById(int.Parse(ItemId));
+            string ListNameToLower = list.Title.ToLower();
 
             string targetColumns = "ReviewedURL";
-            if (item[targetColumns] != null && !string.IsNullOrEmpty(item[targetColumns].ToString()))
+            if (ListNameToLower != "correspondences" && item[targetColumns] != null && !string.IsNullOrEmpty(item[targetColumns].ToString()))
             {
                 SPFieldUrlValue FileUrl = new SPFieldUrlValue(item[targetColumns].ToString());
 
@@ -97,61 +98,72 @@ public partial class PrintView : System.Web.UI.Page
 
             else
             {
-                string StrFullRef = "";
-                if (item.ParentList.Fields.ContainsField("FullRef"))
-                    StrFullRef = (item["FullRef"] != null) ? item["FullRef"].ToString() : "";
-
-                string DeliverableType = (item["DeliverableType"] != null) ? item["DeliverableType"].ToString() : "";
-                string ListName = "";
+                string StrFullRef = "", DeliverableType = "";
                 SPListItem LeadItem = null;
 
-                ListName = "Lead Action";
-
-                if (DeliverableType == "MIR")
-                    FormName = "MIR_FORM";
-
-
-                else if (DeliverableType == "SI")
+                if (ListNameToLower == "correspondences")
                 {
-                    FormName = "SI_FORM";
-                    if (string.IsNullOrEmpty(StrFullRef))
-                    {
-                        string _Ref = (item["Reference"] != null) ? item["Reference"].ToString() : "";
-                        StrFullRef = _Ref;
-                    }
+                    FormName = "COR_FORM";
+                    StrFullRef = (item["RefNo"] != null) ? item["RefNo"].ToString() : "";
+                    DeliverableType = "COR";
                 }
-                else if (DeliverableType == "DPR")
-                {
-                    FormName = "DPR_FORM";
-                    if (string.IsNullOrEmpty(StrFullRef))
-                    {
-                        string _Ref = (item["Reference"] != null) ? item["Reference"].ToString() : "";
-                        StrFullRef = _Ref;
-                    }
-                }
-                else if (DeliverableType == "MAT")
-                    FormName = "MAT_FORM";
-
-
-                else if (DeliverableType == "SCR")
-                    FormName = "SCR_FORM";
 
                 else
-                {
-                    string BldgType = (item["InspType"] != null) ? item["InspType"].ToString().Split('#')[1] : "";
-                    if (BldgType == "Buildings")
-                        FormName = "RIW_BLDG";
-                    else FormName = "OTHER_RIW";
-                }
+                {                    
+                    if (item.ParentList.Fields.ContainsField("FullRef"))
+                        StrFullRef = (item["FullRef"] != null) ? item["FullRef"].ToString() : "";
 
-                if (DeliverableType != "SI" && DeliverableType != "DPR")
-                {
-                    SPList objlistLeadTasks = web.Lists[ListName];
-                    SPQuery _Leadquery = new SPQuery();
-                    _Leadquery.Query = "<Where><Eq><FieldRef Name='Reference' /><Value Type='Text'>" + StrFullRef + "</Value></Eq></Where>";
-                    SPListItemCollection LeadItems = objlistLeadTasks.GetItems(_Leadquery);
-                    if (LeadItems.Count == 1)
-                        LeadItem = LeadItems[0];
+                    DeliverableType = (item["DeliverableType"] != null) ? item["DeliverableType"].ToString() : "";
+                    string ListName = "";                    
+
+                    ListName = "Lead Action";
+
+                    if (DeliverableType == "MIR")
+                        FormName = "MIR_FORM";
+
+
+                    else if (DeliverableType == "SI")
+                    {
+                        FormName = "SI_FORM";
+                        if (string.IsNullOrEmpty(StrFullRef))
+                        {
+                            string _Ref = (item["Reference"] != null) ? item["Reference"].ToString() : "";
+                            StrFullRef = _Ref;
+                        }
+                    }
+                    else if (DeliverableType == "DPR")
+                    {
+                        FormName = "DPR_FORM";
+                        if (string.IsNullOrEmpty(StrFullRef))
+                        {
+                            string _Ref = (item["Reference"] != null) ? item["Reference"].ToString() : "";
+                            StrFullRef = _Ref;
+                        }
+                    }
+                    else if (DeliverableType == "MAT")
+                        FormName = "MAT_FORM";
+
+
+                    else if (DeliverableType == "SCR")
+                        FormName = "SCR_FORM";
+
+                    else
+                    {
+                        string BldgType = (item["InspType"] != null) ? item["InspType"].ToString().Split('#')[1] : "";
+                        if (BldgType == "Buildings")
+                            FormName = "RIW_BLDG";
+                        else FormName = "OTHER_RIW";
+                    }
+
+                    if (DeliverableType != "SI" && DeliverableType != "DPR")
+                    {
+                        SPList objlistLeadTasks = web.Lists[ListName];
+                        SPQuery _Leadquery = new SPQuery();
+                        _Leadquery.Query = "<Where><Eq><FieldRef Name='Reference' /><Value Type='Text'>" + StrFullRef + "</Value></Eq></Where>";
+                        SPListItemCollection LeadItems = objlistLeadTasks.GetItems(_Leadquery);
+                        if (LeadItems.Count == 1)
+                            LeadItem = LeadItems[0];
+                    }
                 }
 
                 GenericEmailTemplate(web, FormName, item, ref EmailBody, ref EmailSubject, LeadItem, DeliverableType);
@@ -160,13 +172,6 @@ public partial class PrintView : System.Web.UI.Page
                 #region PRINT PDF VERSION
                 byte[] CRSFrom_PDFByte = PDFConvert(Formlbl.Text);
                 string attachName = StrFullRef + ".pdf";
-                //if (item.Attachments.Count > 0)
-                //{
-                //    try { item.Attachments.DeleteNow(attachName); } catch { }
-                //}
-                //item.Attachments.Add(attachName, CRSFrom_PDFByte); //File.ReadAllBytes(strpath3)
-                //item.SystemUpdate(false);
-
                 Response.Clear();
                 Response.ContentType = "application/pdf";
                 Response.AddHeader("Content-Length", CRSFrom_PDFByte.Length.ToString());
@@ -176,6 +181,7 @@ public partial class PrintView : System.Web.UI.Page
                 Response.Flush();
                 Response.End();
                 #endregion
+                
             }
         }
         catch (ThreadAbortException) { }
@@ -275,7 +281,8 @@ public partial class PrintView : System.Web.UI.Page
         #endregion
 
         string Code = "";
-        if (DeliverableType == "DPR")
+        if (DeliverableType == "COR") { }
+        else if (DeliverableType == "DPR")
             Code = (Listitem["Status"] != null) ? Listitem["Status"].ToString() : "";
         else Code = (Listitem["Code"] != null) ? Listitem["Code"].ToString() : "";
         string WF_Status = "Open";

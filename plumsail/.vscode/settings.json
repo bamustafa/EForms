@@ -21,5 +21,6 @@
         "Submittals",
         "Submittedby",
         "valext"
-    ]
+    ],
+    "CodeGPT.apiKey": "CodeGPT Plus Beta"
 }

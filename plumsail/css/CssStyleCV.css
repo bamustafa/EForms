@@ -5,17 +5,29 @@
 
   .ms-FocusZone, .ms-searchux-searchbox{
       display: none;
-  } 
- 
-  /* */
- .pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1 { 
-  margin-left: -200px;
   }  
+  
+ .pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1 { 
+    margin-left: -220px;
+  } 
+
+  @media (max-width: 768px){
+    .pageContainer_e9e4af8d,
+    .container_e9e4af8d,
+    .pageContainer_5a558a10,
+    .pageContainer_972f0ed1 { 
+        margin-left: 0px;
+    }
+
+    .SPCanvas, .commandBarWrapper{
+      padding-left: 0px;
+    }
+  } 
   /* #endregion */
 
 .ControlZone  {
  box-sizing: border-box;
- background: url('../css/Images/ImgCV.jpg') no-repeat center center fixed;
+ background: linear-gradient(to right, rgb(218 237 216), rgb(187 229 218), rgb(158 214 224), rgb(150 182 235), rgb(175 169 240), rgb(175 168 240), rgb(168 165 239)); 
  -webkit-background-size: auto;
  -moz-background-size: cover;
  -o-background-size: cover;
@@ -23,8 +35,8 @@
 }
 
 .tabset, .tabs-top, .fd-grid, .container-fluid {
-    background: rgba(233, 233, 233, 0.5) !important;
-    backdrop-filter: blur(0px) !important;
+    background-color: rgb(255 255 255 / 32%) !important;
+    backdrop-filter: blur(6px) !important;
     border-radius: 4px !important;
 	/*height: 700px;*/
 }
@@ -47,7 +59,7 @@
 
  .homePageContent_39ae25bf, .SPCanvas-canvas, .CanvasZone{
     max-width: 98% !important; 
-	margin-left: 71px;
+	  margin-left: 71px;
  }
 
  .fd-form-container .container-fluid{
@@ -102,8 +114,9 @@ html .k-upload,
 .k-datepicker .k-picker-wrap,
 .k-timepicker .k-picker-wrap,
 .k-datetimepicker .k-picker-wrap,
-.k-multiselect-wrap {
+.k-multiselect-wrap{
   border-radius: 4px !important;
+  box-shadow: rgba(0, 0, 0, 0.1) 4px 8px 8px;
 }
 
 .fd-form .col {

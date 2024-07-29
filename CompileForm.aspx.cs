@@ -1382,9 +1382,10 @@ public partial class CompileForm : System.Web.UI.Page
     {
         try
         {
-            string from = GetParameter(objweb, "FromRFI");
-            string MailFromName = GetParameter(objweb, "FromRFIName");
-            string bcc = GetParameter(objweb, "AdminEmails");
+            string from = GetParameter(web, "FromRFI");
+            string MailFromName = GetParameter(web, "FromRFIName");
+            string bcc = GetParameter(web, "AdminEmails");
+            string isExternal = GetParameter(web, "isExternal");
 
             SmtpClient myClient = new SmtpClient(SmtpServer);
             myClient.UseDefaultCredentials = true;
@@ -1405,6 +1406,20 @@ public partial class CompileForm : System.Web.UI.Page
             msg.Subject = subject;
             msg.Body = "";
             msg.Body = body;
+
+            if (isExternal.ToLower() == "yes" || isExternal == "1")
+            {
+                if (ConfigurationManager.AppSettings["InternalHost"] != null && ConfigurationManager.AppSettings["ExternalHost"] != null)
+                {
+                    string InternalHost = "";
+                    string ExternalHost = "";
+
+                    InternalHost = ConfigurationManager.AppSettings["InternalHost"].ToString();
+                    ExternalHost = ConfigurationManager.AppSettings["ExternalHost"].ToString();
+
+                    body = body.Replace(InternalHost, ExternalHost);
+                }
+            }
 
             foreach (string s in attachement_path1)
             {
@@ -1436,6 +1451,7 @@ public partial class CompileForm : System.Web.UI.Page
             string from = GetParameter(web, "FromRFI");
             string MailFromName = GetParameter(web, "FromRFIName");
             string BCC = GetParameter(web, "AdminEmails");
+            string isExternal = GetParameter(web, "isExternal");
 
             SmtpClient myClient = new SmtpClient(SmtpServer);
             myClient.UseDefaultCredentials = true;
@@ -1464,6 +1480,20 @@ public partial class CompileForm : System.Web.UI.Page
             msg.IsBodyHtml = true;
             msg.BodyEncoding = Encoding.UTF8; //Encoding.Unicode;
                                               //    int retry = 0;
+
+            if (isExternal.ToLower() == "yes" || isExternal == "1")
+            {
+                if (ConfigurationManager.AppSettings["InternalHost"] != null && ConfigurationManager.AppSettings["ExternalHost"] != null)
+                {
+                    string InternalHost = "";
+                    string ExternalHost = "";
+
+                    InternalHost = ConfigurationManager.AppSettings["InternalHost"].ToString();
+                    ExternalHost = ConfigurationManager.AppSettings["ExternalHost"].ToString();
+
+                    body = body.Replace(InternalHost, ExternalHost);
+                }
+            }
 
             //doUpdate:
 
@@ -1504,6 +1534,7 @@ public partial class CompileForm : System.Web.UI.Page
             string from = GetParameter(web, "FromRFI");
             string MailFromName = GetParameter(web, "FromRFIName");
             string BCC = GetParameter(web, "AdminEmails");
+            string isExternal = GetParameter(web, "isExternal");
 
             SmtpClient myClient = new SmtpClient(SmtpServer);
             myClient.UseDefaultCredentials = true;
@@ -1548,6 +1579,20 @@ public partial class CompileForm : System.Web.UI.Page
                 string Fbody = HostValue + body;
 
                 body = Fbody;
+            }
+
+            if (isExternal.ToLower() == "yes" || isExternal == "1")
+            {
+                if (ConfigurationManager.AppSettings["InternalHost"] != null && ConfigurationManager.AppSettings["ExternalHost"] != null)
+                {
+                    string InternalHost = "";
+                    string ExternalHost = "";
+
+                    InternalHost = ConfigurationManager.AppSettings["InternalHost"].ToString();
+                    ExternalHost = ConfigurationManager.AppSettings["ExternalHost"].ToString();
+
+                    body = body.Replace(InternalHost, ExternalHost);
+                }
             }
 
             body += "<br/>" + "<p><span style='font-family: Verdana;font-size: 13px;color: Red;font-weight: bold;'>Please do not reply to this email as it is sent from an unattended mailbox.</span></p>";
@@ -2445,7 +2490,7 @@ public partial class CompileForm : System.Web.UI.Page
         {
             SPSecurity.RunWithElevatedPrivileges(delegate ()
             {
-                using (SPSite site = new SPSite(SPContext.Current.Site.ID))
+                using (SPSite site = new SPSite(SPContext.Current.Web.Site.ID)) //
                 { objweb = site.OpenWeb(); }
             });
 
@@ -2726,7 +2771,9 @@ public partial class CompileForm : System.Web.UI.Page
             objweb.AllowUnsafeUpdates = true;
             LeadItem.Update();// SystemUpdate(false);
 
-            HyperLinkLeadAttach.NavigateUrl = LeadItem.Attachments.UrlPrefix + attachName;
+            string attachmentUrl = SPContext.Current.Web.Url + "/" + LeadItem.ParentList.RootFolder.Url + "/Attachments/" + LeadItem.ID + "/" + attachName;
+
+            HyperLinkLeadAttach.NavigateUrl = attachmentUrl;//LeadItem.Attachments.UrlPrefix + attachName;
             HyperLinkLeadAttach.Text = attachName;// "Download Compiled RIW Document";
 
             embedpdfViewer.Visible = true;
@@ -4116,7 +4163,7 @@ public partial class CompileForm : System.Web.UI.Page
         {
             //SPSecurity.RunWithElevatedPrivileges(delegate ()
             //{
-            //    using (SPSite site = new SPSite(SPContext.Current.Site.ID))
+            //    using (SPSite site = new SPSite(SPContext.Current.Web))
             //    { web = site.OpenWeb(); }
             //});
 
@@ -4578,7 +4625,7 @@ public partial class CompileForm : System.Web.UI.Page
             {
                 SPWeb objweb = null;
                 byte[] FinalpdfFile = IRFileUpload.FileBytes;
-                using (SPSite site = new SPSite(SPContext.Current.Site.ID))
+                using (SPSite site = new SPSite(SPContext.Current.Web.Site.ID))
                 { objweb = site.OpenWeb(); }
 
                 objweb.AllowUnsafeUpdates = true;

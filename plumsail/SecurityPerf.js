@@ -8,8 +8,10 @@ var _isExist = false;
 
 var _status;
 
+const itemsToRemove = ['Status', 'State', 'Code', 'WorkflowStatus'];
+
 var onRender = async function (moduleName, formType, relativeLayoutPath){
-	//localStorage.clear();	
+	// localStorage.clear();	
 	try {	
 
 		if(relativeLayoutPath !== undefined && relativeLayoutPath !== null && relativeLayoutPath !== '')
@@ -17,6 +19,8 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 
 		await PreloaderScripts();		
 		await loadScripts();
+
+		clearLocalStorageItemsByField(itemsToRemove);
 
 		fixTextArea();
 
@@ -519,7 +523,7 @@ var loadScripts = async function(){
 		_layout + '/plumsail/js/commonUtils.js'
 	];
   
-	const cacheBusting = `?v=${Date.now()}`;
+	const cacheBusting = '?t=' + new Date().getTime();
 	  libraryUrls.map(url => { 
 		  $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
 		});

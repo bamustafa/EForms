@@ -154,22 +154,30 @@ var setFormHeaderTitle = async function(){
 		  moduleTitle  = ausHeaderTitle;
 		else if(_module === 'INS')
 		  moduleTitle  = insHeaderTitle;
+		else if(_module === 'PINT') //FOR PROJECT CENTER
+			moduleTitle  = pintHeaderTitle;
+		else if(_module === 'MTD') //FOR PROJECT CENTER
+			moduleTitle  = mtdHeaderTitle;
      }
 	 await addLegend('modulelblId', moduleTitle, 'moduleTitle', 'same');
 }
 
-function clearStoragedFields(fields){
+function clearStoragedFields(fields, execludeField){
 
 	for (const field in fields) {
 
-		var fieldproperties = fd.field(field);
+		if(execludeField !== undefined && field === execludeField) 
+			continue;
 
-		var fieldDefaultVal = fieldproperties._fieldCtx.schema.DefaultValue;
-		//var fieldType = fieldproperties._fieldCtx.schema.FieldType;
-	
-		if (fieldDefaultVal !== undefined && fieldDefaultVal !== null) {}	
-		else			  
-			fd.field(field).clear(); 
+		var fieldproperties = fd.field(field);
+		if(fieldproperties._fieldCtx.schema !== undefined){
+			var fieldDefaultVal = fieldproperties._fieldCtx.schema.DefaultValue;
+			//var fieldType = fieldproperties._fieldCtx.schema.FieldType;
+		
+			if (fieldDefaultVal !== undefined && fieldDefaultVal !== null) {}	
+			else			  
+				fd.field(field).clear(); 
+		}
 	}
 }
 
@@ -504,8 +512,8 @@ var getGlobalParameters = async function(){
 	 console.log(result);
 }
 
-var setButtonCustomToolTip = async function(_btnText, toolTipMessage){
-  
+var setButtonCustomToolTip = async function(_btnText, toolTipMessage, animationType){
+	animationType = animationType === undefined ? 'fade' : animationType
     var btnElement = $('span').filter(function(){ return $(this).text() == _btnText; }).prev();
 	if(btnElement.length === 0)
 	  btnElement = $(`button:contains('${_btnText}')`);
@@ -515,7 +523,7 @@ var setButtonCustomToolTip = async function(_btnText, toolTipMessage){
 		btnElement = btnElement[1].parentElement;
       else btnElement = btnElement[0].parentElement;
 	  
-      $(btnElement).attr('title', toolTipMessage);
+      $(btnElement).attr('title', toolTipMessage,);
 
 	  await _spComponentLoader.loadScript( _layout + '/controls/tooltipster/jquery.tooltipster.min.js').then(async () =>{
 		$(btnElement).tooltipster({
@@ -523,7 +531,7 @@ var setButtonCustomToolTip = async function(_btnText, toolTipMessage){
 			maxWidth: 350,
 			speed: 500,
 			interactive: true,
-			animation: 'slide', //fade, grow, swing, slide, fall
+			animation: animationType, //fade, grow, swing, slide, fall
 			trigger: 'hover'
 		  });
 	  });
@@ -674,7 +682,9 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 			if(spanFieldValue === 2)
 			getfilenameValue = filenameParts[position] + delimeter + filenameParts[position+1];
 			else if(spanFieldValue === 3)
-			getfilenameValue = filenameParts[position] + delimeter + filenameParts[position+1] + delimeter + filenameParts[position+2];
+			  getfilenameValue = filenameParts[position] + delimeter + filenameParts[position+1] + delimeter + filenameParts[position+2];
+			else if(spanFieldValue === 4)
+				getfilenameValue = filenameParts[position] + delimeter + filenameParts[position+1] + delimeter + filenameParts[position+2] + delimeter + filenameParts[position+3];
 			var isText = item.isText;
 			var dictArray = [];
 
@@ -902,10 +912,17 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 }
 //#endregion
 
-const _sendEmail = async function(ModuleName, emailName, query, ApprovalTradeCC, notificationName, rootFolder){
+const _sendEmail = async function(ModuleName, emailName, query, ApprovalTradeCC, notificationName, rootFolder, currUser){
 	let webUrl = _spPageContextInfo.siteAbsoluteUrl;
 	let siteUrl = new URL(webUrl).origin;
-    let CurrentUser = await GetCurrentUser();
+    let CurrentUser;
+	
+	debugger;
+	if(currUser !== undefined && currUser !== null && currUser !== '')
+		CurrentUser = currUser
+	else CurrentUser = await GetCurrentUser(); 
+	
+
     let serviceUrl = `${siteUrl}/AjaxService/DarPSUtils.asmx?op=SEND_EMAIL_TEMPLATE`;
     let soapContent = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
                         <soap:Body>
@@ -988,7 +1005,7 @@ var getSoapResponse1 = async function(method, serviceUrl, isAsync, soapContent, 
     });
 }
 
-function setPSErrorMesg(errMesg){
+function setPSErrorMesg(errMesg, removeAlertHeadingText){
 
 	function checkForErrors() {
 	  var errorElement = $('.errors[data-v-386d995a]');
@@ -1015,7 +1032,11 @@ function setPSErrorMesg(errMesg){
 			  'height': 'auto',
 			  'opacity': '1'
 		  });
-		  errorMessage = '<br/>' + errorMessage;
+		  if(removeAlertHeadingText === true){
+			$('p.alert-heading').text('')
+			errorMessage = errorMessage;
+		  }
+		  else errorMessage = '<br/>' + errorMessage;
 		  var mesgElement = $('#customErrorId');
 		   if(mesgElement.length === 0)
 			$('p.alert-heading').append(`<p id='customErrorId'>${errorMessage}</p>`);
@@ -1058,4 +1079,28 @@ const chckRequiredFields = async function(){
         return false
     }
     else return true
+}
+
+function isNullOrEmpty(value) {
+	return value === null || value === undefined || value === '' || value.length === 0;
+}
+
+function htmlEncode(str) {
+    return str.replace(/[&<>"']/g, function(match) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[match];
+    });
+}
+
+function clearLocalStorageItemsByField(itemsToRemove) {
+	    itemsToRemove.forEach(item => {
+        if (localStorage.getItem(item) !== null) {
+            localStorage.removeItem(item);
+        }
+    });
 }

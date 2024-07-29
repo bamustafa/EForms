@@ -18,7 +18,10 @@ var leadTaskHeaderTitle = 'CM Task',
     dprHeaderTitle = 'Daily Progress Report',
     fncHeaderTitle = 'Filenaming Convention',
     ckdHeaderTitle = 'Check Deliverables',
-    insHeaderTitle = 'Initiate New Submission';
+    insHeaderTitle = 'Initiate New Submission',
+
+    pintHeaderTitle = 'Project Initiation',
+    mtdHeaderTitle = 'Master Technical Documents';
 //#endregion
 
 //#region EFORMS BUTTON MESSAGES
@@ -53,7 +56,9 @@ var contractorRequiredFieldMesg = 'One Inspection Date at least should be set fo
 //#region GENERAL BUTTON MESSAGES
 var saveMesg = "Click 'Save' to store your progress and keep your work as a draft.";
 var submitMesg = "Click 'Submit' to finalize and send officially.";
+var finalizetMesg = "Click 'Finalize' to finalize and send officially.";
 var cancelMesg = "Click 'Cancel' to discard changes and exit without saving.";
+var closeMesg = "Click 'Close' to exit the form without saving.";
 var assignMesg = "Click 'Assign' to allocate this task or responsibility.";
 var rejectMesg = "To return the task to inspector, select the completed task in the tick column then click Reject."
 var previewMesg = "Click here to preview the document before submitting to contractor";

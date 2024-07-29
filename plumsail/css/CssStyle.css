@@ -37,6 +37,12 @@
     padding-left: 96px;
   }
 
+  @media (max-width: 767px) {
+    .SPCanvas, .commandBarWrapper{
+      padding-left: 0px;
+    }
+  }
+
   .ms-FocusZone, .ms-searchux-searchbox{
       display: none;
   } 
@@ -44,7 +50,16 @@
   /* */
  .pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1 { 
   margin-left: -200px;
-  }  
+  } 
+  
+  @media (max-width: 767px) {
+    .pageContainer_e9e4af8d,
+    .container_e9e4af8d,
+    .pageContainer_5a558a10,
+    .pageContainer_972f0ed1 { 
+        margin-left: 0px;
+    }
+  }
   /* #endregion */
 
  .FormTitle{
@@ -75,7 +90,8 @@
   border-top-left-radius: 6px;
   border-bottom-left-radius: 6px;
   /* overflow: hidden; */
-  /* width: 190px; */
+  width: 190px;
+  display: inline-block;
 }
 
 .fd-field-title{
