@@ -2372,7 +2372,7 @@ var TQ_editForm = async function(){
 			$(fd.field('Answer').$parent.$el).hide();
 			$(fd.field('QueryTypeChecked').$parent.$el).hide();	
 			//fd.field('Attachments').disabled = true;
-			SetAttachmentToReadOnly();					
+			//SetAttachmentToReadOnly();					
 			
 			if(WorkflowStatus === "Assigned" || WorkflowStatus === "Reassigned" || WorkflowStatus === "Ready for Response")
 			{			
