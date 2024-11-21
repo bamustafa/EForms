@@ -13,6 +13,9 @@ let itemId = '';
 const ProjectNameList = "";
 const ProjectYear = 2010;
 let projectArr=[];
+let CurrentUser;
+
+let _Email, _Notification = '', _ApprovalTradeCC = '';
 
 const itemsToRemove = ['Status', 'State', 'Code', 'WorkflowStatus'];
 
@@ -36,12 +39,14 @@ var onRender = async function (moduleName, formType){
 	}
 }
 
-var onMELLRender = async function (formType){	
+var onMELLRender = async function (formType){
 
     await PreloaderScripts(); 			
 	await loadScripts();
  
     clearLocalStorageItemsByField(itemsToRemove);
+
+    CurrentUser = await GetCurrentUser(); 
 
 	if(formType == 'New'){        
 		await MELL_newForm();        
@@ -54,7 +59,7 @@ var onMELLRender = async function (formType){
     }    
 }
 
-var MELL_newForm = async function(){ 
+var MELL_newForm = async function(){    
     
     fd.toolbar.buttons[0].style = "display: none;";   
 	fd.toolbar.buttons[1].style = "display: none;";
@@ -68,17 +73,25 @@ var MELL_newForm = async function(){
 	fd.field('Reference').required = true;
 	fd.field('Recommendation').required = true;
 
-	var LoginNameU = _spPageContextInfo.userLoginName;
+    let DisplayName = '', 
+    LoginNameU = '';
+
+    await pnp.sp.web.currentUser.get().then(user => {
+        DisplayName = user.Title;
+        LoginNameU = user.LoginName.split('|')[1];
+    });
+
+	// var LoginNameU = _spPageContextInfo.userLoginName;
 	var Domain = LoginNameU.split("\\")[0];
 	if(Domain.toUpperCase() === "DMSD")
 		Domain = "DarCairo";
 	fd.field('Office').value = Domain.toUpperCase();
-	$(fd.field('Office').$parent.$el).hide();   
+	$(fd.field('Office').$parent.$el).hide();    
     
-    fd.field('Leader').value = _spPageContextInfo.userDisplayName;
+    fd.field('Leader').value = LoginNameU; //_spPageContextInfo.userDisplayName;
     $(fd.field('Leader').$parent.$el).hide();
 	
-	fd.field('UserDisplayName').value = _spPageContextInfo.userDisplayName;
+	fd.field('UserDisplayName').value = DisplayName; //_spPageContextInfo.userDisplayName;
 	$(fd.field('UserDisplayName').$parent.$el).hide();	
 	
 	fd.field('Trade').value = 'ME';
@@ -259,7 +272,6 @@ var MELL_newForm = async function(){
 		fd.field('ClientName').required = true;
 	}
 
-    debugger;
     const group = await pnp.sp.web.siteGroups.getByName('PD').get();
     const groupId = group.Id;    
     //const PD = await pnp.sp.web.siteGroups.getById(groupId).users();
@@ -282,8 +294,8 @@ var MELL_newForm = async function(){
     preloader("remove");    
 }
 
-var MELL_editForm = async function(){ 
-
+var MELL_editForm = async function(){    
+    
     fd.toolbar.buttons[0].style = "display: none;"; 
     fd.toolbar.buttons[1].style = "display: none;";
     
@@ -374,28 +386,27 @@ var MELL_editForm = async function(){
 				// $(fd.field('FormStatus').$parent.$el).hide();           
 
                 let web = pnp.sp.web;            
-                const leader = _spPageContextInfo.userDisplayName;                             
-            
-                let refNo = await updateCounter();             
-
-                fd.field('Status').disabled = false;
-                fd.field('Status').value = 'Open';
-                fd.field('Status').disabled = true;
-                
-                $(fd.field('AutoRef').$parent.$el).show();
-                fd.field('AutoRef').value = refNo;
-                $(fd.field('AutoRef').$parent.$el).hide();
-
-                $(fd.field('FormStatus').$parent.$el).show();
-                fd.field('FormStatus').value = 'Saved By PD';
-                $(fd.field('FormStatus').$parent.$el).hide();         
+                const leader = _spPageContextInfo.userDisplayName;                      
 				
 		        if(fd.isValid){
                     await PreloaderScripts();
-                    fd.save().then(async function() {
-                        let query = `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${itemId}</Value></Eq></Where>`;
-                        await _sendEmail(_modulename, 'NewLLItem_Email', query, '', 'LessonsLearned_Initiated', '');
-                    });                    
+                    let refNo = await updateCounter();             
+
+                    fd.field('Status').disabled = false;
+                    fd.field('Status').value = 'Open';
+                    fd.field('Status').disabled = true;
+                    
+                    $(fd.field('AutoRef').$parent.$el).show();
+                    fd.field('AutoRef').value = refNo;
+                    $(fd.field('AutoRef').$parent.$el).hide();
+
+                    $(fd.field('FormStatus').$parent.$el).show();
+                    fd.field('FormStatus').value = 'Saved By PD';
+                    $(fd.field('FormStatus').$parent.$el).hide(); 
+                    _proceed = true;
+                    _Email = 'NewLLItem_Email';
+                    _Notification = 'LessonsLearned_Initiated';
+                    fd.save();                    
                 }
 		    }	     
 	    });
@@ -458,10 +469,10 @@ var MELL_editForm = async function(){
 		        
                 if(fd.isValid){
                     await PreloaderScripts(); 
-                    fd.save().then(async function() {
-                        let query = `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${itemId}</Value></Eq></Where>`;
-                        await _sendEmail(_modulename, 'NewLLItem_Email', query, '', 'LessonsLearned_Initiated', '');
-                    }); 
+                    _proceed = true;
+                    _Email = 'NewLLItem_Email';
+                    _Notification = 'LessonsLearned_Initiated';
+                    fd.save(); 
                 }
 		    }	     
 	    });
@@ -576,7 +587,7 @@ fd.spSaved(async function(result) {
         if(_proceed){		
             var itemId = result.Id;        
             let query = `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${itemId}</Value></Eq></Where>`;
-            await _sendEmail(_modulename, 'NewLLItem_Email', query, '', 'LessonsLearned_Initiated', '');    
+            await _sendEmail(_modulename, _Email, query, _ApprovalTradeCC, _Notification, '', CurrentUser);    
         }   						
     }
     catch(e){
@@ -630,7 +641,7 @@ async function GetProjectListALLP(ProjectYear)
             }  
             catch(err) 
             {
-                console.log(err + "\n" + text);				
+                console.log(err);				
             } 
         }
     } 
@@ -674,7 +685,7 @@ function GetProjectList(ProjectName)
             }  
             catch(err) 
             {
-                console.log(err + "\n" + text);				
+                console.log(err);				
             } 
         }
     }     
@@ -769,54 +780,26 @@ $(fd.field('Submit').$parent.$el).hide();
 	        click: async function() {	  
 
             let web = pnp.sp.web;            
-			const leader = _spPageContextInfo.userDisplayName;                             
-           
-            let refNo = await updateCounter();                   
-                
-            $(fd.field('Status').$parent.$el).show();
-            fd.field('Status').value = 'Open';
-            $(fd.field('Status').$parent.$el).hide();
-            
-            $(fd.field('AutoRef').$parent.$el).show();
-            fd.field('AutoRef').value = refNo;
-            $(fd.field('AutoRef').$parent.$el).hide();
-
-            $(fd.field('FormStatus').$parent.$el).show();
-            fd.field('FormStatus').value = 'Saved By PD';
-            $(fd.field('FormStatus').$parent.$el).hide(); 
-            
-            // let EmailbodyHeader = `A new Lesson Learned of reference number ${refNo} has been sent to you for review.`;
-            // let Title = fd.field('Title').value; 
-            // let Category = fd.field('Category').value; 
-            // let Office = fd.field('Office').value;           
-
-            // $(fd.field('Country_Name').$parent.$el).show();
-            // let Country_Name = fd.field('Country_Name').value;
-            // $(fd.field('Country_Name').$parent.$el).hide();
-
-            // $(fd.field('Client_Name').$parent.$el).show();
-            // let Client_Name = fd.field('Client_Name').value;
-            // $(fd.field('Client_Name').$parent.$el).hide();
-
-            // let Result = {  'Lesson Learned Title': Title, 
-            //     Country: Country_Name, 
-            //     Client: Client_Name, 
-            //     Category: Category, 
-            //     Office: Office, 
-            //     ModifiedBy: leader                
-            // };
-
-            // let Subject = `New Lesson Learned - ${refNo} - ${Title}`;
-            // let encodedSubject = htmlEncode(Subject);
-            // let Body = await GetHTMLBody(Result, EmailbodyHeader, leader);
-            // let encodedBody = htmlEncode(Body);
-
-            //await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', '', 'LessonsLearned_Initiated', '');
-            // let itemId = await getMaxItemId(_listName);            
+			const leader = _spPageContextInfo.userDisplayName;                                   
 
 	        if(fd.isValid){
                 await PreloaderScripts();
+                let refNo = await updateCounter();                   
+                
+                $(fd.field('Status').$parent.$el).show();
+                fd.field('Status').value = 'Open';
+                $(fd.field('Status').$parent.$el).hide();
+                
+                $(fd.field('AutoRef').$parent.$el).show();
+                fd.field('AutoRef').value = refNo;
+                $(fd.field('AutoRef').$parent.$el).hide();
+
+                $(fd.field('FormStatus').$parent.$el).show();
+                fd.field('FormStatus').value = 'Saved By PD';
+                $(fd.field('FormStatus').$parent.$el).hide();
                 _proceed = true;
+                _Email = 'NewLLItem_Email';
+                _Notification = 'LessonsLearned_Initiated';
                 fd.save();                
             }
 	    }	     
@@ -991,7 +974,8 @@ function MEIsUserInGroup(group, Initiator)
                                 style: `background-color:${greenColor}; color:white`,
 						        click: async function() {                            
                                 
-                                let Code = fd.field('Code').value;                              
+                                let Code = fd.field('Code').value;                               
+                                _ApprovalTradeCC = fd.field('Leader').value.EntityData.Email;                           
 
                                 if (Code === ''){}
                                 else {                                                                       
@@ -1019,14 +1003,19 @@ function MEIsUserInGroup(group, Initiator)
                                 }
 																
                                 if(fd.isValid){
-                                    await PreloaderScripts();                                    
-                                    fd.save().then(async function() {                                        
-                                        let query = `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${itemId}</Value></Eq></Where>`;
-                                        if(Code === 'Approved')
-                                            await _sendEmail(_modulename, 'IssuedLLItem_Email', query, Initiator, 'LessonsLearned_Reviewed', '');
-                                        else
-                                            await _sendEmail(_modulename, 'IssuedLLRejectedItem_Email', query, Initiator, 'LessonsLearned_Rejected', '');
-                                    });                                   
+                                    await PreloaderScripts();  
+                                    _proceed = true;                                 
+                                    
+                                    if(Code === 'Approved'){                                        
+                                        _Email = 'IssuedLLItem_Email';
+                                        _Notification = 'LessonsLearned_Reviewed';  
+                                    }
+                                    else{                                        
+                                        _Email = 'IssuedLLRejectedItem_Email';
+                                        _Notification = 'LessonsLearned_Rejected';
+                                    }
+                                    
+                                    fd.save();                                   
                                 }
 						    }	     
 					    });
@@ -1144,5 +1133,27 @@ function SetAttachmentToReadOnly(){
             spanRemoveElement.style.display = 'none';
 	}	
 }
+
+// function clearLocalStorageItemsByField(fields) {
+// 	fields.forEach(field => {
+// 		let cachedFields = localStorage;
+//         for (let i = 0; i < cachedFields.length; i++) {
+// 	        const key = localStorage.key(i);        
+// 	        if (key.includes(field)){
+// 	        	localStorage.removeItem(key);
+// 	        }
+//     	}
+//     });
+// }
+
+// const GetCurrentUser = async function(){
+// 	try {
+//         const user = await pnp.sp.web.currentUser.get();
+//         return user;
+//     } catch (error) {
+//         console.error("Error fetching current user:", error);
+//         throw error; // Re-throw the error if needed
+//     }	
+// }
 
 //#endregion

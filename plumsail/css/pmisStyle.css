@@ -13,6 +13,13 @@
 }
 
 /* FOR MOBILE */
+
+@media screen and (min-width: 1024px) {
+  [dir="ltr"] .leftMargin .nav_b5013a39 + .container_b5013a39 {
+      left: 43px;
+  }
+}
+
 @media (max-width: 768px){
   /* FOR BILAL */
   .ctlStyle{ width: 100% !important; }
@@ -153,7 +160,7 @@
 
 .fd-form .nav-tabs .nav-item {
   /* margin-bottom: 5px; */
-  width: 190px;
+  width: 215px;
   text-align: center;
 }
 
@@ -211,7 +218,10 @@
   border-radius: 4px !important;*/
 }
 
-.fd-form .tabset { margin-bottom: 0px !important; }
+.fd-form .tabset { 
+  margin-bottom: 0px !important; 
+  margin-top: 5px;
+}
 /*END TABS */
 
 
@@ -343,7 +353,7 @@
 	 /* position: relative; left: 42%;  520px */
  }
 
- /* ATTACHMENT FIELD */
+ /* ATTACHMENT FIELD */k
 .k-upload .k-dropzone .k-dropzone-hint { text-align: left; padding-left: 10px; }
 
 .k-numeric-wrap.k-state-default,
@@ -396,6 +406,29 @@ b[data-v-386d995a]{ color:red !important; }
 
 
 
+/* Review Department Initiation*/
+.center-text {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.PageTitle
+{
+    font-family: Arial;
+    font-size: 19px;
+    color: Black;
+    font-weight: bold;
+}
+
+.Legend
+{
+    color: Black;
+    font-size: 12px;
+    font-weight: normal;
+    letter-spacing: 0.5px;
+}
+/* END Review Department Initiation */
 
 
 /* .sp-appBar{
@@ -485,7 +518,7 @@ b[data-v-386d995a]{ color:red !important; }
   padding: 0;
   margin: 0;
   position: absolute;
-  background-color: #ebeeec;
+  background-color: #f3f2f1;
   border-bottom-left-radius: 10px;
 }
 

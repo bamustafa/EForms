@@ -1,0 +1,84 @@
+.fd-grid.container-fluid.divGrid {
+    position: relative;
+    border: 1px solid #ced4da; /* Set your desired border color and width */
+    padding-top: 26px; /* Add padding to create space inside the border */
+    margin: 10px -6px; /* Add margin to space out the container */
+    border-radius: 6px; /* Optional: rounded corners */
+    box-shadow: rgba(0, 0, 0, 0.1) 2px 4px 4px;
+    background-color: #f8f9fa2b !important;
+}
+
+.border-title {
+    position: absolute;
+    top: -12px; /* Adjust the position to sit on the border */
+    left: 20px; /* Align with the content */
+    background-color: #fff; /* Match the background color to your page */
+    padding: 0 10px; /* Add padding to the title */
+    font-weight: bold; /* Make the title bold */
+    font-size: 14px; /* Set the font size */
+    color: #FB8C00; /* #5fc9b3 */
+    /* text-transform: uppercase; */
+}
+
+.fd-grid .container-fluid .CanvasZone {
+   width: 100% !important;
+ }
+ 
+ .fd-form .btn-primary {
+  color: #444;
+  background-color: #fdfdfd;
+  border: 1px solid #ababab;
+  /*padding: 5px 30px;*/
+  display: inline-block;
+  margin: 2px 2px;
+  border-radius: 6px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.95em;
+  font-weight: bold;
+  width: max-content;
+}
+
+.fd-form .btn-outline-primary {
+  color: #444;
+  background-color: #fdfdfd;
+  border: 1px solid #ababab;
+  /*padding: 5px 30px;*/
+  display: inline-block;
+  margin: 2px 2px;
+  border-radius: 6px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.95em;
+  font-weight: bold;
+  width: max-content;
+}
+
+.fd-form .row > .fd-field-title {
+    width: 180px;   
+    font-size: 13px;
+}
+
+.fd-form-container.container-fluid {
+    padding-left: 18px !important;
+}
+
+.icon{
+  padding-right: 4px;
+}
+
+.description-area {
+  padding: 10px;
+  color: #333;
+  font-size: 15px;
+  background-color: #f9f9f9;
+}
+
+.description-list {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin: 0;
+}
+
+.description-list li {
+  margin-bottom: 15px;
+  line-height: 1.5;
+}

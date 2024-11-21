@@ -1,18 +1,25 @@
 var onProjRoleRender = async function(){
 
-    debugger;
     let dtName = 'prdt'
     handelTables('div.w-100');
     let result = await getRoles();
 
-    setPageStyle();
+
+    let fullProjTitle = localStorage.getItem('FullProjTitle');
+    fullProjTitle += ' - Project Roles'
+    setPageStyle(fullProjTitle);
     
+    _isSusOwner = JSON.parse(localStorage.getItem('_isSusOwner')); 
+    _isQMOwner = JSON.parse(localStorage.getItem('_isQMOwner'));
     _isQM = JSON.parse(localStorage.getItem('_isQM')); 
     _isSus = JSON.parse(localStorage.getItem('_isSus'));
     _isBuilding = JSON.parse(localStorage.getItem('_isBuilding'));
    
-    if(!_isQM && !_isSus || _isSus && !_isBuilding) 
-      fd.control(dtName).readonly = true;
+    if(_isBuilding){
+        if(!_isSusOwner && !_isQMOwner)
+            fd.control(dtName).readonly = true;
+    }
+    else fd.control(dtName).readonly = true;
 
     if(result.length > 0){
         

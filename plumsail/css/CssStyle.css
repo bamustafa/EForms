@@ -51,6 +51,12 @@
  .pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1 { 
   margin-left: -200px;
   } 
+
+  @media screen and (min-width: 1024px) {
+    [dir=ltr] .leftMargin .nav_b5013a39 + .container_b5013a39 {
+        left: 0px !important;
+    }
+  }
   
   @media (max-width: 767px) {
     .pageContainer_e9e4af8d,
@@ -404,3 +410,177 @@ html .k-upload,
 .form-check{
   margin-bottom: 10px !important;
 }
+
+
+/* AUDIT SCHEDULE TABLE */
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Arial', sans-serif; 
+  box-shadow: 0 2px 10px var(--boxshadow);
+  background-color: #f9f9f98a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.modern-table th {
+  color: var(--black);
+  font-size: 12px;
+  font-weight: bold;
+  /* padding-left: 10px;  */
+  
+  padding: 8px; 
+  border-bottom: 1px solid #ddd;
+}
+
+.modern-table td {
+  border-bottom: 1px solid var(--bordercolor);
+  font-size: 14px;
+  background-color: #d6dcdd47;
+  color: var(--darkgreen);
+  font-weight: bold;
+  /* padding: .5rem 1rem;   */
+
+  padding: 8px; 
+  border-bottom: 1px solid #ddd;
+}
+
+.modern-table tr:nth-child(1) {
+  background-color: #bec4c98a; /* Set your desired color for the header row */
+  color: white;
+}
+
+.modern-table tr:nth-child(odd):not(:first-child) {
+  background-color: #f5f5f5; /* Light grey for even rows */
+}
+
+.modern-table tr:nth-child(even):nth-child(n+2) {
+  background-color: #ffffff; /* White for odd rows */
+}
+
+.modern-table tr:last-child td {
+  border-bottom: none;
+}
+
+#tblItemsId th {
+  color: white;  
+}
+
+.ctlStyle{
+  width: 40%;
+  height: 30px;
+  box-shadow: 0 4px 14px var(--boxshadow);
+  border: 0px solid var(--white);
+}
+
+.vsb-menu .multi li{
+  min-height: 2.4em !important
+}
+
+.vsb-menu .multi li:not(.grouped-option).active::after {
+	margin-left:-17px !important;
+	margin-top:3px !important
+}
+
+.vsb-menu ul {
+  white-space: unset !important;
+}
+
+.dateStyle{
+    width: 240px;
+    height: 40px;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    color: #333;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.styled-select {
+  width: 300px;
+  height: 40px;
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  color: #333;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  appearance: none; /* Removes the default dropdown arrow */
+  background-image: url('data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMDA3YmZmIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMiAxMiIgd2lkdGg9IjEycHgiIGhlaWdodD0iMTJweCI+PHBhdGggZD0iTTUuODI4LDEwLjc0TDEuMDkzLDUuMDA1Yy0wLjA5OC0wLjA5OC0wLjE2NS0wLjIzMi0wLjE2NS0wLjM3M1MwLjkuNjk1IDEuMzgyLDAuNjk1aDkuMjI0YzAuNDgyLDAgMC44NzYsMC4zOTQgMC44NzYsMC44NzQgMCwwLTAuMDY4LDAuMjc0LTAuMTY2LDAuMzc2TDUuODI5LDEwLjc0QzUuNjMxLDExLjA0NyA1LjEwOCwxMS4wNDcgNC44MSwxMC43NCAiLz48L3N2Zz4='); /* Custom dropdown arrow */
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+}
+
+.styled-select:hover, .styled-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+/* END AUDIT SCHEDULE TABLE */
+
+
+/* AUDIT SCHEDULE - MASTER PLAN */
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.items {
+  width: 20%;
+  background-color: #f4f4f4;
+  border-right: 1px solid #ddd;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.items ul {
+  list-style: none;
+  padding: 0;
+}
+
+.items li {
+  margin-bottom: 15px;
+}
+
+.items a {
+  text-decoration: none;
+  color: #333;
+  display: block;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.items a:hover {
+  background-color: #ddd;
+}
+
+.form {
+  width: 80%;
+  padding-left: 20px;
+}
+
+.form iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.items a.active {
+  background-color: #ddd;
+  color: white;
+}
+
+
+
+
+
+
+
+
+

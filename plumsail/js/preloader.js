@@ -89,17 +89,21 @@ function Remove_Pre(ignoreImage){
 		if(!iscurtainRemoved){
 			console.log('Removing curtain...');
 			if($('div.dimbackground-curtain').length > 0){
-			$('div.dimbackground-curtain').remove();
-			iscurtainRemoved = true;
+				$('div.dimbackground-curtain').remove();
+				iscurtainRemoved = true;
 			}
+			else
+				iscurtainRemoved = true;
 		}
 
 		if(!isloaderRemoved){
 			console.log('Removing loader...');
 			if($('#loader').length > 0){
-			$('#loader').remove();
-			isloaderRemoved = true;
+				$('#loader').remove();
+				isloaderRemoved = true;
 			}
+			else
+				isloaderRemoved = true;
 		}
 		console.log('im here');
 		if(iscurtainRemoved && isloaderRemoved){

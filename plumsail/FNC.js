@@ -107,6 +107,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
         }
     }
     else {
+        
         var  schemaValue = fd.field("Schema").value.replace(/&nbsp;/g, '');
         _schema = JSON.parse(schemaValue);
 
@@ -337,7 +338,7 @@ var getListFields = async function(){
         excludedFieldNames.push('Room','Drawingno');
     else if(_mainList === 'Material Submittal')
         excludedFieldNames.push('Address', 'Room','Availability','BaseType', 'BOQ', 'Country', 'Drawingref', 'MatDate', 'ArrivalTime', 'Agent', 'Manufacturer', 
-                                'Standards', 'TotalDuration', 'Specs', 'Location');
+                                'Standards', 'TotalDuration', 'Specs');
     else if(_isDesign && _mainList === 'RLOD')
        excludedFieldNames.push('Approved', 'Comments', 'by', 'CExtensions', 'CFilename', 'Checked', 'CRevision', 'CScale', 'DAR', 'RejectedComments', 'Release',
                                'SubmittalRef', 'CPart', 'DarTrade', 'Description');
@@ -505,7 +506,7 @@ function setListBox(){
         }
     });
 
-    $(listBox).on('change', async function (event) {
+    $(listBox).on('change', async function (event) {        
         await Promise.all(validationlistBoxPromises);
         var lisboxBLength = $('#listBoxContentlistBoxB div div').length;
         if(listBoxFields.length == lisboxBLength){
@@ -1149,7 +1150,7 @@ var setFilename_Schema  =async function(){
                              rowData[featureName] = parseInt(controlValue);
                            else if( featureName === 'isList' && _fNCLists.length > 0){
                              let mappingColumn = 'Title';
-                             if(controlValue === 'Discipline')
+                             if(controlValue === 'Discipline' && _phase.toLowerCase() !== 'design')
                                mappingColumn = 'Acronym';
 
                              rowData[featureName] = `${controlValue.trim()}|${mappingColumn}`;

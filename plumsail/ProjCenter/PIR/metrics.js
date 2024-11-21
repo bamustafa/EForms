@@ -1,27 +1,24 @@
 let isTblCreated = false;
 let single = [], multi = [], classMetArray = [];
 
+let metricsformFields = [];
 
 var onMetricsRender = async function () {
   
-    formFields = {
+  const startTime = performance.now();
+    metricsformFields = {
       Description: fd.field("Description"),
       Category: fd.field("Category"),
       SubCategory: fd.field("SubCategory"),
       IsConfidential: fd.field("IsConfidential"),
-      showAll: fd.field("showAll"),
-  
-      ContractForm: fd.field("ContractForm"),
-      FormContractOther: fd.field("FormContractOther"),
-      ContractType: fd.field("ContractType"),
-      TypeContractOther: fd.field("TypeContractOther")
+      showAll: fd.field("showAll")
     }
   
-    let category = formFields.Category;
-    let subCategory = formFields.SubCategory;
-    let isConfidential = formFields.IsConfidential.value;
-    let showAll = formFields.showAll;
-    formFields.Description.placeholder = 'Description and Components/Scope of Work';
+    let category = metricsformFields.Category;
+    let subCategory = metricsformFields.SubCategory;
+    let isConfidential = metricsformFields.IsConfidential.value;
+    let showAll = metricsformFields.showAll;
+    metricsformFields.Description.placeholder = 'Description and Components/Scope of Work';
   
     if(isConfidential)
       setConfidentialImage('Set Project Confidential');
@@ -42,7 +39,7 @@ var onMetricsRender = async function () {
           subCategory.filter = "Category/Id eq " + catId;
           subCategory.orderBy = { field: "Title", desc: false };
           subCategory.refresh().then(()=>{
-            let dataLength = formFields.SubCategory.widget.dataSource.data().length;
+            let dataLength = metricsformFields.SubCategory.widget.dataSource.data().length;
             let isRequired = dataLength > 0 ? true : false;
             subCategory.required = isRequired;
           });
@@ -75,6 +72,10 @@ var onMetricsRender = async function () {
         }
         await setRenderLogic(subCategory.value);
     }
+
+    const endTime = performance.now();
+    const elapsedTime = endTime - startTime;
+    console.log(`onMetricsRender: ${elapsedTime} milliseconds`);
 }
   
   const setRenderLogic = async function(subCategoryArray){
@@ -290,7 +291,6 @@ var onMetricsRender = async function () {
   }
   
   function checkNumberVal(control){
-    debugger;
     let val = control.value !== undefined && control.value !== null ? control.value.trim() : null;
     if(val !== null){
       val = val.replace(/[^\d.-]/g, '');
@@ -354,11 +354,15 @@ var onMetricsRender = async function () {
   
       var resultArray = {};
       let lookupIds = [];
+
+      if(tables.length > 0)
+        resultArray['MasterIDId'] = parseInt(_itemId)
+      
       tables.each(function(){
           
-          resultArray['CategoryId'] = parseInt(formFields.Category.value.LookupId)
+          resultArray['CategoryId'] = parseInt(metricsformFields.Category.value.LookupId)
   
-          let subCategories = formFields.SubCategory.value;
+          let subCategories = metricsformFields.SubCategory.value;
           for(const subCat of subCategories){
             lookupIds.push(parseInt(subCat.LookupId))
           }
@@ -391,6 +395,8 @@ var onMetricsRender = async function () {
             value = false;
           else if(type === 'LookupMulti')
             value = { results: [] };
+          
+          if(fieldname === 'MasterID')
           
           resultArray[fieldname] = value;
         }

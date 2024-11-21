@@ -7,10 +7,13 @@ var getCurrentWebUrl = async function() {
 }
 
 const GetCurrentUser = async function(){
-	return await pnp.sp.web.currentUser.get()
-		         .then(async (user) =>{
-					return user;
-	 });
+	try {
+        const user = await pnp.sp.web.currentUser.get();
+        return user;
+    } catch (error) {
+        console.error("Error fetching current user:", error);
+        throw error; // Re-throw the error if needed
+    }	
 }
 
 var getDesign_GridSchema = async function(_web, webURL, key){
@@ -327,7 +330,7 @@ var getGridMType = async function(_web, webURL, key, isDesign){
 	//    listname = 'SchemaConfig';
 	//    columns = 'HandsonTblSchema,ListName,LODFilterColumn,RevNumStart,UpdateTitle';
 	// }
-
+	
     var result = "";
     await _web.lists
           .getByTitle(listname)
@@ -342,10 +345,10 @@ var getGridMType = async function(_web, webURL, key, isDesign){
                   var HandsonTblSchema = item.HandsonTblSchema;
 
 				  if(_module === 'AUS'){
-					targetList = item.LODListName;
-					targetFilter = item.LODFilterColumn;
+					targetList = item.ListName;
+					targetFilter = item.FilterColumns;
 				  }
-				  else{
+				  else{					
 					targetList = item.LODListName;
 					targetFilter = item.LODFilterColumn;
 					revNumStart = item.RevNumStart;
@@ -366,6 +369,11 @@ var getGridMType = async function(_web, webURL, key, isDesign){
                         if (obj.source === "getDropDownListValues"){
                               obj.source = await getDropDownListValues(obj.listname, obj.listColumn);
                             }
+                        else if (obj.source === "getQMDropDownListValues"){
+							obj.source = await getQMDropDownListValues(obj.listname, obj.listColumn);
+						  }
+
+							
                         //     else if (obj.validator === "validateDateRequired"){
                         //       obj.validator = validateDateRequired;
                         //     }
@@ -389,17 +397,20 @@ var getGridMType = async function(_web, webURL, key, isDesign){
 
 var getDropDownListValues = async function(_listname, _column){
 	var _colArray = [];
-  
+    let filter = `${_column} ne null`
+
 	await pnp.sp.web.lists
 		  .getByTitle(_listname)
 		  .items
 		  .select(_column)
-		  .filter(_column + " ne null")
+		  .filter(filter)
 		  .get()
 		  .then(async function (items) {
 			  if(items.length > 0)
 				for (var i = 0; i < items.length; i++) {
-					_colArray.push(items[i][_column]);
+			         let val = items[i][_column];
+					 if(!_colArray.includes(val))
+					   _colArray.push(val);
 				}
 			  });
    return _colArray;
@@ -729,7 +740,7 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 			.items
 			.select('Id,' + viewFields)
 			//.filter(`Title eq '${  listValue  }'`)
-			.get();
+			.getAll();
 
 			if(items < 1){
 				errorMesg += `${listname} list is Empty. Contact the admin.<br>`;
@@ -829,12 +840,17 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 								var obj = {  LookupId: itemId,
 											LookupValue: descValue
 										};
-								if(fieldname === 'Discipline_x003a_Acronym')
-								  fieldname = 'Discipline';
-								else if(fieldname === 'SubDiscipline_x003a_Title')
-								  fieldname = 'SubDiscipline';
-								fd.field(fieldname).value = obj;	
-								fd.field(fieldname).disabled = true;
+
+							   if(_module !== 'LOD'){
+								
+									if(fieldname === 'Discipline_x003a_Acronym')
+									  fieldname = 'Discipline';
+									else if(fieldname === 'SubDiscipline_x003a_Title')
+									  fieldname = 'SubDiscipline';
+
+									fd.field(fieldname).value = obj;	
+									fd.field(fieldname).disabled = true;
+							   }
 							}
 						}
 						catch{}
@@ -912,6 +928,7 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 }
 //#endregion
 
+
 const _sendEmail = async function(ModuleName, emailName, query, ApprovalTradeCC, notificationName, rootFolder, currUser){
 	let webUrl = _spPageContextInfo.siteAbsoluteUrl;
 	let siteUrl = new URL(webUrl).origin;
@@ -940,6 +957,94 @@ const _sendEmail = async function(ModuleName, emailName, query, ApprovalTradeCC,
                         </soap:Body>
                     </soap:Envelope>`
     let res = await getSoapResponse('POST', serviceUrl, true, soapContent, 'SEND_EMAIL_TEMPLATEResult');
+}
+
+const _generateErrorEmail = async function (webUrl, username, displayName, errorMessage, errorStack) {
+
+    const usernameHtml = username ? `<p><strong>Username:</strong> ${username}</p>` : '';
+    const displayNameHtml = displayName ? `<p><strong>Display Name:</strong> ${displayName}</p>` : '';
+
+    let errroBody = `
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 20px;
+                    font-size: 15px; /* Set default font size */
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    padding: 20px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                }
+                .header {
+                    background-color: #ff6f61;
+                    padding: 10px 20px;
+                    color: #ffffff;
+                    text-align: center;
+                    font-size: 17px; /* Set font size for header */
+                }
+                .content {
+                    margin: 20px 0;
+                }
+                .content p {
+                    font-size: 13px; /* Set font size for content paragraphs */
+                }
+                .footer {
+                    text-align: center;
+                    color: #999999;
+                    margin-top: 20px;
+                    font-size: 11px; /* Set font size for footer */
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Error Notification</h1>
+                </div>
+                <div class="content">
+                    <p>Dear Admin,</p>
+                    <p>An error has occurred in the system. Below are the details:</p>
+                    ${usernameHtml}
+                    ${displayNameHtml}
+					<p><strong>Site URL:</strong> ${webUrl}</p>
+                    <p><strong>Error Message:</strong> ${errorMessage}</p>
+                    <p><strong>Error Detail:</strong> ${errorStack}</p>
+                    <p>Please investigate the issue as soon as possible.</p>
+                </div>
+                <div class="footer">
+                    <p>This is an automated message. Please do not reply to this email.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+
+    errroBody = htmlEncode(errroBody);
+    await _sendErrorEmail(errroBody);
+}
+
+const _sendErrorEmail = async function(Body){    
+
+	let webUrl = _spPageContextInfo.siteAbsoluteUrl;
+	let siteUrl = new URL(webUrl).origin;
+
+    let serviceUrl = `${siteUrl}/AjaxService/DarPSUtils.asmx?op=SEND_ERROR_EMAIL_CVGUIDELINE`;
+    let soapContent = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                        <soap:Body>
+                            <SEND_ERROR_EMAIL_CVGUIDELINE xmlns="http://tempuri.org/">
+                                <WebURL>${webUrl}</WebURL>
+                                <Body>${Body}</Body>                                
+                            </SEND_ERROR_EMAIL_CVGUIDELINE>
+                        </soap:Body>
+                    </soap:Envelope>`
+    let res = await getSoapResponse('POST', serviceUrl, true, soapContent, 'SEND_ERROR_EMAIL_CVGUIDELINEResult');
 }
 
 var getSoapResponse = async function(method, serviceUrl, isAsync, soapContent, getResultTag){
@@ -1097,10 +1202,86 @@ function htmlEncode(str) {
     });
 }
 
-function clearLocalStorageItemsByField(itemsToRemove) {
-	    itemsToRemove.forEach(item => {
-        if (localStorage.getItem(item) !== null) {
-            localStorage.removeItem(item);
-        }
+function TextQueryEncode(str) {
+    return str.replace(/[&<>"']/g, function(match) {
+        return {
+            '&': '%26'
+        }[match];
     });
+}
+
+function clearLocalStorageItemsByField(fields) {
+	fields.forEach(field => {
+		let cachedFields = localStorage;
+        for (let i = 0; i < cachedFields.length; i++) {
+	        const key = localStorage.key(i);        
+	        if (key.includes(field)){
+	        	localStorage.removeItem(key);
+	        }
+    	}
+    });
+}
+
+function clearFormFields(fields){
+	for(let i = 0; i < fields.length; i++){
+        const field = fields[i];
+		if(field !== 'InkSign'){
+		
+			var fieldproperties = fd.field(field);
+
+			if(fieldproperties._fieldCtx !== undefined){
+				var fieldDefaultVal = fieldproperties._fieldCtx.schema.DefaultValue;
+				
+				if (fieldDefaultVal !== undefined && fieldDefaultVal !== null) {}  
+				else              
+					fd.field(field).clear();
+			}
+			else fd.field(field).clear();
+		}
+    }
+}
+
+function disableRichTextField(fieldname){
+
+	let elem = $(fd.field(fieldname).$el).find('.k-editor tr');
+
+	elem.each(function(index, element){	
+
+	 if(index === 0)
+		$(element).remove()
+
+	 else if(index === 1){	
+
+		let iframe = $(element).find('iframe');
+		
+		if(iframe.length > 0){
+
+			let content = iframe.contents();			
+			let divElement = content.find('div');
+
+			var lblElement = $('<label>', { 
+			  for: 'inputField', 
+			}).html(divElement.html());	
+			
+			if(divElement.length === 0){				
+				lblElement = $('<label>', { 
+					for: 'inputField', 
+				  }).html(content[0].activeElement.innerHTML);
+			}
+
+			lblElement.css({ 
+				'padding-top': '6px',
+				'padding-bottom': '6px',
+				'padding-left': '12px',
+				'background-color': '#e9ecef',
+				'width': '100%',
+				'border-radius': '4px'				
+			});		
+
+			let tblElement = iframe.parent().parent().parent().parent();
+			tblElement.parent().append(lblElement);
+			tblElement.remove();
+		}
+	   }
+	})
 }

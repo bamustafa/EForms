@@ -3,11 +3,13 @@ var _layout = '/_layouts/15/PCW/General/EForms',
     _ListInternalName = _spPageContextInfo.serverRequestPath.split('/')[5],
     _ListFullUrl = _spPageContextInfo.webAbsoluteUrl + '/Lists/' + _ListInternalName;
 
+let _CVOwnerName = '', _CVOwnerEmail = '';
+
 let Inputelems = document.querySelectorAll('input[type="text"]');
 
 var _modulename = "", _formType = "", EmpGrade = 'P1', RedirectRule = "Dont Redirect", _DipN = "", _Impersonate, EmployeeID;
 
-let items, itemsPerUser, ProjectExperienceitems ,Capabilitiesitems , CapabilitiesitemsCount, _Status, RealDisplayName, editTaskLink, CreatedByEmail;
+let items, itemsPerUser, ProjectExperienceitems ,Capabilitiesitems , CapabilitiesitemsCount, _Status, RealDisplayName, RealLoginName, editTaskLink, CreatedByEmail;
 
 let EmployerArr=[], FromYearArr=[], ToYearArr=[], CountryArr=[], TitleArr=[], PositionArr=[], ProjectArr=[], ProfessionArr=[], FieldOfSpecializationArr=[], KeyQualificationsArr=[];
 
@@ -17,6 +19,7 @@ let _SubmitAlertMessage = 'By clicking "Submit", you will send your information 
 let _CapabilitiesTableCount = false, _CAdditionalCapabilitiesTableCount = false, _CTopFiveTableCount = false, _CProjectsTableCount = false, _CPrevExpTableCount = false, _ProceedConfirm = false, _isforReviewer = false;
 
 const itemsToRemove = ['Status', 'State', 'Code', 'WorkflowStatus'];
+let failureMessage = 'Please note that a failure occurred while rendering the form. We have been notified and will resolve the issue immediately.\nFor any support, please contact CVUpdate@dar.com.';
 
 // const blueColor = '#a1b8f1a1', greenColor = '#6abaac96', yellowColor = '#fee082d1', redColor = '#ff5733a3';
 const blueColor = '#6ca9d5', greenColor = '#5FC9B3', yellowColor = '#F7D46D', redColor = '#F28B82';
@@ -48,11 +51,16 @@ var onCVGuidlinesRender = async function (formType){
  
     clearLocalStorageItemsByField(itemsToRemove);
 
-	if(formType == 'New'){        
+	if(formType == 'New'){     
 		await CVGuidlines_newForm();        
     } 	
-    else if(formType == 'Edit'){        
-		await CVGuidlines_editForm();       
+    else if(formType == 'Edit'){     
+
+		await CVGuidlines_editForm(); 
+        
+        _CVOwnerName = fd.field('CVOwner').value.DisplayText;
+        _CVOwnerEmail = fd.field('CVOwner').value.EntityData.Email;
+        $(fd.field('CVOwner').$parent.$el).hide();
     }    
     else if(formType == 'Display'){ 
         //setPreviewForm();
@@ -60,22 +68,46 @@ var onCVGuidlinesRender = async function (formType){
     }    
 }
 
-var CVGuidlines_newForm = async function(){	  
+var CVGuidlines_newForm = async function(){   
     
     fd.toolbar.buttons[0].style = "display: none;";
-    fd.toolbar.buttons[1].style = "display: none;";    
+    fd.toolbar.buttons[1].style = "display: none;"; 
+    
+    let isOneFile = true;
+
+    fd.validators.push({
+        error: "Please upload the softcopy",
+        validate: function(value) {	
+            if(isOneFile)
+            {                       
+                if(fd.field('Attachments').value.length > 1)
+                {
+                    this.error = 'Please upload only one image file in .png, .jpg, or .jpeg format.';
+                    return false; 
+                }
+
+                else if(fd.field('Attachments').value.length === 1)
+                {
+                    const valext = fd.field('Attachments').value[0];
+                    const ext = fd.field('Attachments').value[0].name.split(".")[1];                             		  
+                    if (!['png', 'jpg', 'jpeg'].includes(ext.toString().toLowerCase())) {
+                        this.error = "Only .png, .jpg, or .jpeg files are allowed for upload.";
+                        return false;
+                    }                    
+                }	
+            }
+            
+        return true;
+        }
+    });
     	
 	CustomclearStoragedFields(fd.spForm.fields);  
     
     var content = "To review your HR data please <a href='https://bi.dar.com/reports/powerbi/TC/EmployeeProfile?rs:Embed=true' target='_blank' style='color: blue;text-decoration: underline;'>click here</a>.";
-    $('#HR-html').append(content); 
-	
-    $(fd.field('EmployeeID').$parent.$el).hide();
-	$(fd.field('Grade').$parent.$el).hide();
-    $(fd.field('Status').$parent.$el).hide(); 
-    $(fd.field('ImpTog').$parent.$el).hide(); 
-    $(fd.field('Impersonate').$parent.$el).hide();
-    $(fd.field('LoginName').$parent.$el).hide();
+    $('#HR-html').append(content);
+    
+    const hideField = (field) => $(fd.field(field).$parent.$el).hide();
+    ['EmployeeID', 'Grade', 'Status', 'ImpTog', 'Impersonate', 'LoginName', 'CVOwner'].forEach(hideField);   
     
     await loadingButtons();
     formatingButtonsBar();	
@@ -101,14 +133,23 @@ var CVGuidlines_newForm = async function(){
 
         fd.field('Impersonate').$on('change', async function(value) {                  
 
-            let filterValue;
+            let filterValue = '';
+            
+            debugger;
 
             if (value != null) {                       
                 const DisplayName = value.DisplayText;
                 const LoginName = value.Description;
                 
                 updateFields(DisplayName, LoginName);
-                await performDataFetch(LoginName);
+                //await doLoadFunction(LoginName, DisplayName);
+                try {
+                    await doLoadFunction(LoginName, DisplayName);   
+                }    
+                catch(err){
+                    await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, LoginName, DisplayName, err.message, err.stack);
+                    alert(failureMessage);
+                }
 
                 filterValue = LoginName;                       
             } else {
@@ -116,8 +157,7 @@ var CVGuidlines_newForm = async function(){
                 resetFields();
                 LoginName = '';
                 DisplayName = 'M&C Team';
-                updateFields(DisplayName, LoginName);
-                await performDataFetch(LoginName);
+                updateFields(DisplayName, LoginName);                
             }
 
             applyFilters(filterValue);
@@ -127,7 +167,7 @@ var CVGuidlines_newForm = async function(){
 
             if(value){
 
-                let filterByColumn = '';
+                let filterByColumn = '';                
 
                 $(fd.field('Impersonate').$parent.$el).show();
                 fd.field('Impersonate').required = true;
@@ -140,7 +180,14 @@ var CVGuidlines_newForm = async function(){
                     LoginName = ImpersonatedUser.Description;
                     
                     updateFields(DisplayName, LoginName);
-                    await performDataFetch(LoginName);
+                    //await doLoadFunction(LoginName, DisplayName);
+                    try {
+                        await doLoadFunction(LoginName, DisplayName);   
+                    }    
+                    catch(err){
+                        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, LoginName, DisplayName, err.message, err.stack);
+                        alert(failureMessage);
+                    }
                     filterByColumn = `${LoginName}`; 
                 }
                 else {                    
@@ -148,35 +195,10 @@ var CVGuidlines_newForm = async function(){
                     resetFields();
                     LoginName = '';
                     DisplayName = 'M&C Team';
-                    updateFields(DisplayName, LoginName);
-                    await performDataFetch(LoginName);
+                    updateFields(DisplayName, LoginName);                    
                 } 
 
-                applyFilters(filterByColumn);
-
-                fd.field('Impersonate').$on('change', async function(value) {                  
-
-                    let filterValue;
-        
-                    if (value != null) {                       
-                        const DisplayName = value.DisplayText;
-                        const LoginName = value.Description;
-                        
-                        updateFields(DisplayName, LoginName);
-                        await performDataFetch(LoginName);
-        
-                        filterValue = LoginName;                       
-                    } else {
-                        filterValue = '1234';
-                        resetFields();
-                        LoginName = '';
-                        DisplayName = 'M&C Team';
-                        updateFields(DisplayName, LoginName);
-                        await performDataFetch(LoginName);
-                    }
-        
-                    applyFilters(filterValue);
-                });
+                applyFilters(filterByColumn);                
             }
             else{
 
@@ -192,7 +214,14 @@ var CVGuidlines_newForm = async function(){
                 });
 
                 updateFields(DisplayName, LoginName);
-                await performDataFetch(LoginName); 
+                //await doLoadFunction(LoginName, DisplayName); 
+                try {
+                    await doLoadFunction(LoginName, DisplayName);   
+                }    
+                catch(err){
+                    await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, LoginName, DisplayName, err.message, err.stack);
+                    alert(failureMessage);
+                }
                 applyFilters(LoginName);             
             }
         });        
@@ -206,20 +235,12 @@ var CVGuidlines_newForm = async function(){
         
         updateFields(DisplayName, LoginName);        
         doLoad = true;
-    }  
+    }     
 
-    localStorage.setItem('LoginName', LoginName);
-    localStorage.setItem('DisplayName', DisplayName);
+    //localStorage.setItem('LoginName', LoginName);
+    //localStorage.setItem('DisplayName', DisplayName);
 
-    if(doLoad){
-        let startTime = performance.now();
-        await GetItemCT(LoginName);       
-        let endTime = performance.now();
-        let elapsedTime = endTime - startTime;
-        console.log(`Execution time GetItemCount: ${elapsedTime} milliseconds`);
-    }
-
-	fd.control('CapabilitiesTable').dialogOptions = {
+    fd.control('CapabilitiesTable').dialogOptions = {
         width: '95%',  
     	height: '94%'       
     }
@@ -242,41 +263,25 @@ var CVGuidlines_newForm = async function(){
 	fd.control('PrevExpTable').dialogOptions = {       
 		width: '95%',  
     	height: '94%' 
-    }
+    }	
     
     if(doLoad){
-        // startTime = performance.now();
-        // await GetEmpKeyQualFromSP(LoginName, DisplayName);
-        // endTime = performance.now();
-        // elapsedTime = endTime - startTime;
-        // console.log(`Execution time Qualifications Update: ${elapsedTime} milliseconds`); 
-        
-        // startTime = performance.now();
-        // await GetEmpPreDarExpFromSP(LoginName, DisplayName);
-        // endTime = performance.now();
-        // elapsedTime = endTime - startTime;
-        // console.log(`Execution time GetEmployeePreDarExperiences: ${elapsedTime} milliseconds`);        
-        
-        startTime = performance.now();
-        await GetProfession(LoginName);
-        endTime = performance.now();
-        elapsedTime = endTime - startTime;
-        console.log(`Execution time GetProfession: ${elapsedTime} milliseconds`); 
-      
-        startTime = performance.now();
-        await GetEmpGrade(LoginName);
-        endTime = performance.now();
-        elapsedTime = endTime - startTime;
-        console.log(`Execution time GetEmployeeGrade: ${elapsedTime} milliseconds`); 	
+        try {
+            await doLoadFunction(LoginName, DisplayName);   
+        }    
+        catch(err){
+            await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, LoginName, DisplayName, err.message, err.stack);
+            alert(failureMessage);
+        } 
     }
 
-    fd.control('CapabilitiesTable').ready().then(function(dt){        
-		fd.control('CapabilitiesTable').buttons[0].visible = false;	
+    fd.control('CapabilitiesTable').ready().then(function(dt){               
         fd.control('CapabilitiesTable').buttons[fd.control('CapabilitiesTable').buttons.length - 1].visible = false; 
         fd.control('CapabilitiesTable').buttons[1].text = 'Edit Recorded Capability';
         fd.control('CapabilitiesTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
         fd.control('CapabilitiesTable').refresh().then(function() {
             setTimeout(function() {
+                fd.control('CapabilitiesTable').buttons[0].visible = false;
                 FixWidget(fd.control('CapabilitiesTable')); 
             }, 200); // Delay of 2000 milliseconds (2 seconds)
         });                          
@@ -294,13 +299,13 @@ var CVGuidlines_newForm = async function(){
         });                      
 	});	
     
-    fd.control('TopFiveTable').ready().then(function(dt){		
-        fd.control('TopFiveTable').buttons[0].text = 'Add responsibilities and achievements'; 
+    fd.control('TopFiveTable').ready().then(function(dt){                  
         fd.control('TopFiveTable').buttons[1].text = 'Edit responsibilities and achievements';
         fd.control('TopFiveTable').buttons[fd.control('TopFiveTable').buttons.length - 1].visible = false;        
         fd.control('TopFiveTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
         fd.control('TopFiveTable').refresh().then(function() {
             setTimeout(function() {
+                fd.control('TopFiveTable').buttons[0].visible = false; 
                 FixWidget(fd.control('TopFiveTable')); 
             }, 200); // Delay of 2000 milliseconds (2 seconds)
         });                       
@@ -319,8 +324,7 @@ var CVGuidlines_newForm = async function(){
 	});	
     
     fd.control('PrevExpTable').ready().then(function(dt){		
-        fd.control('PrevExpTable').buttons[0].text = 'Add Pre-Dar Experience';
-        //fd.control('CapabilitiesTable').buttons[0].visible = false;	 
+        fd.control('PrevExpTable').buttons[0].text = 'Add Pre-Dar Experience';        	 
         fd.control('PrevExpTable').buttons[1].text = 'Edit Pre-Dar Experience'; 
         fd.control('PrevExpTable').buttons[fd.control('PrevExpTable').buttons.length - 1].visible = false;         
         fd.control('PrevExpTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
@@ -355,10 +359,11 @@ var CVGuidlines_newForm = async function(){
     });
     
     fd.control('TopFiveTable').$on('change', function(changeData) {					
-    	fd.control('TopFiveTable').ready().then(function(){                      
+    	fd.control('TopFiveTable').ready().then(function(){             	                     
     		fd.control('TopFiveTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${localStorage.getItem('LoginName')}</Value></Eq>`;        
             fd.control('TopFiveTable').refresh().then(function() {                
-                setTimeout(function() {                     
+                setTimeout(function() { 
+                    fd.control('TopFiveTable').buttons[0].visible = false;                    
                     FixWidget(fd.control('TopFiveTable')); 
                 }, 200); // Delay of 2000 milliseconds (2 seconds)
             });                                     
@@ -467,11 +472,11 @@ var CVGuidlines_newForm = async function(){
             items.splice(indexOfPrevItem, 1); 
         }
 
-        if (items.length > 0){
-            fd.control('TopFiveTable').buttons[0].visible = false; 
-        }
-        else
-            fd.control('TopFiveTable').buttons[0].visible = true;
+        // if (items.length > 0){
+        //     fd.control('TopFiveTable').buttons[0].visible = false; 
+        // }
+        // else
+        //     fd.control('TopFiveTable').buttons[0].visible = true;
     });    
     
     fd.control('ProjectsTable').$watch('selectedItems', function(items, pervItem) {
@@ -543,10 +548,40 @@ var CVGuidlines_newForm = async function(){
 	preloader("remove");
 }
 
-var CVGuidlines_editForm = async function(){ 
-	
+var CVGuidlines_editForm = async function(){
+
     fd.toolbar.buttons[0].style = "display: none;";
     fd.toolbar.buttons[1].style = "display: none;"; 
+
+    debugger;
+
+    let isOneFile = true;
+
+    fd.validators.push({
+        error: "Please upload the softcopy",
+        validate: function(value) {	
+            if(isOneFile)
+            {                       
+                if(fd.field('Attachments').value.length > 1)
+                {
+                    this.error = 'Please upload only one image file in .png, .jpg, or .jpeg format.';
+                    return false; 
+                }
+
+                else if(fd.field('Attachments').value.length === 1)
+                {
+                    const valext = fd.field('Attachments').value[0];
+                    const ext = fd.field('Attachments').value[0].name.split(".")[1];                             		  
+                    if (!['png', 'jpg', 'jpeg'].includes(ext.toString().toLowerCase())) {
+                        this.error = "Only .png, .jpg, or .jpeg files are allowed for upload.";
+                        return false;
+                    }                    
+                }	
+            }
+            
+        return true;
+        }
+    });
     
     var content = "To review your HR data please <a href='https://bi.dar.com/reports/powerbi/TC/EmployeeProfile?rs:Embed=true' target='_blank' style='color: blue;text-decoration: underline;'>click here</a>.";
     $('#HR-html').append(content); 
@@ -558,7 +593,7 @@ var CVGuidlines_editForm = async function(){
     localStorage.setItem('Impersonate', _Impersonate);
     $(fd.field('Impersonate').$parent.$el).hide(); 
 
-    editTaskLink = _ListFullUrl + "/SitePages/PlumsailForms/CV/Item/DisplayForm.aspx?item=" + fd.itemId; 
+    editTaskLink = _spPageContextInfo.webAbsoluteUrl + "/SitePages/PlumsailForms/CV/Item/DisplayForm.aspx?item=" + fd.itemId; 
    
     CreatedByEmail = fd.field('Author').value.email;
     if(CreatedByEmail === ''){		
@@ -574,26 +609,41 @@ var CVGuidlines_editForm = async function(){
 	const MCAdmin = await CheckifUserinSPGroup(); 
     localStorage.setItem('MCAdmin', MCAdmin);
 
-    var DisplayName;
-	await pnp.sp.web.currentUser.get().then(user => {			        
-        DisplayName = user.Title;
-        //AssignedToEmail = user.Email;
-    });
-	
-	RealDisplayName = fd.field('Title').value;
+    let LoginName = '', DisplayName = '';
+
+    LoginName = fd.field('LoginName').value;
+    $(fd.field('LoginName').$parent.$el).hide();
+
+    DisplayName = fd.field('Title').value;
+    //$(fd.field('Title').$parent.$el).hide(); 
+    
+	await pnp.sp.web.currentUser.get().then(user => {
+        RealDisplayName = user.Title;
+		RealLoginName = user.LoginName.split('|')[1];
+    });    
+
+    localStorage.setItem('LoginName', LoginName);
+    localStorage.setItem('DisplayName', DisplayName);   
           
     if(MCAdmin === 'User') {	
-		if(DisplayName !== RealDisplayName) {
+		if (LoginName.toLowerCase() !== RealLoginName.toLowerCase()){
 			alert("Apologies, this item is not related to you.");
 	    	fd.close();
 		}        
 	}
     else{
-        if(DisplayName === RealDisplayName)
+        if(LoginName.toLowerCase() === RealLoginName.toLowerCase())
             _isforReviewer = true;
     }
 
-    await GetProfession(DisplayName);    
+    try{
+        await GetProfession(LoginName); 
+        await GetEmployeesTopFiveProjects(LoginName, DisplayName, fd.itemId); 
+    }
+    catch(err){
+        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, LoginName, DisplayName, err.message, err.stack);
+        alert(failureMessage);
+    } 
     
     RenderForm(MCAdmin);
 
@@ -649,7 +699,27 @@ var CVGuidlines_editForm = async function(){
 	
 	if(fd.field('Grade').value !== '')
 		EmpGrade = fd.field('Grade').value;
+    else
+    {
+        try{
+            let xmlDoc = await GetEmployeeGrade('GET', true, LoginName);  
+    
+            const table1Nodes = xmlDoc.getElementsByTagName("EmployeeGrade");
+
+            if(table1Nodes !== undefined && table1Nodes !== null && table1Nodes.length > 0)	{
+                EmpGrade = table1Nodes[0].getElementsByTagName("Grade")[0].textContent.trim();   
+                fd.field('Grade').value = EmpGrade;         
+            }
+        }
+        catch(err){
+            await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, LoginName, DisplayName, err.message, err.stack);
+            alert(failureMessage);
+        } 
+    }
 	$(fd.field('Grade').$parent.$el).hide();
+
+    if(EmpGrade === '' || EmpGrade.toLowerCase().includes('t'))
+		EmpGrade = 'P1';
 	
 	// await pnp.sp.web.currentUser.get().then(user => {
     //     DisplayName = user.Title;
@@ -682,94 +752,130 @@ var CVGuidlines_editForm = async function(){
     }
     
     fd.control('CapabilitiesTable').ready().then(function(){
-		fd.control('CapabilitiesTable').buttons[fd.control('CapabilitiesTable').buttons.length - 1].visible = false; 
-        fd.control('CapabilitiesTable').buttons[0].visible = false;     
+		fd.control('CapabilitiesTable').buttons[fd.control('CapabilitiesTable').buttons.length - 1].visible = false;            
         fd.control('CapabilitiesTable').buttons[1].text = 'Edit Recorded Capability';
-        
-        FixWidget(fd.control('CapabilitiesTable')); 
-        GetCapabilitiesTableCount(fd.control('CapabilitiesTable'));          
+        fd.control('CapabilitiesTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        fd.control('CapabilitiesTable').refresh().then(function() {
+            setTimeout(function() {
+                fd.control('CapabilitiesTable').buttons[0].visible = false; 
+                FixWidget(fd.control('CapabilitiesTable')); 
+                GetCapabilitiesTableCount(fd.control('CapabilitiesTable')); 
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                
 	});
     	
     fd.control('AdditionalCapabilitiesTable').ready().then(function(){
 		fd.control('AdditionalCapabilitiesTable').buttons[fd.control('AdditionalCapabilitiesTable').buttons.length - 1].visible = false;
         fd.control('AdditionalCapabilitiesTable').buttons[0].text = 'Add new field of specialization'; 
-        fd.control('AdditionalCapabilitiesTable').buttons[1].text = 'Edit field of specialization';        
-        
-        FixWidget(fd.control('AdditionalCapabilitiesTable'));
-        GetCAdditionalCapabilitiesTableCount(fd.control('AdditionalCapabilitiesTable'));                   
+        fd.control('AdditionalCapabilitiesTable').buttons[1].text = 'Edit field of specialization';  
+        fd.control('AdditionalCapabilitiesTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        fd.control('AdditionalCapabilitiesTable').refresh().then(function() {
+            setTimeout(function() {
+                FixWidget(fd.control('AdditionalCapabilitiesTable')); 
+                GetCAdditionalCapabilitiesTableCount(fd.control('AdditionalCapabilitiesTable'));  
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                       
 	});  
     
     fd.control('TopFiveTable').ready().then(function(){
 		fd.control('TopFiveTable').buttons[fd.control('TopFiveTable').buttons.length - 1].visible = false;      
-        fd.control('TopFiveTable').buttons[0].text = 'Add responsibilities and achievements'; 
+        // fd.control('TopFiveTable').buttons[0].text = 'Add responsibilities and achievements'; 
         fd.control('TopFiveTable').buttons[1].text = 'Edit responsibilities and achievements'; 
-        //$('.k-grid-content, .k-auto-scrollable').css('height', '38px');
-        
-        FixWidget(fd.control('TopFiveTable')); 
-        GetCTopFiveTableCount(fd.control('TopFiveTable'));                
+        fd.control('TopFiveTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        fd.control('TopFiveTable').refresh().then(function() {
+            setTimeout(function() {
+                fd.control('TopFiveTable').buttons[0].visible = false; 
+                FixWidget(fd.control('TopFiveTable')); 
+                GetCTopFiveTableCount(fd.control('TopFiveTable'));
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                       
 	}); 
 
     fd.control('ProjectsTable').ready().then(function(){
 		fd.control('ProjectsTable').buttons[fd.control('ProjectsTable').buttons.length - 1].visible = false; 
         fd.control('ProjectsTable').buttons[0].text = 'Add additional project'; 
         fd.control('ProjectsTable').buttons[1].text = 'Edit project';
-        
-        FixWidget(fd.control('ProjectsTable')); 
-        GetCProjectsTableCount(fd.control('ProjectsTable'));                        
+        fd.control('ProjectsTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        fd.control('ProjectsTable').refresh().then(function() {
+            setTimeout(function() {
+                FixWidget(fd.control('ProjectsTable')); 
+                GetCProjectsTableCount(fd.control('ProjectsTable')); 
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                              
 	});
 
     fd.control('PrevExpTable').ready().then(function(){
 		fd.control('PrevExpTable').buttons[fd.control('PrevExpTable').buttons.length - 1].visible = false;  
         fd.control('PrevExpTable').buttons[0].text = 'Add Pre-Dar Experience'; 
         fd.control('PrevExpTable').buttons[1].text = 'Edit Pre-Dar Experience';
-        
-        FixWidget(fd.control('PrevExpTable')); 
-        GetCPrevExpTableCount(fd.control('PrevExpTable'));                             
+        fd.control('PrevExpTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        fd.control('PrevExpTable').refresh().then(function() {
+            setTimeout(function() {
+                FixWidget(fd.control('PrevExpTable')); 
+                GetCPrevExpTableCount(fd.control('PrevExpTable'));  
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                                   
 	});  
     
      fd.control('CapabilitiesTable').$on('change', async function(changeData) {					
-    	fd.control('CapabilitiesTable').ready().then(async function(){                        
-    		fd.control('CapabilitiesTable').refresh().then(function(){ 
-                fd.control('CapabilitiesTable').buttons[0].visible = false;
-                FixWidget(fd.control('CapabilitiesTable'));
-                GetCapabilitiesTableCount(fd.control('CapabilitiesTable')); 
-            });                                              
+    	fd.control('CapabilitiesTable').ready().then(async function(){            
+            fd.control('CapabilitiesTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${localStorage.getItem('LoginName')}</Value></Eq>`;        
+            fd.control('CapabilitiesTable').refresh().then(function() {                
+                setTimeout(function() {                     
+                    fd.control('CapabilitiesTable').buttons[0].visible = false;
+                    FixWidget(fd.control('CapabilitiesTable'));
+                    GetCapabilitiesTableCount(fd.control('CapabilitiesTable')); 
+                }, 200); // Delay of 2000 milliseconds (2 seconds)
+            });    		                                              
     	});          			  				       
     });
     
     fd.control('AdditionalCapabilitiesTable').$on('change', async function(changeData) {					
-    	fd.control('AdditionalCapabilitiesTable').ready().then(async function(){            
-    		fd.control('AdditionalCapabilitiesTable').refresh().then(function(){ 
-                FixWidget(fd.control('AdditionalCapabilitiesTable')); 
-                GetCAdditionalCapabilitiesTableCount(fd.control('AdditionalCapabilitiesTable')); 
-            });                                     
+    	fd.control('AdditionalCapabilitiesTable').ready().then(async function(){  
+            fd.control('AdditionalCapabilitiesTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${localStorage.getItem('LoginName')}</Value></Eq>`;        
+            fd.control('AdditionalCapabilitiesTable').refresh().then(function() {                
+                setTimeout(function() {                     
+                    FixWidget(fd.control('AdditionalCapabilitiesTable')); 
+                    GetCAdditionalCapabilitiesTableCount(fd.control('AdditionalCapabilitiesTable')); 
+                }, 200); // Delay of 2000 milliseconds (2 seconds)
+            });   		                                     
     	});          			  				       
     });
     
-    fd.control('TopFiveTable').$on('change', async function(changeData) {					
-    	fd.control('TopFiveTable').ready().then(async function(){            
-    		fd.control('TopFiveTable').refresh().then(function(){ 
-                FixWidget(fd.control('TopFiveTable'));
-                GetCTopFiveTableCount(fd.control('TopFiveTable')); 
-            });                                     
+    fd.control('TopFiveTable').$on('change', async function(changeData) {        					
+    	fd.control('TopFiveTable').ready().then(async function(){              
+            fd.control('TopFiveTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${localStorage.getItem('LoginName')}</Value></Eq>`;        
+            fd.control('TopFiveTable').refresh().then(function() {                
+                setTimeout(function() {    
+                    fd.control('TopFiveTable').buttons[0].visible = false;                 
+                    FixWidget(fd.control('TopFiveTable'));
+                    GetCTopFiveTableCount(fd.control('TopFiveTable')); 
+                }, 200); // Delay of 2000 milliseconds (2 seconds)
+            });    		                                    
     	});          			  				       
     }); 
     
     fd.control('ProjectsTable').$on('change', async function(changeData) {					
-    	fd.control('ProjectsTable').ready().then(async function(){            
-    		fd.control('ProjectsTable').refresh().then(function(){ 
-                FixWidget(fd.control('ProjectsTable')); 
-                GetCProjectsTableCount(fd.control('ProjectsTable'));
-            });                                     
+    	fd.control('ProjectsTable').ready().then(async function(){ 
+            fd.control('ProjectsTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${localStorage.getItem('LoginName')}</Value></Eq>`;        
+            fd.control('ProjectsTable').refresh().then(function() {                
+                setTimeout(function() {                     
+                    FixWidget(fd.control('ProjectsTable')); 
+                    GetCProjectsTableCount(fd.control('ProjectsTable'));
+                }, 200); // Delay of 2000 milliseconds (2 seconds)
+            });   		                                    
     	});          			  				       
     }); 
     
     fd.control('PrevExpTable').$on('change', async function(changeData) {					
-    	fd.control('PrevExpTable').ready().then(async function(){            
-    		fd.control('PrevExpTable').refresh().then(function(){ 
-                FixWidget(fd.control('PrevExpTable'));
-                GetCPrevExpTableCount(fd.control('PrevExpTable')); 
-            });                                     
+    	fd.control('PrevExpTable').ready().then(async function(){   
+            fd.control('PrevExpTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${localStorage.getItem('LoginName')}</Value></Eq>`;        
+            fd.control('PrevExpTable').refresh().then(function() {                
+                setTimeout(function() {                     
+                    FixWidget(fd.control('PrevExpTable'));
+                    GetCPrevExpTableCount(fd.control('PrevExpTable')); 
+                }, 200); // Delay of 2000 milliseconds (2 seconds)
+            });   		                                     
     	});          			  				       
     }); 
     
@@ -853,11 +959,11 @@ var CVGuidlines_editForm = async function(){
             items.splice(indexOfPrevItem, 1); 
         }
 
-        if (items.length > 0){
-            fd.control('TopFiveTable').buttons[0].visible = false; 
-        }
-        else
-            fd.control('TopFiveTable').buttons[0].visible = true;
+        // if (items.length > 0){
+        //     fd.control('TopFiveTable').buttons[0].visible = false; 
+        // }
+        // else
+        //     fd.control('TopFiveTable').buttons[0].visible = true;
     });    
     
     fd.control('ProjectsTable').$watch('selectedItems', function(items, pervItem) {
@@ -921,20 +1027,40 @@ var CVGuidlines_editForm = async function(){
         else
             fd.control('PrevExpTable').buttons[0].visible = true;
     });
+
+    var isTrue = false;
     
-	const referenceGrade = "P4+";
-	const parsedGrade = parseGrade(EmpGrade);
-    const parsedReference = parseGrade(referenceGrade);
-	var isTrue = false;
-	
-	if (!parsedGrade || !parsedReference)
-	    isTrue = false;
-	if (parsedGrade.level > parsedReference.level) {
-        isTrue = true;
-    } else if (parsedGrade.level === parsedReference.level) {        
-        isTrue = parsedGrade.plus && parsedReference.plus;
-    } else {
-        isTrue = false;
+    try{
+
+        if(EmpGrade.includes('T')){
+            isTrue = false;
+        }
+        else if(EmpGrade === 'N/A'){
+            isTrue = false;
+        }
+        else if(EmpGrade === ''){
+            isTrue = false;
+        }
+        else{
+            
+            const referenceGrade = "P4+";
+            const parsedGrade = parseGrade(EmpGrade);
+            const parsedReference = parseGrade(referenceGrade);	
+            
+            if (!parsedGrade || !parsedReference)
+                isTrue = false;
+            if (parsedGrade.level > parsedReference.level) {
+                isTrue = true;
+            } else if (parsedGrade.level === parsedReference.level) {        
+                isTrue = parsedGrade.plus && parsedReference.plus;
+            } else {
+                isTrue = false;
+            }
+        }
+    }
+    catch(err){
+        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, LoginName, DisplayName, err.message, err.stack);
+        alert(failureMessage);
     }
 	
 	$('.PMRes').hide();
@@ -942,6 +1068,7 @@ var CVGuidlines_editForm = async function(){
 	$('.picImg').hide();
 	$(fd.field('Responsibilities').$parent.$el).hide();
 	
+    
 	if(isTrue) {
 		$('.PMRes').show();
         $('.toHide').show();
@@ -970,14 +1097,24 @@ var CVGuidlines_editForm = async function(){
    
     var elements = document.querySelectorAll('.fd-sp-field-text, .col-form-label');  
     elements[1].style.marginLeft = '-50px';
+
+    setTimeout(async () => {
+        await setButtonToolTip('Save', 'Save your progress.');
+        await setButtonToolTip('Submit', 'Submit your final input.');
+        await setButtonToolTip('Confirm', 'Submit your final input.');
+        await setButtonToolTip('Preview', 'View your input before submitting.');
+        await setButtonToolTip('Cancel', 'Discard changes and exit.');
+    }, 300);    
     
-	preloader("remove");
-	
+	preloader("remove");	
 }
 
 var CVGuidlines_displayForm = async function(){	
 
     //fd.toolbar.buttons[1].style = "display: none;";
+
+    debugger;
+
     fd.toolbar.buttons[1].text = "Cancel";
     fd.toolbar.buttons[1].icon = "Cancel";
     fd.toolbar.buttons[1].style = `background-color:${redColor}; color:white; width:195px !important;`;
@@ -992,18 +1129,48 @@ var CVGuidlines_displayForm = async function(){
     var content = "To review your HR data please <a href='https://bi.dar.com/reports/powerbi/TC/EmployeeProfile?rs:Embed=true' target='_blank' style='color: blue;text-decoration: underline;'>click here</a>.";
     $('#HR-html').append(content); 
 
-    _Status = fd.field('Status').value;  
+    _Status = fd.field('Status').value;     
+    $(fd.field('Status').$parent.$el).hide(); 
+
+    let LoginName = '', DisplayName = '';  
+
+    LoginName = fd.field('LoginName').value;
+    $(fd.field('LoginName').$parent.$el).hide();
+
+    DisplayName = fd.field('Title').value;
+    $(fd.field('Title').$parent.$el).hide();
     
-    $(fd.field('Status').$parent.$el).hide();	
+	await pnp.sp.web.currentUser.get().then(user => {
+        RealDisplayName = user.Title;
+		RealLoginName = user.LoginName.split('|')[1];
+    });
 	
 	EmpGrade = fd.field('Grade').value;
-	$(fd.field('Grade').$parent.$el).hide();
-	
-    let DisplayName = '';
-	await pnp.sp.web.currentUser.get().then(user => {
-        DisplayName = user.Title;
-		//LoginName = user.LoginName.split('|')[1];	;
-    });
+
+    if(fd.field('Grade').value !== '')
+		EmpGrade = fd.field('Grade').value;
+    else{
+
+        try{
+            let xmlDoc = await GetEmployeeGrade('GET', true, LoginName);  
+    
+            const table1Nodes = xmlDoc.getElementsByTagName("EmployeeGrade");
+
+            if(table1Nodes !== undefined && table1Nodes !== null && table1Nodes.length > 0)	{
+                EmpGrade = table1Nodes[0].getElementsByTagName("Grade")[0].textContent.trim();   
+                fd.field('Grade').value = EmpGrade;         
+            }
+        }
+        catch(err){
+            await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, LoginName, DisplayName, err.message, err.stack);
+            alert(failureMessage);
+        }
+    }
+
+    if(EmpGrade === '' || EmpGrade.toLowerCase().includes('t'))
+		EmpGrade = 'P1';
+
+	$(fd.field('Grade').$parent.$el).hide();   
 
 	fd.control('CapabilitiesTable').dialogOptions = {
         width: '95%',  
@@ -1033,7 +1200,12 @@ var CVGuidlines_displayForm = async function(){
     fd.control('CapabilitiesTable').ready().then(function(dt){	       
         dt.buttons[0].visible = false; 
         dt.buttons[dt.buttons.length - 1].visible = false; 
-        FixWidget(dt);                                 
+        dt.filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        dt.refresh().then(function() {
+            setTimeout(function() {
+                FixWidget(dt); 
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                                        
 	});
     
     fd.control('CapabilitiesTable').$watch('selectedItems',
@@ -1047,7 +1219,12 @@ var CVGuidlines_displayForm = async function(){
     fd.control('AdditionalCapabilitiesTable').ready().then(function(dt){        
 		dt.buttons[0].visible = false;  
         dt.buttons[dt.buttons.length - 1].visible = false;
-        FixWidget(dt);                       
+        dt.filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        dt.refresh().then(function() {
+            setTimeout(function() {
+                FixWidget(dt); 
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                       
 	});
     
     fd.control('AdditionalCapabilitiesTable').$watch('selectedItems',
@@ -1061,7 +1238,12 @@ var CVGuidlines_displayForm = async function(){
     fd.control('TopFiveTable').ready().then(function(dt){
 		dt.buttons[0].visible = false;  
         dt.buttons[dt.buttons.length - 1].visible = false;
-        FixWidget(dt);                      
+        dt.filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        dt.refresh().then(function() {
+            setTimeout(function() {
+                FixWidget(dt); 
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                      
 	});
     
     fd.control('TopFiveTable').$watch('selectedItems',
@@ -1075,7 +1257,12 @@ var CVGuidlines_displayForm = async function(){
     fd.control('ProjectsTable').ready().then(function(dt){
 		dt.buttons[0].visible = false;  
         dt.buttons[dt.buttons.length - 1].visible = false;
-        FixWidget(dt);                         
+        dt.filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        dt.refresh().then(function() {
+            setTimeout(function() {
+                FixWidget(dt); 
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                         
 	});
     
     fd.control('ProjectsTable').$watch('selectedItems',
@@ -1089,7 +1276,12 @@ var CVGuidlines_displayForm = async function(){
     fd.control('PrevExpTable').ready().then(function(dt){
 		dt.buttons[0].visible = false;  
         dt.buttons[dt.buttons.length - 1].visible = false;
-        FixWidget(dt);                    
+        dt.filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;        
+        dt.refresh().then(function() {
+            setTimeout(function() {
+                FixWidget(dt); 
+            }, 200); // Delay of 2000 milliseconds (2 seconds)
+        });                    
 	});
     
     fd.control('PrevExpTable').$watch('selectedItems',
@@ -1098,21 +1290,28 @@ var CVGuidlines_displayForm = async function(){
         buttons.forEach(button => {
             button.visible = false; 
         });
-    });
-	
-	const referenceGrade = "P4+";
-	const parsedGrade = parseGrade(EmpGrade);
-    const parsedReference = parseGrade(referenceGrade);
-	var isTrue = false;
-	
-	if (!parsedGrade || !parsedReference)
-	    isTrue = false;
-	if (parsedGrade.level > parsedReference.level) {
-        isTrue = true;
-    } else if (parsedGrade.level === parsedReference.level) {        
-        isTrue = parsedGrade.plus && parsedReference.plus;
-    } else {
-        isTrue = false;
+    });	
+    
+    var isTrue = false;
+
+    try {
+        const referenceGrade = "P4+";
+        const parsedGrade = parseGrade(EmpGrade);
+        const parsedReference = parseGrade(referenceGrade);	
+        
+        if (!parsedGrade || !parsedReference)
+            isTrue = false;
+        if (parsedGrade.level > parsedReference.level) {
+            isTrue = true;
+        } else if (parsedGrade.level === parsedReference.level) {        
+            isTrue = parsedGrade.plus && parsedReference.plus;
+        } else {
+            isTrue = false;
+        }
+    }
+    catch(err){
+        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, LoginName, DisplayName, err.message, err.stack);
+        alert(failureMessage);
     }
 	
 	$('.PMRes').hide();
@@ -1145,13 +1344,10 @@ var CVGuidlines_displayForm = async function(){
 	} 
     
     const MCAdmin = await CheckifUserinSPGroup(); 
-    localStorage.setItem('MCAdmin', MCAdmin);
-
-	var RealDisplayName = fd.field('Title').value;
-    $(fd.field('Title').$parent.$el).hide();	
+    localStorage.setItem('MCAdmin', MCAdmin);		
     
     if(MCAdmin === 'User') {	
-		if(DisplayName !== RealDisplayName) {
+		if(LoginName.toLowerCase() !== RealLoginName.toLowerCase()) {
 			alert("Apologies, this item is not related to you.");
 	    	fd.close();
 		}        
@@ -1299,6 +1495,61 @@ async function PreDARensureItemsExist(itemsToEnsure, DisplayName) {
         }
     } catch (error) {
         console.log("Error ensuring items exist:", error);
+    }
+}
+
+async function Top5ensureItemsExist(itemsToEnsure, LoginName, itemId) {
+    let itemValue = '';
+    
+    try {       
+    
+	    const listTitle = 'CV Top Five Projects';//list.Title;
+        
+        const camlFilter = `<View>
+                                <Query>
+                                    <Where>									
+                                        <Eq><FieldRef Name='LoginName'/><Value Type='Text'>${LoginName}</Value></Eq>						
+                                    </Where>
+                                </Query>
+                            </View>`;
+
+        const existingItems = await pnp.sp.web.lists.getByTitle(listTitle).getItemsByCAMLQuery({ ViewXml: camlFilter });
+       
+        const existingItemKeys = new Set(existingItems.map(item => `${item.LoginName.toLowerCase()}|${item.Title.toLowerCase()}`));       
+        const itemsToCreate = itemsToEnsure.filter(item => !existingItemKeys.has(`${item.LoginName.toLowerCase()}|${item.Title.toLowerCase()}`));            
+    
+        if (itemsToCreate.length > 0) {
+            const batch = pnp.sp.web.createBatch();
+
+            itemsToCreate.forEach(async item => {
+
+                itemValue = item;
+                if(itemId !== undefined){
+
+                    const newItemData = {                                                
+                        Lookup_IDId: itemId // Use CVOwnerId to specify the user ID
+                    };
+
+                    const updatedItemData = {
+                        ...item,
+                        ...newItemData
+                    };
+
+                    await pnp.sp.web.lists.getByTitle(listTitle).items.inBatch(batch).add(updatedItemData)
+                    .then(() => console.log(`Item with Title "${item.Title}" created.`));
+                }
+                else{
+                    await pnp.sp.web.lists.getByTitle(listTitle).items.inBatch(batch).add(item)
+                        .then(() => console.log(`Item with Title "${item.Title}" created.`));
+                }
+            });
+
+            await batch.execute();
+        } else {
+            console.log("All items already exist.");
+        }
+    } catch (error) {
+        console.log(`Item: ${JSON.stringify(itemValue)} Error ensuring items exist:`, error);
     }
 }
 
@@ -1452,9 +1703,67 @@ async function GetEmpPreDarExpFromSP(LoginName, DisplayName){
     }  
 }
 
-async function GetEmpGrade(LoginName){
+async function GetEmployeesTopFiveProjects(LoginName, DisplayName, itemId){
 
-    debugger;
+    let GetTopFiveProjects = await GetEmployeesTopFiveProjectsFromSQL('GET', true, LoginName);
+    const GetTopFiveProjectsNodes = GetTopFiveProjects.getElementsByTagName("EmplyeeTop5Projects");	     
+    
+    if(GetTopFiveProjectsNodes.length > 0) {
+
+        let GetTopFiveProjectsToUpdate = []; 
+
+        for (let i = 0; i < GetTopFiveProjectsNodes.length; i++) {
+
+            const projectNode = GetTopFiveProjectsNodes[i];
+            
+            const ProjectCode = projectNode.getElementsByTagName("ProjectNumber")[0]?.textContent.trim() || 'NA';//.toLowerCase()) || 'na';
+            const RegularHours = projectNode.getElementsByTagName("TotalRegularHours")[0]?.textContent || 'NA';          
+            const ProjectName = projectNode.getElementsByTagName("ProjectName")[0]?.textContent || 'NA';
+            const ProjectCountry = projectNode.getElementsByTagName("Country")[0]?.textContent.trim() || 'NA';
+            const ProjectYear = projectNode.getElementsByTagName("ProjectYear")[0]?.textContent || 'NA';
+            const ProjectSubCategory = projectNode.getElementsByTagName("SubCategory")[0]?.textContent || 'NA';
+            const ProjectCategory = projectNode.getElementsByTagName("ProjectCategory")[0]?.textContent || 'NA';
+            const ProjectDescription = projectNode.getElementsByTagName("ProjectDescription")[0]?.textContent || 'NA';
+            const MCProjectDescription = projectNode.getElementsByTagName("MCProjectDescription")[0]?.textContent || 'NA';            
+
+            GetTopFiveProjectsToUpdate.push({
+                Title: ProjectCode,
+                ProjectName: ProjectName,
+                TotalHours: RegularHours,              
+                ProjectCountry: ProjectCountry,
+                ProjectYear: ProjectYear,
+                ProjectSubCategory: ProjectSubCategory,
+                ProjectCategory: ProjectCategory,         
+                ProjectDescription: ProjectDescription,
+                MCProjectDescription: MCProjectDescription,
+                LoginName: LoginName,
+                EmployeeName: DisplayName           				         
+            });
+        };        
+            
+        (async () => {    
+            try {
+    
+                await Top5ensureItemsExist(GetTopFiveProjectsToUpdate, LoginName, itemId);    
+                
+                fd.control('TopFiveTable').ready().then(async function(){ 
+                    fd.control('TopFiveTable').buttons[0].visible = false;	
+                    fd.control('TopFiveTable').filter = `<Eq><FieldRef Name="LoginName"/><Value Type="Text">${LoginName}</Value></Eq>`;           
+                    fd.control('TopFiveTable').refresh().then(function() {
+                        setTimeout(function() {
+                            FixWidget(fd.control('TopFiveTable')); 
+                        }, 200); // Delay of 2000 milliseconds (2 seconds)
+                    });                               
+                });               
+                
+            } catch (error) {
+                console.log("Error in getting filtered items:", error);
+            }
+        })();        
+    }  
+}
+
+async function GetEmpGrade(LoginName){    
 
     var isTrue = false;
 
@@ -1473,6 +1782,9 @@ async function GetEmpGrade(LoginName){
            isTrue = false;
     }
     else if(EmpGrade === 'N/A'){
+        isTrue = false;
+    }
+    else if(EmpGrade === ''){
         isTrue = false;
     }
     else{
@@ -1598,7 +1910,13 @@ async function loadingButtons(){
             await PreloaderScripts();
             fd.close();
         }			
-	});      
+	}); 
+    
+    setTimeout(async () => {
+        await setButtonToolTip('Save & Preview', 'Save your progress.');
+        await setButtonToolTip('Submit', 'Submit your final input.');
+        await setButtonToolTip('Cancel', 'Discard changes and exit.');
+    }, 300);    
 }
 
 function formatingButtonsBar(){
@@ -1779,7 +2097,8 @@ function RenderForm(MCAdmin) {
         			$(fd.field('Status').$parent.$el).show();
         			fd.field('Status').value = 'Pending';
                     $(fd.field('Status').$parent.$el).hide();
-        			alert(_SaveAlertMessage);        				
+        			alert(_SaveAlertMessage);    
+                    fd.validators;    				
                     if(fd.isValid){
                     	await PreloaderScripts(); 
                     	fd.save();
@@ -1794,7 +2113,7 @@ function RenderForm(MCAdmin) {
                 text: 'Submit',
                 style: `background-color:${greenColor}; color:white; width:150px !important;`,
                 click: async function() {                
-                    
+                    fd.validators;
                     if (confirm('Ready to submit?')) {
                         
                         RedirectRule = 'Dont Redirect';
@@ -1830,7 +2149,8 @@ function RenderForm(MCAdmin) {
             			$(fd.field('Status').$parent.$el).show();
             			fd.field('Status').value = 'Submitted';
                         $(fd.field('Status').$parent.$el).hide();        					
-            			alert(_SaveAlertMessage);	
+            			alert(_SaveAlertMessage);
+                        //fd.validators;	
                         if(fd.isValid){
                         	await PreloaderScripts(); 
                         	fd.save();
@@ -1845,10 +2165,9 @@ function RenderForm(MCAdmin) {
                 disabled: true,
                 text: 'Confirm',
                 style: `background-color:${greenColor}; color:white; width:150px !important;`,
-                click: async function() {	
-                    
-                    if (confirm('Are you sure you want to confirm the form?')) {
-                        
+                click: async function() {                   
+             
+                    if (confirm('Are you sure you want to confirm the form?')) {                        
                         RedirectRule = 'Dont Redirect';
                         $(fd.field('Status').$parent.$el).show();
             			fd.field('Status').value = 'Reviewed';
@@ -1867,11 +2186,11 @@ function RenderForm(MCAdmin) {
                             
             				var Subject = 'Your CV Has Been Reviewed by the M&C Department';
             				var encodedSubject = htmlEncode(Subject);
-            				var Body = GetHTMLBody(EmailbodyHeader, RealDisplayName, 'M&C Department');
+            				var Body = GetHTMLBody(EmailbodyHeader, _CVOwnerName, 'M&C Department');
             				var encodedBody = htmlEncode(Body);
                             var notificationName = '';
 
-            				await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', CreatedByEmail, notificationName, '');
+            				await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', _CVOwnerEmail, notificationName, '');
                             
                         	fd.save();
                         	preloader("remove");
@@ -1881,11 +2200,11 @@ function RenderForm(MCAdmin) {
             });
         }
         else if(_Status === 'Pending' || _Status === 'Reviewed') {
-            if(!_isforReviewer && _Impersonate === null){
-                alert('The CV form has not yet been submitted for your review. Thank you!');
-    	    	fd.close();
-            }
-            else{
+            // if(!_isforReviewer && _Impersonate === null){
+            //     alert('The CV form has not yet been submitted for your review. Thank you!');
+    	    // 	fd.close();
+            // }
+            //else{
                 fd.toolbar.buttons.push({
                     icon: 'Save',
                     class: 'btn-outline-primary',
@@ -1896,8 +2215,9 @@ function RenderForm(MCAdmin) {
                         RedirectRule = 'Redirect';
             			$(fd.field('Status').$parent.$el).show();
             			fd.field('Status').value = 'Pending';
-                        $(fd.field('Status').$parent.$el).hide();        					
-            			alert(_SaveAlertMessage);	
+                        $(fd.field('Status').$parent.$el).hide();  
+                        //fd.validators;      					
+            			alert(_SaveAlertMessage);                        	
                         if(fd.isValid){
                         	await PreloaderScripts(); 
                         	fd.save();
@@ -1912,11 +2232,9 @@ function RenderForm(MCAdmin) {
                     disabled: true,
                     text: 'Confirm',
                     style: `background-color:${greenColor}; color:white; width:150px !important;`,
-                    click: async function() {	
-                        
-                        //await PreloaderScripts();           						
-            			if (confirm('Are you sure you want to confirm the form?')) {
-                            
+                    click: async function() {                        
+                                						
+            			if (confirm('Are you sure you want to confirm the form?')) {                            
                             RedirectRule = 'Dont Redirect';
                             $(fd.field('Status').$parent.$el).show();
                 			fd.field('Status').value = 'Reviewed';
@@ -1936,11 +2254,11 @@ function RenderForm(MCAdmin) {
                                 
                 				var Subject = 'Your CV Has Been Reviewed by the M&C Department';
                 				var encodedSubject = htmlEncode(Subject);
-                				var Body = GetHTMLBody(EmailbodyHeader, RealDisplayName, 'M&C Department');
+                				var Body = GetHTMLBody(EmailbodyHeader, _CVOwnerName, 'M&C Department');
                 				var encodedBody = htmlEncode(Body);
                                 var notificationName = '';
 
-                				await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', CreatedByEmail, notificationName, '');
+                				await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', _CVOwnerEmail, notificationName, '');
                                  
                             	fd.save();
                             	preloader("remove");
@@ -1948,7 +2266,7 @@ function RenderForm(MCAdmin) {
                         }                                            						 
             	     }
                 });
-            }
+            //}
         }
         else if(_Status === 'Reviewed') {
             // alert('The CV form has already been reviewed. Thank you!');
@@ -2127,11 +2445,13 @@ function CheckBoolians(){
     buttons.forEach(function(button, index) {
         if (button.text === 'Confirm') {
             
-            if (_CapabilitiesTableCount && _CAdditionalCapabilitiesTableCount && _CTopFiveTableCount && _CProjectsTableCount && _CPrevExpTableCount) {
-                button.disabled = false;
-            } else {
-                button.disabled = true;
-            }           
+            // if (_CapabilitiesTableCount && _CAdditionalCapabilitiesTableCount && _CTopFiveTableCount && _CProjectsTableCount && _CPrevExpTableCount) {
+            //     button.disabled = false;
+            // } else {
+            //     button.disabled = true;
+            // }  
+            
+            button.disabled = false;
         }
     });    
 }
@@ -2210,7 +2530,9 @@ function setTableFilter(controlName, filterField, filterValue) {
     fd.control(controlName).ready(function() {
         fd.control(controlName).filter = `<Eq><FieldRef Name="${filterField}"/><Value Type="Text">${filterValue}</Value></Eq>`;
         fd.control(controlName).refresh().then(function() { 
-            setTimeout(function() { 
+            setTimeout(function() {
+                if(controlName === 'CapabilitiesTable' || controlName === 'TopFiveTable') 
+                    fd.control(controlName).buttons[0].visible = false;
                 FixWidget(fd.control(controlName));                         
             }, 200); // Optional delay of 2000 milliseconds (2 seconds)
         });
@@ -2228,6 +2550,10 @@ function updateFields(DisplayName, LoginName) {
 
     localStorage.setItem('LoginName', LoginName);
     localStorage.setItem('DisplayName', DisplayName);
+
+    $(fd.field('CVOwner').$parent.$el).show();
+    fd.field('CVOwner').value = LoginName;
+    $(fd.field('CVOwner').$parent.$el).hide();
 }
 
 function resetFields() {
@@ -2240,14 +2566,6 @@ function resetFields() {
     $('.picImg').hide();
     fd.field('Responsibilities').required = false;
     $(fd.field('Responsibilities').$parent.$el).hide();
-}
-
-async function performDataFetch(LoginName) {
-    await GetItemCT(LoginName); 
-    // await GetEmpKeyQualFromSP(LoginName, DisplayName);
-    // await GetEmpPreDarExpFromSP(LoginName, DisplayName);
-    await GetProfession(LoginName);
-    await GetEmpGrade(LoginName);
 }
 
 function applyFilters(filterValue) {
@@ -2265,17 +2583,65 @@ let closePreview = async function() {
         Remove_Pre(true);
     }
 }
-  
+
+var setButtonToolTip = async function(_btnText, toolTipMessage){  
+        
+    var btnElement = $('span').filter(function(){ return $(this).text() == _btnText; }).prev();
+	if(btnElement.length === 0)
+	  btnElement = $(`button:contains('${_btnText}')`);
+	
+    if(btnElement.length > 0){
+	  if(btnElement.length > 1)
+		btnElement = btnElement[1].parentElement;
+      else btnElement = btnElement[0].parentElement;
+	  
+      $(btnElement).attr('title', toolTipMessage);
+
+      $(btnElement).tooltipster({
+        delay: 100,
+        maxWidth: 350,
+        speed: 500,
+        interactive: true,
+        animation: 'fade', //fade, grow, swing, slide, fall
+        trigger: 'hover'
+      });
+    }
+}
+
+async function doLoadFunction(LoginName, DisplayName) {
+    let startTime = performance.now();
+    await GetItemCT(LoginName);       
+    let endTime = performance.now();
+    let elapsedTime = endTime - startTime;
+    console.log(`Execution time GetItemCount: ${elapsedTime} milliseconds`);
+
+    startTime = performance.now();
+    await GetEmployeesTopFiveProjects(LoginName, DisplayName);
+    endTime = performance.now();
+    elapsedTime = endTime - startTime;
+    console.log(`Execution time GetEmployeesTopFiveProjects: ${elapsedTime} milliseconds`);           
+    
+    startTime = performance.now();
+    await GetProfession(LoginName);
+    endTime = performance.now();
+    elapsedTime = endTime - startTime;
+    console.log(`Execution time GetProfession: ${elapsedTime} milliseconds`); 
+    
+    startTime = performance.now();
+    await GetEmpGrade(LoginName);
+    endTime = performance.now();
+    elapsedTime = endTime - startTime;
+    console.log(`Execution time GetEmployeeGrade: ${elapsedTime} milliseconds`); 	
+}  
 //#endregion
 
 
 //#region Soap Call Function
 
-var GetEmployeeGrade = async function(method, isAsync, LoginName){    
+var GetEmployeeGrade = async function(method, isAsync, LoginName){  
 
     var siteUrl = _spPageContextInfo.siteAbsoluteUrl;    	
     var serviceUrl = siteUrl + "/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetEmployeeGrade&LoginName=" + LoginName;
-    
     let soapContent = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
                          <soap:Body>
                           <GetEmployeeGrade xmlns="http://tempuri.org/">
@@ -2435,5 +2801,45 @@ var GetEmployeePreDarExperiencesFromSharepoint = async function(LoginName){
 
     const existingItems = await pnp.sp.web.lists.getByTitle(listTitle).getItemsByCAMLQuery({ ViewXml: camlFilter });
     return existingItems; 
+}
+
+var GetEmployeesTopFiveProjectsFromSQL = async function(method, isAsync, LoginName){ 
+
+    const siteUrl = _spPageContextInfo.siteAbsoluteUrl;
+    const serviceUrl = `${siteUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetEmployeesTopFiveProjects&LoginName=${LoginName}`;        
+    const soapContent = `
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <GetEmployeesTopFiveProjects xmlns="http://tempuri.org/">
+                    <LoginName>${LoginName}</LoginName>
+                </GetEmployeesTopFiveProjects>
+            </soap:Body>
+        </soap:Envelope>`;
+
+    return new Promise((resolve, reject) => {
+        var xhr = new XMLHttpRequest();
+        xhr.open(method, serviceUrl, isAsync);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                try {
+                    if (xhr.status == 200) {
+                        const response = this.responseText;
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(response, "text/xml");
+                        resolve(xmlDoc); // Resolve the promise with the parsed XML document
+                    } else {
+                        reject(new Error('Failed to get valid response'));
+                    }
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        };
+        
+        xhr.setRequestHeader('Content-Type', 'text/xml');
+        if (soapContent !== '') 
+		  xhr.send(soapContent);
+        else xhr.send();
+    }); 
 }
 //#endregion

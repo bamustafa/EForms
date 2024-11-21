@@ -1,0 +1,138 @@
+:root{
+  --darkgreen: #14987e94;
+  --lightgreen: #5dc7b2b0; 
+  --lightgray: #b5b5b54d;
+  --white: white;
+  --bordercolor: #ffffff24;
+  --btnborder: #ababab;
+  --black: black;
+  --boxshadow: rgba(0, 0, 0, 0.1);
+  --sucat-color: #2c3e507a ;
+  --hover-bg: #f0f0f0;
+  --hover-color: #333333;
+}
+
+.sp-appBar-link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgb(96, 94, 92);
+  text-decoration: none;
+  padding: 14px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  /* border-radius: 14px; */
+}
+
+.sp-appBar-link:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: rgb(50, 50, 50);
+  /* width: 28px;
+  height: 28px; */
+}
+
+.sp-appBar-borderLeft {
+  height: 20px;
+  width: 1px;
+  background-color: rgb(96, 94, 92);
+  margin-left: 10px;
+}
+
+.sp-appBar {
+  background-color: #ebeeec;
+  position: absolute;
+  /* border-bottom-left-radius: 10px; */
+}
+
+.sp-appBar-linkContainer {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  background-color: #f8f8f8;
+  border-bottom-left-radius: 10px;
+  height: 100vh;
+}
+
+.sp-appBar-linkLi {
+  display: inline-block;
+  position: relative;
+}
+
+.sp-appBar-linkLiDiv {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  width: 50px;
+}
+
+.sp-appBar-tooltipDiv {
+  display: none;
+  position: absolute;
+  right: -67%;
+  background-color: rgb(0 0 0);
+  color: #fff;
+  border-radius: 3px;
+  font-size: 13px;
+  white-space: nowrap;
+  width: max-content;
+  font-weight: bold;
+  padding: 4px;
+}
+
+.sp-appBar-tooltipDiv::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%; /* Adjusts the arrow to the left of the tooltip */
+  margin-top: -5px; /* Centers the arrow vertically with respect to the tooltip */
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent rgb(0 0 0) transparent transparent; /* Arrow points left */
+
+  /* content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent; */
+}
+
+.sp-appBar-linkLi:hover .sp-appBar-tooltipDiv {
+  display: block; /* Show the tooltip on hover */
+}
+
+.dimmed-svg {
+  opacity: 0.5; /* Dim the SVG by reducing its opacity */
+  pointer-events: none; /* Make the SVG not clickable */
+}
+
+/* .sp-appBar-tooltipDiv {
+  position: relative;
+  right: -54px;
+  width: 80px;
+}
+
+.sp-appBar-tooltip {
+  display: inline-block;
+  font-size: 12px;
+} */
+
+
+.ms-HorizontalNavItem-link {
+  background: 0 0;
+  cursor: pointer;
+  min-width: 20px;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+  height: 100%;
+  box-sizing: border-box;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 400;
+  border: hidden;
+  margin-top: 4px;  
+}

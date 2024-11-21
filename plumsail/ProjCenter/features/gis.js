@@ -1,9 +1,11 @@
 let gisPath = `${_spPageContextInfo.siteAbsoluteUrl}${_layout}/plumsail/ProjCenter/features/drawProjects2k14.html`;
 // 'https://db-gispub.darbeirut.com/gwadar/default_clean.aspx?projid=AD23005-0100D'
 var gisItem = {}, isFound = false, gisId;
-let projNo;
+let projNo, mapTimeOut;
 
 var onGISRender = async function(){
+
+    clearFormFields(['Option', 'Remarks', 'ApprovalStatus', 'ResRejRemarks'])
 
     formFields = {
         Status: fd.field("Status"),
@@ -17,26 +19,46 @@ var onGISRender = async function(){
         RejRemarks: fd.field('ResRejRemarks')
     }
 
-    setPageStyle();
+    formFields.Status.disabled = true;
+    formFields.longitude.disabled = true;
+    formFields.latitude.disabled = true;
+
+    debugger
+    let fullProjTitle = localStorage.getItem('FullProjTitle');
+    fullProjTitle += ' - GIS Location'
+    setPageStyle(fullProjTitle);
     let gisControlId = '#GISId';
-    let gisFields = [formFields.longitude, formFields.latitude, formFields.Remarks];
+    let gisFields = [formFields.longitude, formFields.latitude];
 
     let itemId, filtQuery = '';
+    
     
     if(!isNaN(fd.itemId)){
         itemId = fd.itemId
         filtQuery = `Id eq ${itemId}`
+
+        
+        let option = fd.field('Option').selectedOption;
+        if( option === 'Attaching A File' && fd.field('Status').value !== 'Rejected'){
+            //fd.field('Attachments').disabled = true
+            $('div.k-upload-button').remove();
+            $('button.k-upload-action').remove();
+            $('.k-dropzone').remove();
+        }
     }
     else{
         itemId = parseInt(localStorage.getItem('MasterId'));
         filtQuery = `MasterID/Id eq ${itemId}`
+
+        formFields.Status.value = 'In Progress';
     }
+    
     let result = await isRecordExist(filtQuery);
     _isGIS = await IsUserInGroup('GIS');
 
     if(result !== ''){
         isFound = true;
-
+        //window.location.href = `${_webUrl}/SitePages/PlumsailForms/GISLocation/Item/EditForm.aspx?item=${itemId}`
         //IS APPROVED OR CANCELLED SET FUNCTION TO CHECK THE LOGIC
         await handleItemAfterApproval(result);
     }
@@ -44,12 +66,16 @@ var onGISRender = async function(){
     localStorage.setItem('isGISFound', isFound);
     
     if(isFound){
+
+       formFields.Status.value = result.Status;
+
         gisId = result.Id
         let option = result.Option
         formFields.Option.value = option
         formFields.longitude.value = result.longitude
         formFields.latitude.value = result.latitude
         formFields.Remarks.value = result.Remarks
+        formFields.RejRemarks.value = result.ResRejRemarks
 
         await checkGISApprovalFields();
 
@@ -73,6 +99,11 @@ var onGISRender = async function(){
         gisFields.push(formFields.Attachments);
         hideGISApprovalFields()
         await _HideFields(gisFields, true);
+
+        localStorage.removeItem('gisStatus');  
+
+        if(_isGIS)
+         disableSubmission('Only PM is allowed to submit for GIS',true);
     }
     
     fd.field('Option').$on('change', async (value) => {
@@ -82,15 +113,20 @@ var onGISRender = async function(){
             $(gisControlId).hide();
          }
          else{
+            debugger;
             await _HideFields(gisFields, false);
             hideGISApprovalFields()
             $(formFields.Attachments.$parent.$el).hide();
             addMap(gisControlId)
 
-            //let Status =  formFields.Status.value;
+            if(!isFound){
+                mapTimeOut = setInterval(async () => {
+                                    await disableGISPMFields(true);
+                                }, 200);
+            }
             let ResRejRemarksFld =  formFields.RejRemarks
 
-            if(ResRejRemarksFld.value !== undefined || ResRejRemarksFld.value !== null || ResRejRemarksFld.value !== ''){
+            if(ResRejRemarksFld.value !== undefined && ResRejRemarksFld.value !== null && ResRejRemarksFld.value !== ''){
                 ResRejRemarksFld.disabled = true;
                 $(formFields.RejRemarks.$parent.$el).show();
             }
@@ -121,12 +157,13 @@ var onGISRender = async function(){
         await fetchGISInfo(value, itemId, isFound);
     });
 
-    await _HideFields(['MasterID', 'SelectionType'], true, true);
+    await _HideFields(['MasterID', 'SelectionType', 'Title'], true, true);
 
     // var hasOnClick = $._data($('#gwadar')[0], 'events') && $._data($('#gwadar')[0], 'events').click;
     // if (!hasOnClick)
 
-    disableGISPMFields(true, true)//to make sure gwadar is removed if not approved.
+    if(isFound)
+     disableGISPMFields(true, true)//to make sure gwadar is removed if not approved.
 }
 
 let isRecordExist = async function(filterQuery){
@@ -134,7 +171,7 @@ let isRecordExist = async function(filterQuery){
           await _web.lists
                 .getByTitle("GIS Location")
                 .items
-                .select("Id,MasterID/Id,longitude,latitude,Option,Remarks,SelectionType")
+                .select("Id,MasterID/Id,longitude,latitude,Option,Remarks,SelectionType,Status,ResRejRemarks")
                 .filter(filterQuery)
                 .expand('MasterID')
                 .get()
@@ -156,14 +193,19 @@ function addMap(gisControlId){
 async function fetchGISInfo(res, itemId, isFound){
   fd.field('longitude').value = res.longitude;
   fd.field('latitude').value = res.latitude;
+  fd.field('SelectionType').value = res.type;
 
   projNo = localStorage.getItem('projectNo')
   projNo = isNullOrEmpty(projNo) ? '' : projNo;
+  fd.field('Title').value = projNo;
+  fd.field('MasterID').value = itemId;
+
+
+
   gisItem = {
     longitude: res.longitude,
     latitude: res.latitude,
     SelectionType: res.type,
-    Remarks: fd.field('Remarks').value,
     Option: fd.field('Option').value,
     MasterIDId: itemId,
     Title: projNo
@@ -171,12 +213,24 @@ async function fetchGISInfo(res, itemId, isFound){
 }
 
 var InsertGISItem = async function(data, isFound){
-    if(!isFound)
+    
+    if(!isFound){
+        data['Remarks'] = fd.field('Remarks').value
         await _web.lists.getByTitle(GISLocation).items.add(data);
+    }
     else {
-        data.Status =  formFields.ApprovalStatus.value;
-        data.ApprovalStatus =  formFields.ApprovalStatus.value;
-        data.ResRejRemarks =  formFields.RejRemarks.value;
+        let approvalStatus = formFields.ApprovalStatus.value;
+        data.Status = formFields.ApprovalStatus.value === 'Rejected' || formFields.Status.value === 'Rejected' ? 'Submitted' : formFields.ApprovalStatus.value;
+
+        data.Remarks = fd.field('Remarks').value
+        data.longitude = fd.field('longitude').value
+        data.latitude = fd.field('latitude').value
+
+        data.ApprovalStatus =  approvalStatus
+
+        let rejRemarks = approvalStatus === 'Approved' || approvalStatus === 'Cancelled' ? '' : formFields.RejRemarks.value;
+        data.ResRejRemarks = rejRemarks;
+
         await _web.lists.getByTitle(GISLocation).items.getById(gisId).update(data); 
     }
 }
@@ -193,11 +247,13 @@ let checkGISApprovalFields = async function(){
           fields.push(formFields.RejRemarks);
         hideFields = true
 
+        let mesg = 'item is already submitted for GIS Approval'
         if(status !== 'Rejected'){
-            setTimeout(async () => {
-                setPSErrorMesg('item is already submitted for GIS Approval', true)
-                $('span').filter(function(){ return $(this).text() == 'Finalize'; }).parent().attr("disabled", "disabled");
-            }, 100);
+
+            if(status === 'Approved' || status === 'Cancelled')
+                mesg = 'Item is already Closed'
+
+            disableSubmission(mesg,true);
             await disableGISPMFields(true);
         }
     }
@@ -208,6 +264,10 @@ let checkGISApprovalFields = async function(){
             $(formFields.RejRemarks.$parent.$el).hide();
             disableGISPMFields(true)
         }
+
+        if(status !== 'Submitted'){
+            disableSubmission('',false);
+        }
     }
     if(fields.length > 0)
      await _HideFields(fields, hideFields);
@@ -216,21 +276,28 @@ let checkGISApprovalFields = async function(){
 let disableGISPMFields = async function(isDisable, ignoreFields){
 
     if(ignoreFields){
-      formFields.Option.disabled = isDisable;
-      formFields.Remarks.disabled = isDisable;
+        if(isFound){
+          formFields.Option.disabled = isDisable;
+
+          if(!_isGIS && (formFields.Status.value === 'Rejected' || formFields.Status.value === 'In Progress' )){}
+          else formFields.Remarks.disabled = isDisable;
+        }
     }
 
     if(isDisable){
         $(document).ready(function(){
             $('#frameId').on('load', function(){
                 var iframeContent = $(this).contents();
-                iframeContent.find('#polyImg').remove();
-                iframeContent.find('#lineImg').remove();
-                iframeContent.find('#pointImg').remove();
 
-                let status = localStorage.getItem('gisStatus');
+                let status = localStorage.getItem('gisStatus') === null ? fd.field('Status').value : localStorage.getItem('gisStatus') ;
                 if(status !== 'Approved')
                   iframeContent.find('#gwadar').remove();
+
+                if(status === 'Approved' || status === 'Cancelled' || _isGIS || (!_isGIS && status !== 'In Progress' && status !== 'Rejected')){
+                    iframeContent.find('#polyImg').remove();
+                    iframeContent.find('#lineImg').remove();
+                    iframeContent.find('#pointImg').remove();
+                }
                 else{
                     iframeContent.find('#gwadar').on('click', function(){
                         let proj = localStorage.getItem('projectNo')
@@ -239,21 +306,28 @@ let disableGISPMFields = async function(isDisable, ignoreFields){
                     })
                 }
                 //localStorage.removeItem('gisStatus');
+                if(mapTimeOut !== undefined && mapTimeOut !== null)
+                  clearInterval(mapTimeOut);
             });
         });
     }
 }
 
 let sendGISApproval = async function(){
+    debugger;
     let module = 'GIS';
     let projNo = isNullOrEmpty(projectNo) ? fd.field('Title').value : projectNo
 
     const ApprovalStatus = formFields.ApprovalStatus.value;
-    let emailName = `${module}_Email`, notName = `${module}_${ApprovalStatus}`;
-  
 
     let itemId = !isNaN(fd.itemId) ? fd.itemId : parseInt(localStorage.getItem('MasterId'));
-    let result = await isRecordExist(itemId);
+    let filtQuery = `MasterID/Id eq ${itemId}`
+
+    let result = await isRecordExist(filtQuery);
+
+    let isNew = result.Status === 'Submitted' ? true : false;
+    let emailName = isNew ? `${module}_New_Email` : `${module}_Email`,
+    notName = isNew ? `${module}_New` : `${module}_${ApprovalStatus}`;
 
     let query = `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${result.Id}</Value></Eq></Where>`;
     _sendEmail(module, `${emailName}|${projNo}`, query, '', notName, '');
@@ -264,17 +338,35 @@ function hideGISApprovalFields(){
     $(formFields.RejRemarks.$parent.$el).hide();
 }
 
-let handleItemAfterApproval = async function(){
+let handleItemAfterApproval = async function(result){
 
-  let Status =  formFields.Status.value;
-  let ResRejRemarksFld =  formFields.RejRemarks
+  let Status =  '', ResRejRemarksFld = '';
+  if(result !== undefined){
+    Status = result.Status
+    ResRejRemarksFld = result.ResRejRemarks
+  }
+  else{
+    Status = formFields.Status.value;
+    ResRejRemarksFld = formFields.RejRemarks.value;
+  }
   
   if(Status !== 'In Progress'){
-    if(ResRejRemarksFld.value !== undefined && ResRejRemarksFld.value !== null && ResRejRemarksFld.value !== '')
-        ResRejRemarksFld.disabled = true;
+    if(ResRejRemarksFld !== undefined && ResRejRemarksFld !== null && ResRejRemarksFld !== ''){
+        if(_isGIS && formFields.ApprovalStatus.value === ''){
+           $(formFields.RejRemarks.$parent.$el).hide();
+        }
+        formFields.RejRemarks.disabled = true;
+    }
+       
     else $(formFields.RejRemarks.$parent.$el).hide();
 
-    $(formFields.ApprovalStatus.$parent.$el).hide();
+    if(Status === 'Submitted'){
+        setTimeout(async () => {
+            gisItem['longitude'] = formFields.longitude.value
+        }, 100);
+        $(formFields.ApprovalStatus.$parent.$el).show();
+    }
+    else $(formFields.ApprovalStatus.$parent.$el).hide();
 
     if(Status === 'Rejected'){
       if(_isGIS)
@@ -282,4 +374,80 @@ let handleItemAfterApproval = async function(){
     }
     else disableGISPMFields(true)
   }
+}
+
+let disableSubmission = async function(mesg){
+    setTimeout(async () => {
+        setPSErrorMesg(mesg, true)
+        $('span').filter(function(){ return $(this).text() == submitText; }).parent().attr("disabled", "disabled");
+    }, 100);
+}
+
+let setGISMetaInfo = async function(){
+    let isValid = fd.isValid
+    if(isValid){
+
+
+     let option = gisItem['Option'] === undefined ? fd.field('Option').value : gisItem['Option'];
+     if(option !== 'Attaching A File'){
+       let longitude = gisItem['longitude'] === undefined ? fd.field('longitude').value : gisItem['longitude'];
+       if(longitude === undefined || longitude === null || longitude === ''){
+         setPSErrorMesg('please mark a coordinate on the map and try again', true)
+         return;
+       }
+     }
+     else{
+        let attachment = fd.field('Attachments').value;
+        if(attachment.length === 0){
+            setPSErrorMesg('Attachment is required Field', true)
+            return;
+        }
+     }
+     
+
+     let itemId;
+     if(!isNaN(fd.itemId)){
+         itemId = fd.itemId
+         if(fd.field('Status').value === 'Rejected' && formFields.ApprovalStatus.value === '')
+           fd.field('Status').value = 'Submitted'
+        else fd.field('Status').value = formFields.ApprovalStatus.value
+     }
+     else {
+        _HideFields(['Title', 'MasterID'], false, true);
+
+       itemId = parseInt(localStorage.getItem('MasterId'));
+       projNo = localStorage.getItem('projectNo')
+       projNo = isNullOrEmpty(projNo) ? '' : projNo;
+
+       fd.field('Title').value = projNo;
+       fd.field('Status').value = 'Submitted';
+       fd.field('MasterID').value = itemId;
+
+       fd.field('longitude').value;
+       fd.field('latitude').value
+       fd.field('SelectionType').value
+
+       _HideFields(['Title', 'MasterID'], true, true);
+     }
+
+     debugger;
+     fd.save()
+     .then(()=>{
+        window.close();
+      });
+
+    
+       // await InsertGISItem(gisItem, isGISFound).then(()=>{
+       //   let isNew = isGISFound ? false : true
+       //   sendGISApproval(isNew)
+       // })
+       // fd.save()
+       // .then(()=>{
+       //   window.close();
+       // });
+
+       // .then(()=>{
+       //   window.close();
+       // })
+    }
 }

@@ -1,3 +1,14 @@
+var onContReviewRender = async function(){
+  const startTime = performance.now();
+
+  var result = await getTemplateItems(Questions, ['Id', 'Title', 'IsRequired']);
+  await renderCustomTable(result);
+
+  const endTime = performance.now();
+  const elapsedTime = endTime - startTime;
+  console.log(`onContReviewRender: ${elapsedTime} milliseconds`);
+}
+
 var getTemplateItems = async function(targetList, colsInternal){
     var itemArray = [];
     
@@ -23,7 +34,7 @@ var getTemplateItems = async function(targetList, colsInternal){
   
     else{
       const cols = colsInternal.join(',');
-      var _query = "Title ne null";
+      var _query = "Category eq 'PIR'";
       items = await pnp.sp.web.lists.getByTitle(targetList).items.filter(_query).select(cols).getAll();
   
       for(var i = 0; i < items.length; i++){
@@ -38,9 +49,9 @@ var getTemplateItems = async function(targetList, colsInternal){
       }
     }
     return itemArray;
-  }
+}
   
-  var insertItemsInBulk = async function(itemsToInsert, targetList, colsInternal) {
+let insertItemsInBulk = async function(itemsToInsert, targetList, colsInternal) {
     const list = _web.lists.getByTitle(targetList);
     const batch = pnp.sp.createBatch();
     const columns = colsInternal.join(',');
@@ -86,134 +97,131 @@ var getTemplateItems = async function(targetList, colsInternal){
     }
     if(batch._index > -1)
      await batch.execute();
-  }
+}
   
-  var onContReviewRender = async function(){
+let renderCustomTable = async function(result){
+  let resultCount = result !== null ? result.length : 0;
   
-    var result = await getTemplateItems(Questions, ['Id', 'Title', 'IsRequired']);
-    await renderCustomTable(result);
-  }
-  
-  var renderCustomTable = async function(result){
-    let resultCount = result !== null ? result.length : 0;
-    
-    let tableId = 'tblItemsId'
-    let divElement = $('');
-    if($(`#${tableId}`).length === 0){
-      let tbl = `</br><table id='${tableId}' width='100%' class='modern-table'> 
-                    <tr>
-                      <th width='50%'><label class="d-flex fd-field-title col-form-label">Question</label></th>
-                      <th width='20%'><label class="d-flex fd-field-title col-form-label">Answer</label></th>
-                      <th width='20%'><label class="d-flex fd-field-title col-form-label">Comments</label></th>
-                    </tr>`;
-  
-      for(var i = 0; i < resultCount; i++){
-        let {Id, Title, TitleId, IsRequired, Answer, Comments} = result[i];
-        TitleId = TitleId === undefined ? Id : TitleId;
-        tbl += '<tr>'
-        tbl += await renderQuestionControls(i, Title, TitleId, Answer, IsRequired.toLowerCase(), Comments);
-        tbl += '</tr>'
-      }
-      tbl += `</table>`;
-      $('#QL').append(tbl);
+  let tableId = 'tblItemsId'
+ 
+  if($(`#${tableId}`).length === 0){
+    let tbl = `</br><table id='${tableId}' width='100%' class='modern-table'> 
+                  <tr>
+                    <th width='50%'><label class="d-flex fd-field-title col-form-label">Question</label></th>
+                    <th width='20%' style="text-align: center;">
+                        <label class="d-flex fd-field-title col-form-label" style="justify-content: center; align-items: center;">Answer</label>
+                    </th>
+                    <th width='20%'><label class="d-flex fd-field-title col-form-label">Comments</label></th>
+                  </tr>`;
+
+    for(var i = 0; i < resultCount; i++){
+      let {Id, Title, TitleId, IsRequired, Answer, Comments} = result[i];
+      TitleId = TitleId === undefined ? Id : TitleId;
+      tbl += '<tr>'
+      tbl += await renderQuestionControls(i, Title, TitleId, Answer, IsRequired.toLowerCase(), Comments);
+      tbl += '</tr>'
     }
+    tbl += `</table>`;
+    $('#QL').append(tbl);
   }
-  
-  var renderQuestionControls = async function(index, Title, TitleId, Answer, IsRequired, Comments){
-      
-    let quesId = `q${index}`;
-    let padding = "padding: 0px 30px 0px 6px;"
-    let yesChecked = Answer === 'Yes' ? 'checked' : '';
-    let noChecked = Answer === 'No' ? 'checked' : '';
-  
-    let tblRows = `<td style="vertical-align: top; color: black; font-weight:normal;"><label id="${quesId}title" titleId="${TitleId}">${Title}</label></td>`;
+}
+
+let renderQuestionControls = async function(index, Title, TitleId, Answer, IsRequired, Comments){
     
-    tblRows += '<td style="vertical-align: top; color: black; font-weight:normal;">'
-    tblRows += IsRequired === 'yes' ? 
-               `<input type="radio" id="${quesId}yes" name="${quesId}" value="yes" ${yesChecked} isRequiredOn =${IsRequired} onchange="handleRadioChange(this)" /><label for="${quesId}yes" style="${padding}">Yes<span style="color: red"> *</span></label>`:
-               `<input type="radio" id="${quesId}yes" name="${quesId}" value="yes" ${yesChecked} isRequiredOn =${IsRequired} onchange="handleRadioChange(this)" /><label for="${quesId}yes" style="${padding}">Yes</label>`
-               
-    tblRows += IsRequired === 'no' ?  
-              `<input type="radio" id="${quesId}no" name="${quesId}" value="no" ${noChecked} isRequiredOn =${IsRequired} onchange="handleRadioChange(this)" /><label for="${quesId}no" style="${padding}">No<span style="color: red"> *</span></label>`:
-              `<input type="radio" id="${quesId}no" name="${quesId}" value="no" ${noChecked} isRequiredOn =${IsRequired} onchange="handleRadioChange(this)" /><label for="${quesId}no" style="${padding}">No</label>`
-    tblRows += '</td>';
+  let quesId = `q${index}`;
+  let padding = "padding: 0px 30px 0px 6px;"
+  let yesChecked = Answer === 'Yes' ? 'checked' : '';
+  let noChecked = Answer === 'No' ? 'checked' : '';
+
+  let tblRows = `<td style="vertical-align: top; color: black; font-weight:normal;"><label id="${quesId}title" titleId="${TitleId}">${Title}</label></td>`;
   
-    Comments = Comments === undefined || Comments === null? '' : Comments;
-    let style = Answer !== undefined && Answer !== null && Answer.toLowerCase() === IsRequired ? 'placeholder="Required"' : 'placeholder="optional"';
-    
-    tblRows += `<td><textarea id="${quesId}com" rows="4" cols="50" ${style}>${Comments}</textarea></td>`;
+  tblRows += '<td style="vertical-align: top; color: black; font-weight:normal;">'
+  tblRows += IsRequired === 'yes' ? 
+              `<input type="radio" id="${quesId}yes" name="${quesId}" value="yes" ${yesChecked} isRequiredOn =${IsRequired} onchange="handleRadioChange(this)" /><label for="${quesId}yes" style="${padding}">Yes<span style="color: red"> *</span></label>`:
+              `<input type="radio" id="${quesId}yes" name="${quesId}" value="yes" ${yesChecked} isRequiredOn =${IsRequired} onchange="handleRadioChange(this)" /><label for="${quesId}yes" style="${padding}">Yes</label>`
+              
+  tblRows += IsRequired === 'no' ?  
+            `<input type="radio" id="${quesId}no" name="${quesId}" value="no" ${noChecked} isRequiredOn =${IsRequired} onchange="handleRadioChange(this)" /><label for="${quesId}no" style="${padding}">No<span style="color: red"> *</span></label>`:
+            `<input type="radio" id="${quesId}no" name="${quesId}" value="no" ${noChecked} isRequiredOn =${IsRequired} onchange="handleRadioChange(this)" /><label for="${quesId}no" style="${padding}">No</label>`
+  tblRows += '</td>';
+
+  Comments = Comments === undefined || Comments === null? '' : Comments;
+  let style = Answer !== undefined && Answer !== null && Answer.toLowerCase() === IsRequired ? 'placeholder="Required"' : 'placeholder="optional"';
   
-    return tblRows;
+  tblRows += `<td><textarea id="${quesId}com" rows="4" cols="50" ${style}>${Comments}</textarea></td>`;
+
+  return tblRows;
+}
+
+function handleRadioChange(element){
+  let checked = element.defaultValue === 'yes' ? 'yes' : 'no';
+  let isRequiredOn = element.getAttribute('isRequiredOn');
+  let placeholderText = isRequiredOn === checked ? 'Required' : 'Optional';
+
+  let Id = element.id.replace('yes', 'com').replace('no', 'com');
+  $(`#${Id}`).attr('placeholder', placeholderText);
+}
+
+const isQuestionValid = async function(){
+  let tblRows = $('#tblItemsId tr').length - 1;
+  let _mesg = '';
+
+  var itemsToInsert = [];
+  for(let i = 0; i < tblRows; i++){
+    var _objValue = { };
+    var radios = document.getElementsByName(`q${i}`);
+    var formValid = false;
+
+    for (var j = 0; j < radios.length; j++){
+        if (radios[j].checked) {
+            let checked = radios[j].defaultValue === 'yes' ? 'Yes' : 'No';
+            _objValue['Answer'] = checked;
+            formValid = true;
+            break;
+        }
+    }
+
+    let comment = document.getElementById(`q${i}com`);
+    if (!formValid) {
+        _mesg = 'Please select one Answer option.'
+        comment.placeholder = _mesg;
+        setRequiredFieldErrorStyle(comment);
+        break;
+    }
+    else _objValue['Comments'] = comment.value.trim();
+
+
+    let element = document.getElementById(`q${i}title`);
+    let titleId = element.getAttribute('titleId');
+    let titleLookupValue = element.innerText.trim();
+
+    _objValue['Title'] = titleLookupValue;
+    _objValue['QuestionId'] = parseInt(titleId);
+    _objValue['MasterIDId'] = _itemId;
+    itemsToInsert.push(_objValue);
   }
-  
-  function handleRadioChange(element){
-    let checked = element.defaultValue === 'yes' ? 'yes' : 'no';
-    let isRequiredOn = element.getAttribute('isRequiredOn');
-    let placeholderText = isRequiredOn === checked ? 'Required' : 'Optional';
-  
-    let Id = element.id.replace('yes', 'com').replace('no', 'com');
-    $(`#${Id}`).attr('placeholder', placeholderText);
-  }
-  
-  const isQuestionValid = async function() {
-    let tblRows = $('#tblItemsId tr').length - 1;
-    let _mesg = '';
-  
-    var itemsToInsert = [];
+
+  if(_mesg === ''){
     for(let i = 0; i < tblRows; i++){
-      var _objValue = { };
-      var radios = document.getElementsByName(`q${i}`);
-      var formValid = false;
-  
-      for (var j = 0; j < radios.length; j++) {
-          if (radios[j].checked) {
-              let checked = radios[j].defaultValue === 'yes' ? 'Yes' : 'No';
-              _objValue['Answer'] = checked;
-              formValid = true;
-              break;
-          }
-      }
-  
       let comment = document.getElementById(`q${i}com`);
-      if (!formValid) {
-         _mesg = 'Please select one Answer option.'
-          comment.placeholder = _mesg;
-          break;
-      }
-      else _objValue['Comments'] = comment.value.trim();
-  
-  
-      let element = document.getElementById(`q${i}title`);
-      let titleId = element.getAttribute('titleId');
-      let titleLookupValue = element.innerText.trim();
-  
-      _objValue['Title'] = titleLookupValue;
-      _objValue['QuestionId'] = parseInt(titleId);
-      _objValue['MasterIDId'] = _itemId;
-      itemsToInsert.push(_objValue);
-    }
-  
-    if(_mesg === ''){
-      for(let i = 0; i < tblRows; i++){
-        let comment = document.getElementById(`q${i}com`);
-        if(comment.placeholder === 'Required'){
-          if(comment.value.trim() === ''){
-            _mesg = 'Comment is Required Field';
-            setRequiredFieldErrorStyle(comment);
-            
-            comment.addEventListener('change', function() {
-              if(this.value.trim() === '')
-                setRequiredFieldErrorStyle(this, false);
-              else setRequiredFieldErrorStyle(this, true);
-            });
-            
-          }
+      if(comment.placeholder === 'Required'){
+        if(comment.value.trim() === ''){
+          _mesg = 'Comment is Required Field';
+          setRequiredFieldErrorStyle(comment);
+          
+          comment.addEventListener('change', function() {
+            if(this.value.trim() === '')
+              setRequiredFieldErrorStyle(this, false);
+            else setRequiredFieldErrorStyle(this, true);
+          });
+          
         }
       }
     }
-  
-    return {
-      mesg: _mesg, // Allow form submission
-      items: itemsToInsert
-    }
   }
+
+  return {
+    mesg: _mesg, // Allow form submission
+    items: itemsToInsert
+  }
+}

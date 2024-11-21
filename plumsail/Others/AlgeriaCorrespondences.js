@@ -715,3 +715,25 @@ var PreloaderScripts = async function(){
     await _spComponentLoader.loadScript(_layout + '/plumsail/js/preloader.js');
     preloader();
 }
+
+function clearLocalStorageItemsByField(fields) {
+	fields.forEach(field => {
+		let cachedFields = localStorage;
+        for (let i = 0; i < cachedFields.length; i++) {
+	        const key = localStorage.key(i);        
+	        if (key.includes(field)){
+	        	localStorage.removeItem(key);
+	        }
+    	}
+    });
+}
+
+const GetCurrentUser = async function(){
+	try {
+        const user = await pnp.sp.web.currentUser.get();
+        return user;
+    } catch (error) {
+        console.error("Error fetching current user:", error);
+        throw error; // Re-throw the error if needed
+    }	
+}

@@ -1,8 +1,13 @@
 var onSusRender = async function(dtName, fieldOnList, fieldQuery, secondFieldonTable, secondList){
 
+    const startTime = performance.now();
     await filterDataTable_LookupField(dtName, fieldOnList, fieldQuery, secondList, secondFieldonTable);
 
     fixTableCols(dtName);
+
+    const endTime = performance.now();
+    const elapsedTime = endTime - startTime;
+    console.log(`onSusRender: ${elapsedTime} milliseconds`);
 }
 
 

@@ -11,12 +11,19 @@ var International_SERVICE_URL = BASEURL + "/AjaxService/XMLService.asmx?op=CallI
 var CodeArr = [];
 const CodeObjectArray = [];
 var PackageArr = [];
+let refICDNo = '', rfICDVal = '';
 
 var saveMesg = "Click 'Save' to store your progress and keep your work as a draft.";
 var submitMesg = "Click 'Submit' to finalize and send officially.";
 var cancelMesg = "Click 'Cancel' to discard changes and exit without saving.";
 
+const blueColor = '#6ca9d5', greenColor = '#5FC9B3', yellowColor = '#F7D46D', redColor = '#F28B82';
+
 const itemsToRemove = ['Status', 'State', 'Code', 'WorkflowStatus'];
+
+const hideField = (field) => $(fd.field(field).$parent.$el).hide();
+const showField = (field) => $(fd.field(field).$parent.$el).show();
+const disableField = (field) => fd.field(field).disabled = true;
 
 var onRender = async function (moduleName, formType, relativeLayoutPath){
 	// localStorage.clear();
@@ -47,8 +54,11 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 			await onTQRender(formType);
 		else if(moduleName === "DDSInitiate")
 			await onDDSRender(formType);
+		else if(moduleName === "ICD")
+			await onICDRender(formType);
 
-		await setButtonToolTip('Save', saveMesg);
+		if(moduleName !== "ICD")
+			await setButtonToolTip('Save', saveMesg);
 		await setButtonToolTip('Submit', submitMesg);
 		await setButtonToolTip('Submit for Approval', submitMesg);
 		await setButtonToolTip('Cancel', cancelMesg);
@@ -232,6 +242,187 @@ async function onTQRender(formType){
     }
     else if(formType == 'Edit'){
         await TQ_editForm(formType);
+    }
+}
+
+var onICDRender = async function (formType){
+
+	if(formType == 'New'){    
+		fd.toolbar.buttons[0].style = "display: none;";   
+		fd.toolbar.buttons[1].style = "display: none;";
+		
+		const placeholderField = (field) => fd.field(field).placeholder = 'Enter value here';
+		['OriginatorDescription', 'ReceiverDescription', 'Description', 'ResolutionDefinition', 'ScheduleActivitiesImpacted'].forEach(placeholderField); 
+		['InterfaceID', 'Interface'].forEach(hideField);
+
+		fd.field('Originator').$on('change', async function(value) {
+			if(value !== null){
+				let OrgAcronym = await getInitials(value.LookupValue);
+				let RecAcronym = '';
+				if (fd.field('Receiver').value)	{				
+					 RecAcronym = await getInitials(fd.field('Receiver').value.LookupValue);
+					 RecAcronym = RecAcronym.Description;
+				}
+				
+				await referenceIDCChecker(OrgAcronym.Description, RecAcronym);
+			}
+			else{
+				fd.field('InterfaceID').value = '';
+				['InterfaceID'].forEach(hideField);
+			}
+		});
+		
+		fd.field('Receiver').$on('change', async function(value) {
+			if(value !== null){
+				let RecAcronym = await getInitials(value.LookupValue);
+				let OrgAcronym = '';
+				if (fd.field('Originator').value) {					
+					 OrgAcronym = await getInitials(fd.field('Originator').value.LookupValue);
+					 OrgAcronym = OrgAcronym.Description;
+				}
+
+				await referenceIDCChecker(OrgAcronym, RecAcronym.Description);
+			}
+			else{
+				fd.field('InterfaceID').value = '';
+				['InterfaceID'].forEach(hideField);
+			}
+		})
+		
+		fd.toolbar.buttons.push({
+	        icon: 'Accept',
+	        class: 'btn-outline-primary',
+	        text: 'Submit',
+            style: `background-color:${greenColor}; color:white; width:150px !important;`,
+	        click: async function() {	        	                         
+
+				if(fd.isValid){
+
+					await PreloaderScripts();
+
+					refICDNo = await updateCounter();				
+
+					['InterfaceID', 'Interface'].forEach(showField);			
+					fd.field('InterfaceID').value = refICDNo;
+					fd.field('Interface').value = {		
+						description: 'Go to document',
+						url: `${_spPageContextInfo.siteAbsoluteUrl}/ICDLibrary/${refICDNo}`
+					};						
+					['InterfaceID', 'Interface'].forEach(hideField);
+
+                    fd.save();               
+				}
+			}	     
+		});
+
+		fd.toolbar.buttons.push({
+			icon: 'Cancel',
+			class: 'btn-outline-primary',
+			text: 'Cancel',	
+			style: `background-color:${redColor}; color:white; width:150px !important;`,
+			click: async function() {
+				await PreloaderScripts();
+				fd.close();
+			}			
+		});
+
+		fd.spSaved(async function(result) {			
+			try
+			{	
+				debugger;
+				if(refICDNo !== '')	{					
+					var itemId = result.Id;						
+					var folderStructure = refICDNo;
+					await _CreatFolderStructure('ICD', 'ICDLibrary', itemId, folderStructure, 'ICD_Initial');
+				}
+			}
+			catch(e){alert(e);}								 
+		 });
+
+		formatingButtonsBar();	    		
+    }
+    else if(formType == 'Edit'){ 
+
+		fd.toolbar.buttons[0].style = "display: none;";   
+		fd.toolbar.buttons[1].style = "display: none;";
+
+		['InterfaceID', 'Title', 'InterfaceType', 'Location','Originator', 'OriginatorDescription', 'Receiver', 'ReceiverDescription', 'InterfaceOwner', 'InterfacePPOC', 'Description', 'ResolutionDefinition', 'PlannedDate', 'ImpactOnScope', 'ImpactOnSchedule', 'ImpactOnCost', 'ScheduleActivitiesImpacted'].forEach(disableField);
+	
+		if(fd.field('Status').value === 'In Progress'){
+			fd.control('SPDataTable1').ready().then(function(dt){		
+				dt.buttons[0].text = 'Add new event'; 	
+				dt.buttons[0].disabled = false;	                      
+			});
+		}
+		else{
+			fd.control('SPDataTable1').ready().then(function(dt){		
+				dt.buttons[0].text = 'Add new event'; 	
+				dt.buttons[0].disabled = true;	                      
+			});
+		}
+
+		fd.field('Status').$on('change', async function(value) {
+			if(value === 'In Progress'){
+				fd.control('SPDataTable1').ready().then(function(dt){	
+					dt.buttons[0].text = 'Add new event';	
+					dt.buttons[0].disabled = false;	                      
+				});
+			}
+			else{
+				fd.control('SPDataTable1').ready().then(function(dt){
+					dt.buttons[0].text = 'Add new event';		
+					dt.buttons[0].disabled = true;	                      
+				});
+			}
+		});
+
+		let refICDNo = fd.field('InterfaceID').value;
+
+		fd.toolbar.buttons.push({
+	        icon: 'Accept',
+	        class: 'btn-outline-primary',
+	        text: 'Submit',
+            style: `background-color:${greenColor}; color:white; width:150px !important;`,
+	        click: async function() {	        	                         
+
+				if(fd.isValid){
+
+					await PreloaderScripts();					
+					await _CreatFolderStructure('ICD', 'ICDLibrary', fd.itemId, refICDNo, 'ICD_Reviewed');
+                    fd.save();               
+				}
+			}	     
+		});
+
+		fd.toolbar.buttons.push({
+			icon: 'Cancel',
+			class: 'btn-outline-primary',
+			text: 'Cancel',	
+			style: `background-color:${redColor}; color:white; width:150px !important;`,
+			click: async function() {
+				await PreloaderScripts();
+				fd.close();
+			}			
+		});
+
+		formatingButtonsBar();		       
+    }    
+    else if(formType == 'Display'){  
+
+		fd.toolbar.buttons[1].text = "Cancel";
+		fd.toolbar.buttons[1].icon = "Cancel";
+		fd.toolbar.buttons[1].style = `background-color:${redColor}; color:white; width:150px !important;`;
+
+		fd.toolbar.buttons[0].icon = "Edit";
+		fd.toolbar.buttons[0].text = "Edit";
+		fd.toolbar.buttons[0].class = 'btn-outline-primary';
+		fd.toolbar.buttons[0].style = `background-color:${greenColor}; color:white; width:150px !important;`;
+
+		fd.control('SPDataTable1').ready().then(function(dt){				
+			dt.buttons[2].visible = false;	                      
+		});
+		
+		formatingButtonsBar();		         
     }
 }
 
@@ -1420,7 +1611,18 @@ var TQ_newForm = async function(){
 	fd.field("Contractor").ready().then(function() {
 		fd.field("Contractor").value = null;
 		fd.field("Contractor").filter = "ListName eq 'Tenderer'";
-	 	fd.field("Contractor").refresh();	      
+	 	fd.field("Contractor").refresh();		
+	
+		var contractorField = fd.field('Contractor');		
+		if (contractorField && contractorField.widget && contractorField.widget.dataSource) {
+			var lookupLength = contractorField.widget.dataSource._data.length;
+			if (lookupLength === 1) {
+				contractorField.value = contractorField.widget.dataSource._data[0].LookupId;
+				contractorField.disabled = true;
+			}
+		} else {
+			console.log("The Contractor field data source is either undefined or empty.");
+		}	
     });	
 
 	var TradesLegend = "<table cellspacing='0' cellpadding='0' width='100%' border='1' style='border-collapse:collapse; font-size:11px;'>" +
@@ -1615,8 +1817,12 @@ var TQ_editForm = async function(){
 						limitCharacters('NoticeNbrText',2);
 						var NoticeNbr = String(value).padStart(2,'0');
 						
-						fd.field('NoticeNbr').disabled = false;	
-						fd.field('NoticeNbr').value = "TC-" + NoticeNbr;
+						fd.field('NoticeNbr').disabled = false;
+						var ProjectNo = _spPageContextInfo.siteAbsoluteUrl.split('/')[4]; 	
+						if(ProjectNo.toLowerCase() === 's22058-0400d' || ProjectNo.toLowerCase() === 'mz22111-0100d')
+							fd.field('NoticeNbr').value = "TC-" + NoticeNbr;
+						else
+							fd.field('NoticeNbr').value = "ADD-" + NoticeNbr;
 						fd.field('NoticeNbr').disabled = true;	
 						
 						$(fd.field('OutUniqueNumber').$parent.$el).show();
@@ -2896,19 +3102,19 @@ async function DCR_IsUserInGroup(formType)
 					IsPMUser = groupsData[i].Title;
 
 					fd.toolbar.buttons[0].style = "display: none;";
-					// fd.toolbar.buttons[0].icon = 'Save';
-					// fd.toolbar.buttons[0].text = "Save";
+					fd.toolbar.buttons[0].icon = 'Save';
+					fd.toolbar.buttons[0].text = "Save";
 
-					// fd.toolbar.buttons.push({
-					// 	icon: 'Save',
-					// 	class: 'btn-outline-primary',
-					// 	text: 'Save',
-					// 	click: function() {
-					// 		fd.field('Status').value = 'Pending';
-					// 		AttachFiles();
-					// 		fd.save();
-					// 	}
-					// }); 
+					fd.toolbar.buttons.push({
+						icon: 'Save',
+						class: 'btn-outline-primary',
+						text: 'Save',
+						click: function() {
+							fd.field('Status').value = 'Pending';
+							AttachFiles();
+							fd.save();
+						}
+					}); 
 					
 					fd.toolbar.buttons.push({
 						icon: 'DocumentApproval',
@@ -2952,7 +3158,9 @@ async function DCR_IsUserInGroup(formType)
 								//setTimeout(function(){ fd.save(); }, 300);
 							}
 						});
-					}	
+					}
+					
+					break;
 				}								
 			}
 				//alert("IsPMUser = " + IsPMUser);
@@ -3341,16 +3549,23 @@ var onDDSRender = async function (formType){
 			fd.field('Trades').orderBy = { field: 'Title', desc: false };
 			fd.field('Trades').refresh();
 		});
-	}
-    
+	}    
 	if(formType == 'Edit'){
 		const Status = await GetColumnValueByID('Status');
-		fd.field('Stat').value = Status;
-		fd.field('Stat').disabled = true;
+		try {
+			fd.field('Stat').value = Status;
+			fd.field('Stat').disabled = true;
+		} catch (error) {
+			console.error('An error occurred while setting the field value:', error);
+		}
 
 		const Reference = await GetColumnValueByID('Reference');
-		fd.field('Ref').value = Reference;
-		fd.field('Ref').disabled = true;
+		try {
+			fd.field('Ref').value = Reference;
+			fd.field('Ref').disabled = true;
+		} catch (error) {
+			console.error('An error occurred while setting the field value:', error);
+		}		
 		
 		if(Status !== "Reviewed"){}
 		else
@@ -3366,12 +3581,20 @@ var onDDSRender = async function (formType){
         fd.toolbar.buttons[1].text = "Cancel"; 
 
 		const Status = await GetColumnValueByID('Status');
-		fd.field('Stat').value = Status;
-		fd.field('Stat').disabled = true;
+		try {
+			fd.field('Stat').value = Status;
+			fd.field('Stat').disabled = true;
+		} catch (error) {
+			console.error('An error occurred while setting the field value:', error);
+		}
 
 		const Reference = await GetColumnValueByID('Reference');
-		fd.field('Ref').value = Reference;
-		fd.field('Ref').disabled = true;
+		try {
+			fd.field('Ref').value = Reference;
+			fd.field('Ref').disabled = true;
+		} catch (error) {
+			console.error('An error occurred while setting the field value:', error);
+		}
     }
 }
 
@@ -3379,4 +3602,148 @@ var PreloaderScripts = async function(){
     await _spComponentLoader.loadScript(_layout + '/controls/preloader/jquery.dim-background.min.js');
     await _spComponentLoader.loadScript(_layout + '/plumsail/js/preloader.js');
     preloader();
+}
+
+function formatingButtonsBar(){   
+
+	$('div.ms-compositeHeader').remove()
+    $('span.o365cs-nav-brandingText').text('Interface Control Document - ICD');
+    $('i.ms-Icon--PDF').remove();  
+
+	let toolbarElements = document.querySelectorAll('.fd-toolbar-primary-commands');
+    toolbarElements.forEach(function(toolbar) {
+        toolbar.style.display = "flex";
+        toolbar.style.justifyContent = "flex-end";
+        toolbar.style.marginRight = "25px";            
+    });
+
+	let commandBarElement = document.querySelectorAll('[aria-label="Command Bar."]');
+	commandBarElement.forEach(function(element) {        
+		element.style.paddingTop = "16px";       
+	}) ;
+
+    var fieldTitleElements = document.querySelectorAll('.fd-form .row > .fd-field-title');
+   
+    fieldTitleElements.forEach(function(element) {
+        element.style.fontWeight = 'bold';
+        element.style.color = '#4e778f';
+        element.style.borderTopLeftRadius = '6px';
+        element.style.borderBottomLeftRadius = '6px';
+        element.style.width = '200px';
+        element.style.display = 'inline-block';
+    });
+
+	let ControlZoneElement = document.querySelectorAll('.ControlZone');
+	ControlZoneElement.forEach(function(element) {
+		element.style.background = 'linear-gradient(to right, rgb(218, 237, 216), rgb(187, 229, 218), rgb(158, 214, 224), rgb(150, 182, 235), rgb(175, 169, 240), rgb(175, 168, 240), rgb(168, 165, 239))';
+	});
+}
+
+function AutoReference(items, rfVal) {
+	var ReservedRef = "";	
+	var CountNumber = 1;	
+	if (items.length == 1)    
+		CountNumber = items[0].Counter;
+		
+	CountNumber = String(CountNumber).padStart(5,'0');	
+	ReservedRef = `${rfVal}-${CountNumber}`;	
+	fd.field('InterfaceID').value = ReservedRef;
+	
+	['InterfaceID'].forEach(disableField); 	
+}
+
+async function updateCounter() {
+    
+    let refNo = '';
+    let value = 1;
+	
+	let camlF = `Title eq '${rfICDVal}'`;
+	
+	var listname = 'Counter';
+	
+	await pnp.sp.web.lists.getByTitle(listname).items.select("Id, Title, Counter").filter(camlF).get().then(async function(items){
+		var _cols = { };
+        if(items.length == 0){
+             _cols["Title"] = rfICDVal;
+             refNo = `${rfICDVal}-` + String(1).padStart(5,'0'); 
+			 value = parseInt(value) + 1;
+             _cols["Counter"] = value.toString();                 
+             await pnp.sp.web.lists.getByTitle(listname).items.add(_cols);
+                             
+        }
+          else if(items.length > 0){
+
+            var _item = items[0];
+			value = parseInt(_item.Counter) + 1;
+            refNo = `${rfICDVal}-` + String(parseInt(_item.Counter)).padStart(5,'0'); ;             	
+			_cols["Counter"] = value.toString();                   
+			await pnp.sp.web.lists.getByTitle(listname).items.getById(_item.Id).update(_cols);        			
+		}                   
+         
+    });
+    
+    return refNo;
+}
+
+async function getInitials(str) {
+
+	let camlF = "Title" + " eq '" + str + "'";
+
+	const existingItems = await pnp.sp.web.lists.getByTitle('ICD Matrix').items
+            .select('Title', 'AssignedTo/Id', 'AssignedTo/Title', 'AssignedTo/EMail', 'CC/Id', 'CC/EMail', 'CC/Title', 'Description')
+            .expand('AssignedTo', 'CC')
+            .filter(camlF)
+            .getAll();
+
+	if (existingItems.length === 0) {
+		throw new Error('No items found matching the filter');
+	}
+	
+	const item = existingItems[0];
+
+    let initialObject = {
+        Description: item.Description ? item.Description : '',
+        AssignedTo: item.AssignedTo ? item.AssignedTo.EMail : '',            
+        CC: item.CC ? item.CC.EMail : ''           
+    };
+
+	return initialObject;
+}
+
+async function referenceIDCChecker(Originator, Receiver){
+
+	if(Originator !== '' &&  Receiver !== ''){
+
+		['InterfaceID'].forEach(showField);
+
+		rfICDVal = `ICD-${Originator}-${Receiver}`;
+		let camlF = "Title" + " eq '" + rfICDVal + "'";
+		
+		await pnp.sp.web.lists.getByTitle('Counter').items.select("Title", "Counter").filter(camlF).get().then(function(items){		
+			AutoReference(items, rfICDVal);	        
+		});
+	}
+	else{
+		fd.field('InterfaceID').value = '';
+		['InterfaceID'].forEach(hideField);
+	}
+}
+
+const _CreatFolderStructure = async function(ListName, LibraryName, ID, folderStructure, digitalForm){
+	let webUrl = _spPageContextInfo.siteAbsoluteUrl;
+	let siteUrl = new URL(webUrl).origin;    
+    let serviceUrl = `${siteUrl}/AjaxService/DarPSUtils.asmx?op=UploadAttchment`;
+    let soapContent = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                        <soap:Body>
+                            <UploadAttchment xmlns="http://tempuri.org/">
+                                <WebURL>${webUrl}</WebURL>
+                                <ListName>${ListName}</ListName>                             
+                                <LibraryName>${LibraryName}</LibraryName>                                
+                                <ID>${ID}</ID>
+                                <folderStructure>${folderStructure}</folderStructure>  
+								<digitalForm>${digitalForm}</digitalForm>                               
+                            </UploadAttchment>
+                        </soap:Body>
+                    </soap:Envelope>`
+    let res = await getSoapResponse('POST', serviceUrl, true, soapContent, 'UploadAttchmentResult');
 }

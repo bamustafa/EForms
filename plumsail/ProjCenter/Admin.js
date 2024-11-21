@@ -71,6 +71,10 @@ var setCustomButtons = async function () {
     fd.toolbar.buttons[1].style = "display: none;";
 
     await setButtonActions("Accept", "Submit");
+
+    if(_isSiteAdmin)
+        await setButtonActions("Accept", "Get List Fields");
+
     await setButtonActions("ChromeClose", "Cancel");  
 }
 
@@ -86,8 +90,113 @@ const setButtonActions = async function(icon, text){
               await createMatrixFields();
               fd.save();
            }
+           else if(text == "Get List Fields"){
+            await getListFields();
+          }
        }
     });
+}
+
+let getListFields = async function(){
+
+  const excludedFieldNames = [
+    '_ComplianceFlags',
+    '_ComplianceTag',
+    '_ComplianceTagUserId',
+    '_ComplianceTagWrittenTime',
+    '_CopySource',
+    '_EditMenuTableEnd',
+    '_EditMenuTableStart',
+    '_EditMenuTableStart2',
+    '_HasCopyDestinations',
+    '_IsCurrentVersion',
+    '_IsRecord',
+    '_Level',
+    '_ModerationComments',
+    '_ModerationStatus',
+    '_UIVersion',
+    '_UIVersionString',
+    '_VirusInfo',
+    '_VirusStatus',
+    '_VirusVendorID',
+    'AccessPolicy',
+    'AppAuthor',
+    'AppEditor',
+    'Attachments',
+    'Author',
+    'BaseName',
+    'ComplianceAssetId',
+    'ContentType',
+    'ContentTypeId',
+    'ContentVersion',
+    'Created',
+    'Created_x0020_Date',
+    'DocIcon',
+    'Edit',
+    'Editor',
+    'EncodedAbsUrl',
+    'File_x0020_Type',
+    'FileDirRef',
+    'FileLeafRef',
+    'FileRef',
+    'FolderChildCount',
+    'FSObjType',
+    'GUID',
+    'HTML_x0020_File_x0020_Type',
+    'ID',
+    'InstanceID',
+    'ItemChildCount',
+    'Last_x0020_Modified',
+    'LinkFilename',
+    'LinkFilename2',
+    'LinkFilenameNoMenu',
+    'LinkTitle',
+    'LinkTitle2',
+    'LinkTitleNoMenu',
+    'MetaInfo',
+    'Modified',
+    'NoExecute',
+    'Order',
+    'OriginatorId',
+    'owshiddenversion',
+    'PermMask',
+    'ProgId',
+    'Restricted',
+    'ScopeId',
+    'SelectTitle',
+    'ServerUrl',
+    'SMLastModifiedDate',
+    'SMTotalFileCount',
+    'SMTotalFileStreamSize',
+    'SMTotalSize',
+    'SortBehavior',
+    'SyncClientId',
+    'UniqueId',
+    'WorkflowInstanceID',
+    'WorkflowVersion'
+  ];
+
+  let FieldsSchema = [];
+  let listname = fd.field('Title').value;
+  await _web.lists.getByTitle(listname).fields.select("Title", "InternalName").orderBy("Title").get()
+    .then(fields => {
+      _Fields = fields.filter(field => {
+           var internalName = field.InternalName;
+           var displayName = field.Title;
+           let fieldType = field['odata.type'];
+
+           if(!excludedFieldNames.includes(internalName)){
+                FieldsSchema.push({ 
+                    Display: displayName, 
+                    Internal: internalName, 
+                    Type: fieldType
+                })
+            }
+         });
+     })
+    .then(() =>{
+       console.table(FieldsSchema);
+    })
 }
 //#endregion
 

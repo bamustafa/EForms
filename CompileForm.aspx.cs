@@ -2602,7 +2602,17 @@ public partial class CompileForm : System.Web.UI.Page
             Label2.Text = "";
             List<String> ListPdffiles = new System.Collections.Generic.List<String>();
             if (RIWItem != null && RIWItem.Attachments.Count > 0)
-                ListPdffiles.Add(RIWItem.Attachments.UrlPrefix + RIWItem.Attachments[0]);
+            {               
+                for (int att=0; att < RIWItem.Attachments.Count; att++)
+                {
+                    if (RIWItem.Attachments[att].EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ListPdffiles.Add(RIWItem.Attachments.UrlPrefix + RIWItem.Attachments[att]);
+                    }
+                }
+
+                //ListPdffiles.Add(RIWItem.Attachments.UrlPrefix + RIWItem.Attachments[0]);
+            }
 
             #region Bind Images and get commented pdf attachments
             Document doc = new Document(PageSize.A4, 0, 0, 70, 60);

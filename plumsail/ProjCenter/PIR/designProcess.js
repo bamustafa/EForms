@@ -1,5 +1,6 @@
 var onDesignProcessRender = async function(){
 
+    const startTime = performance.now();
     let fields = {
         Process: fd.field('Process'),
         CADJust: fd.field('CADJust'),
@@ -25,6 +26,10 @@ var onDesignProcessRender = async function(){
 
     await onProcessChange(fields);
     await onDRDApplicableChange(fields);
+
+    const endTime = performance.now();
+    const elapsedTime = endTime - startTime;
+    console.log(`onDesignProcessRender: ${elapsedTime} milliseconds`);
 }
 
 const hideTabFields = async function(fields, operation){

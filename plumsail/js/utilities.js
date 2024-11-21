@@ -844,6 +844,24 @@ var DisableFields = async function (filterColumn, filterValue, operator, fields,
 	catch(e){ console.log(e); }
 }
 
+var _DisableFormFields = async function (fields, isDisable) {
+    try
+    {
+        for(let i = 0; i < fields.length; i++)
+        {
+          let field = fields[i];
+          
+          if(field.internalName == "Attachments" && isDisable){	
+            $('div.k-upload-button').remove();
+            $('button.k-upload-action').remove();
+            $('.k-dropzone').remove();
+          }
+          else field.disabled = isDisable;
+        }
+    }
+   catch(e){ console.log(e); }
+}
+
 function HideFields(fields, hideButtons, isHide){
 	if(hideButtons)
 	{
@@ -858,6 +876,15 @@ function HideFields(fields, hideButtons, isHide){
 		if(isHide || isHide == undefined)
 		  $(field.$parent.$el).hide();
 		else $(field.$parent.$el).show();
+	}
+}
+
+function _HideFormFields(fields, isHide){
+	for(let i = 0; i < fields.length; i++)
+	{
+		if(isHide)
+		  $(fields[i].$parent.$el).hide();
+		else $(fields[i].$parent.$el).show();
 	}
 }
   
@@ -1059,7 +1086,7 @@ var setButtonToolTip = async function(_btnText, toolTipMessage){
         maxWidth: 350,
         speed: 500,
         interactive: true,
-        animation: 'slide', //fade, grow, swing, slide, fall
+        animation: 'fade', //fade, grow, swing, slide, fall
         trigger: 'hover'
       });
     }

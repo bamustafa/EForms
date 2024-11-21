@@ -5,6 +5,7 @@ var _ListFullUrl = _spPageContextInfo.webAbsoluteUrl + "/Lists/" + _ListInternal
 var _modulename = "", _formType = "",  _AssignedTo = "";
 
 var _isExist = false;
+let CurrentUser;
 
 var _status;
 
@@ -41,6 +42,10 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 }
 
 var onComplianceRender = async function (formType){	
+
+	debugger;
+
+	CurrentUser = await GetCurrentUser(); 
 	
     if(formType == 'Edit'){
 		await Compliance_editForm();        
@@ -188,7 +193,8 @@ var Compliance_editForm = async function(){
 				var Body = GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName);
 				var encodedBody = htmlEncode(Body);
 
-				await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', '', notificationName, '');
+				if(fd.isValid)
+					await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', '', notificationName, '', CurrentUser);
 
                 fd.save();            
             }			
@@ -262,7 +268,8 @@ var Compliance_editForm = async function(){
 					var Body = GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName);
 					var encodedBody = htmlEncode(Body);
 
-					await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', AssignedToEmail, notificationName, '');
+					if(fd.isValid)
+						await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', AssignedToEmail, notificationName, '', CurrentUser);
 				}
 				else if(Action === 'Rejected')
 				{
@@ -287,7 +294,8 @@ var Compliance_editForm = async function(){
 					var Body = GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName);
 					var encodedBody = htmlEncode(Body);
 
-					await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', AssignedToEmail, notificationName, '');
+					if(fd.isValid)
+						await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', AssignedToEmail, notificationName, '', CurrentUser);
 				}				
 				
                 fd.save();            
@@ -543,4 +551,92 @@ var PreloaderScripts = async function(){
     await _spComponentLoader.loadScript(_layout + '/controls/preloader/jquery.dim-background.min.js');
     await _spComponentLoader.loadScript(_layout + '/plumsail/js/preloader.js');
     preloader();
+}
+
+function clearLocalStorageItemsByField(fields) {
+	fields.forEach(field => {
+		let cachedFields = localStorage;
+        for (let i = 0; i < cachedFields.length; i++) {
+	        const key = localStorage.key(i);        
+	        if (key.includes(field)){
+	        	localStorage.removeItem(key);
+	        }
+    	}
+    });
+}
+
+const GetCurrentUser = async function(){
+	try {
+        const user = await pnp.sp.web.currentUser.get();
+        return user;
+    } catch (error) {
+        console.error("Error fetching current user:", error);
+        throw error; // Re-throw the error if needed
+    }	
+}
+
+const _sendEmail = async function(ModuleName, emailName, query, ApprovalTradeCC, notificationName, rootFolder, currUser){
+	let webUrl = _spPageContextInfo.siteAbsoluteUrl;
+	let siteUrl = new URL(webUrl).origin;
+    let CurrentUser;
+	
+	debugger;
+	if(currUser !== undefined && currUser !== null && currUser !== '')
+		CurrentUser = currUser
+	else CurrentUser = await GetCurrentUser(); 
+	
+
+    let serviceUrl = `${siteUrl}/AjaxService/DarPSUtils.asmx?op=SEND_EMAIL_TEMPLATE`;
+    let soapContent = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                        <soap:Body>
+                            <SEND_EMAIL_TEMPLATE xmlns="http://tempuri.org/">
+                                <WebURL>${webUrl}</WebURL>
+                                <Email_Name>${emailName}</Email_Name>
+                                <Query><![CDATA[${query}]]></Query>
+                                <UserDisplayName>${CurrentUser.Title}</UserDisplayName>
+                                <CurrentUserEmail>${CurrentUser.Email}</CurrentUserEmail>
+                                <ApprovalCC>${ApprovalTradeCC}</ApprovalCC>
+                                <CheckPageRootFolder>${rootFolder}</CheckPageRootFolder>
+                                <ModuleName>${ModuleName}</ModuleName>
+                                <Notification_Name>${notificationName}</Notification_Name>
+                            </SEND_EMAIL_TEMPLATE>
+                        </soap:Body>
+                    </soap:Envelope>`
+    let res = await getSoapResponse('POST', serviceUrl, true, soapContent, 'SEND_EMAIL_TEMPLATEResult');
+}
+
+var getSoapResponse = async function(method, serviceUrl, isAsync, soapContent, getResultTag){
+	var xhr = new XMLHttpRequest(); 
+    xhr.open(method, serviceUrl, isAsync); 
+    xhr.onreadystatechange = async function() 
+    {
+        if (xhr.readyState == 4) 
+        {   
+            try 
+            {
+                if (xhr.status == 200 && getResultTag !== '')
+                {                
+                    const obj = this.responseText;
+                    var xmlDoc = $.parseXML(this.responseText),
+                    xml = $(xmlDoc);
+					
+                    var value= xml.find(getResultTag);
+                    if(value.length > 0){
+                        text = value.text();
+                        //_layout = value[0].children[0].textContent;
+                        //_rootSite = value[0].children[1].textContent;
+                    }
+                }
+                else console.log(`status ${xhr.status} - ${xhr.statusText} `);          
+            }
+            catch(err) 
+            {
+                console.log(err + "\n" + text);             
+            }
+        }
+    }
+	xhr.setRequestHeader('Content-Type', 'text/xml');
+	if(soapContent !== '')
+      xhr.send(soapContent);
+	else xhr.send();
 }

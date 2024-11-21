@@ -1,6 +1,13 @@
   var onBackGroundInfoRender = async function (){  
+
+    const startTime = performance.now();
+
     setStyles();
-    ManageOtherFields(formFields)
+    ManageOtherFields()
+
+    const endTime = performance.now();
+    const elapsedTime = endTime - startTime;
+    console.log(`onBackGroundInfoRender: ${elapsedTime} milliseconds`);
   } 
   
   function setStyles(){
@@ -19,15 +26,18 @@
     // btn.after('<span style="font-family:Arial;font-weight:bold;font-size:14px; padding-left: 700px; color: var(--darkgreen)">Source of Technical Documents</span>');
   }
   
-  function ManageOtherFields(formFields){
+  function ManageOtherFields(){
   
-    let FormContractOther = formFields.FormContractOther
-    let TypeContractOther = formFields.TypeContractOther
+    let FormContractOther = fd.field('FormContractOther')
+    let TypeContractOther = fd.field('TypeContractOther')
   
-     _HideFields([FormContractOther,TypeContractOther], true, false);
+    setTimeout(async () => { 
+      await _HideFields([FormContractOther,TypeContractOther], true, false);
+    }, 300);
+     
   
-    OtherFieldChange(formFields.ContractForm, FormContractOther)
-    OtherFieldChange(formFields.ContractType, TypeContractOther)
+    OtherFieldChange(fd.field('ContractForm'), FormContractOther)
+    OtherFieldChange(fd.field('ContractType'), TypeContractOther)
   }
   
   function OtherFieldChange(field, otherField){
@@ -209,7 +219,7 @@
       });
   
       let mtd = fd.field("MTD");
-      mtd.filter = filterQuery;
+      mtd.filter = `${filterQuery} and Superseded eq 0` ;
       mtd.orderBy = { field: "FullDesc", desc: false };
       mtd.refresh();
   }

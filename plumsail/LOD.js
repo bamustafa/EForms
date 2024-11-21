@@ -6,8 +6,8 @@ let updateBatchSize = 10;
 var _web, _webUrl, _siteUrl, _layout, _module = '', _formType = '', _phase = '', _htLibraryUrl;
 var _list, _itemId, _lodRef = '', _status = '', _colArray = [], _requiredFields = [], _targetList, _filterField, _dataArray;
 var _isSiteAdmin = false, _isMain = true, _isLead = false, _isPart = false, _isNew = false, _isEdit = false, _isMultiContracotr = false, _ignoreChange = false, _isAllowed = false,
-    _updateTitle = false, _isDesign = false, _isMidpExist = false, _isMIDPSubjectExist = false, _ignoreChecking = false;
-var delayTime = 100, retryTime = 10, _timeout;
+    _updateTitle = false, _isDesign = false, _isMidpExist = false, _isTradeChecker = false, _isMIDPSubjectExist = false, _ignoreChecking = false, _isOriginatorChecker = false;
+var delayTime = 100, retryTime = 10, _timeout, _revStartWithNeeded;
 
 var _darTrade = '', _cdsTitle = '', _CheckRevision = 'yes';
 
@@ -36,18 +36,19 @@ var _updateItems = [];
 var _listDictionary = [];
 
 let itemExistMesg = 'filename is already submitted'
-
+let disableTable = false;
 var onRender = async function (relativeLayoutPath, moduleName, formType){
 
+    debugger
     _layout = relativeLayoutPath;
     await loadScripts();
     await getLODGlobalParameters(moduleName, formType);
 
+    await renderControls();
     await validateBeforeLoad();
 
-    await renderControls();
-
     await ensureFunction('getGridMType', _web, _webUrl, _module, _isDesign); //set mtItem
+ 
     var colsInternal = [], colsType = [];
     if(mtItem.colArray.length > 0){
         _colArray = mtItem.colArray;
@@ -94,6 +95,9 @@ var _getData = async function(_web, _listname, _filterfld, _refNo, _colsInternal
     var _dataArray = [];
 
     var _query = _filterfld + " eq '" + _refNo + "' and Status ne 'Cancelled'";
+
+    if(_isEdit && _isDesign)
+        _query += ` and DarTrade eq '${fd.field('Trade').value}'`
      
     var filterArray = _colsInternalArray.filter(item => item !== 'Mesg' && item !== _defaultStatusImgCol);
     const _cols = filterArray.join(',');
@@ -208,6 +212,14 @@ const _setData = (Handsontable) => {
             indicators: false // Show the hidden columns indicators
           }
         });
+
+        if(disableTable){
+          _hot.updateSettings({
+            allowInsertRow: false, // Disable adding rows
+            fillHandle: false, // disable drag
+            readOnly: true    // Disable cell editing
+            });
+        }
 
     performAfterChangeActions((rowIndex, operation) => {
 
@@ -341,20 +353,23 @@ async function performAfterChangeActions(callback) {
     _hot.addHook('afterContextMenuDefaultOptions',  customizeContextMenu); //
 
 
-    var isFilenameExist = async function(deliverableType, filename, subject){
+    var isFilenameExist = async function(deliverableType, filename, subject, isExactMatch){
       var isFound = false;
-
+      let CurrentRevisionNumber = 0;
+      let fullfilename = filename;
       if(!_ignoreChecking){
         var schemDelivType = _fncSchemas[deliverableType];
         
-        if(schemDelivType.containsRev)
+        if(schemDelivType.containsRev){      
+            CurrentRevisionNumber = filename.substring(filename.lastIndexOf('-') + 1); // part after the last '-'            
             filename = filename.substring(0, filename.lastIndexOf('-'));
-      }
+        }
+      }     
 
-      var _query = "FileName eq '" + filename + "'";
+       var _query = isExactMatch ? `FullFileName eq '${fullfilename}'`: `FileName eq '${filename}'`;
 
        const list = _web.lists.getByTitle(_RLOD);
-       const items = await list.items.select("Id, Revision, FullFileName, Status, Title, "+_filterField).filter(_query).top(1).get();
+       var items = await list.items.select("Id, Revision, FullFileName, Status, Title, "+_filterField).filter(_query).top(1).get();
        if (items.length > 0)
        {
             let item = items[0];
@@ -364,7 +379,22 @@ async function performAfterChangeActions(callback) {
                 rlodItem: item
             }
         }
-        else return {isFound: false}
+        else {      
+            _query = `FileName eq '${filename}'`;
+            items = await list.items.select("Id, Revision, FullFileName, Status, Title, "+_filterField).filter(_query).top(1).get();
+            if (items.length > 0)
+            {
+                let item = items[0];
+                return {
+                    isFound: false,
+                    ExistRev: item['Revision'],//.LODRef
+                    RevisionNumber: CurrentRevisionNumber
+                }
+            }
+            else{
+                return { isFound: false }
+            }
+        }
     }
     
 
@@ -411,7 +441,7 @@ async function performAfterChangeActions(callback) {
                                 let result = await isFilenameExist('', filename);
                                 if(result.isFound === true){
                                     if(result.rlodItem.Status === 'Cancelled')
-                                      mesg = 'filename is already Cancelled. Contact IT admin to re-open';
+                                      mesg = 'The filename has been canceled. To restore it, add the filename and submit as usual.';
                                 }
                                 return{
                                     rowIndex: rowIndex,
@@ -436,20 +466,35 @@ async function performAfterChangeActions(callback) {
                                 var fname = filename;
                                 filename = '';
 
-                                if(fname !== ''){
+                                if(fname !== ''){                                 
                                     let subject = _hot.getDataAtCell(rowIndex, _hot.propToCol('Title'));
                                     const delivColIndex = _hot.propToCol('DeliverableType');
                                     var deliverableType = _hot.getDataAtCell(rowIndex, delivColIndex);
                                     var result = await setNamingConvention(rowIndex, columnIndex, fname, deliverableType);
-                                    mesg = result.mesg;
-
+                                    mesg = result.mesg;                          
                                     let res, isFound, isVisited = false;
                                     if(_exact_Filename_Match === 'yes' && mesg !== ''){
                                         if(mesg.toLowerCase().startsWith('revision number')){
-                                            res = await isFilenameExist(deliverableType, fname);
-                                            isFound = res.isFound;
+                                            res = await isFilenameExist(deliverableType, fname, '', true);
+                                            isFound = res.isFound;                                            
+                                            let revStart = _revStartWithNeeded;                                   
+                                            let CuRev = parseInt(res.RevisionNumber, 10); // parse as base 10 integer
+                                            let ExRev = parseInt(res.ExistRev, 10);       // parse as base 10 integer
+                                            
+                                            if (revStart) {                                               
+                                                CuRev = parseInt(res.RevisionNumber.replace(revStart, ''), 10);
+                                                ExRev = parseInt(res.ExistRev.replace(revStart, ''), 10);
+                                            }
+
                                             if(isFound === true)
                                                 mesg = itemExistMesg;
+                                            else{
+                                                if(!isNaN(CuRev) && !isNaN(ExRev) && (CuRev - (ExRev + 1) !== 0))
+                                                    mesg = `revision number must be ${ExRev + 1} instead of ${CuRev}`;
+                                                else if(isNaN(CuRev) && isNaN(ExRev)){}
+                                                else 
+                                                    mesg = '';
+                                            }
                                         isVisited = true;
                                         }
                                         else if(mesg.toLowerCase().startsWith('revision must'))
@@ -504,9 +549,15 @@ async function performAfterChangeActions(callback) {
                                         if(_isMidpExist){
                                             mesg = await checkMIDPIfExist(deliverableType, fname, subject);
                                         }
-                                    }
 
-                                
+                                        if(_isTradeChecker && mesg == ''){
+                                            mesg = await checkTradeChecker(deliverableType, fname, subject);
+                                        }
+
+                                        if(_isOriginatorChecker && mesg == ''){
+                                            mesg = await checkOriginatorChecker(deliverableType, fname, subject);
+                                        }
+                                    }                               
 
                                     return{
                                         rowIndex: rowIndex,
@@ -550,6 +601,8 @@ async function performAfterChangeActions(callback) {
                 else{
                     const mesgColumnIndex = _hot.propToCol('Mesg');
                     var mesgValue = _hot.getDataAtCell(result.rowIndex, mesgColumnIndex);
+                    if(mesgValue === null)
+                        mesgValue = '';
                     if(mesgValue.includes(itemExistMesg)){}
                     else if(mesgValue !== null && mesgValue !== '')
                       addError(result.rowIndex, '');
@@ -798,7 +851,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
             schema = schema.replace(/&nbsp;/g, '');
             schema = JSON.parse(schema);
     
-            var scheamResult = await setFilenameText(schema, delimeter);
+            var scheamResult = await setFilenameText(schema, delimeter);       
      
             var containsRev = false;
             var revStartWith;
@@ -807,6 +860,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
                 if(fieldName === 'rev' || fieldName === 'revision'){
                   containsRev = true;
                   revStartWith = fld.RevStartWith;
+                  _revStartWithNeeded = revStartWith;
                   return true;
                 }
             });
@@ -833,6 +887,14 @@ var getLODGlobalParameters = async function(moduleName, formType){
         //_defaultStatusImgCol = 'TempStatus';
         _exact_Filename_Match = await getParameter("Exact_Filename_Match");
         _exact_Filename_Match = _exact_Filename_Match.toLowerCase();
+
+        let TradeChecker = await getParameter('TradeChecker');
+        if(TradeChecker.toLowerCase() === 'yes')
+            _isTradeChecker = true; 
+        
+        let OriginatorChecker = await getParameter('OriginatorChecker');
+        if(OriginatorChecker.toLowerCase() === 'yes')
+            _isOriginatorChecker = true;   
 
         if(_exact_Filename_Match === 'yes'){
             let wfItems = await _web.lists.getByTitle("WorkflowSteps").items.select("ApprovedStatus").filter(`Title eq 'Client'`).get();
@@ -873,6 +935,7 @@ var validateBeforeLoad = async function(){
     // }
   
     if(_isDesign){
+       
          let Reference = (fd.field('Reference') !== null && fd.field('Reference') !== undefined) ? fd.field('Reference').value : '';
          let Trade = (fd.field('Trade') !== null && fd.field('Trade') !== undefined) ? fd.field('Trade').value : '';
          let CDSTitle = (fd.field('CDSTitle') !== null && fd.field('CDSTitle') !== undefined) ? fd.field('CDSTitle').value : '';
@@ -890,6 +953,7 @@ var validateBeforeLoad = async function(){
              fd.close();
            }
 
+           debugger;
            let filter = `Reference eq '${Reference}' and Trade eq '${Trade}'`
            let items = await _web.lists.getByTitle(_DesignTasks).items.select("WorkflowStatus").filter(filter).get();
            if(items.length > 0){
@@ -898,8 +962,14 @@ var validateBeforeLoad = async function(){
                     
                 if (workflowStatus !== "pending")
                 {
-                    alert(`${Reference} for ${Trade} is already ${workflowStatus}. PM Rejection is required so you can proceed`);
-                    fd.close();
+                    const mesg = `${Reference} for ${Trade} is already ${workflowStatus}. PM Rejection is required so you can proceed`
+                    await setPSErrorMesg(mesg, false)
+
+                    $('span').filter(function(){ return $(this).text() == 'Submit'; }).parent().attr("disabled", "disabled");
+                    disableTable = true
+                   
+                    //alert(mesg);
+                    //fd.close();
                 }
            }
     }
@@ -924,6 +994,79 @@ var checkMIDPIfExist = async function(deliverableType, filename, subject){
       }
     }
     else mesg ='The specified reference is not registered in the MIDP';
+    return mesg;
+}
+
+var checkTradeChecker = async function(deliverableType, filename, subject){
+    let mesg = '';
+    let tradeValue = '';
+    let typeMetaInfo = _fncSchemas[deliverableType];    
+    let delimeter = typeMetaInfo.delimeter; 
+    let filenameText = typeMetaInfo.filenameText;     
+
+    let partsArray = filenameText.split(delimeter);
+    let FilenameArray = filename.split(delimeter);
+
+    let tradeIndex = partsArray.map((part, index) => {
+        return part === "Trade" ? index : -1;
+    }).find(index => index !== -1);    
+    
+    if (tradeIndex !== -1 && tradeIndex !== undefined) {
+        let TradeList = typeMetaInfo.schemaFields[tradeIndex+1]?.isList?.split('|')[0] || '';
+        if(TradeList !== '') {
+            tradeValue = FilenameArray[tradeIndex];          
+            let isExist = await isTradeMatched(TradeList, tradeValue, 'darTrade');
+            
+            if(!isExist)
+                mesg =`The specified Trade '${tradeValue}' does not match the folder's trade '${_darTrade}'`;
+        }
+    } 
+
+    return mesg;
+}
+
+var checkOriginatorChecker = async function(deliverableType, filename, subject){
+    let mesg = '';
+    let tradeValue = '';
+    let typeMetaInfo = _fncSchemas[deliverableType];    
+    let delimeter = typeMetaInfo.delimeter; 
+    let filenameText = typeMetaInfo.filenameText;     
+
+    let partsArray = filenameText.split(delimeter);
+    let FilenameArray = filename.split(delimeter);
+
+    let OriginatorIndex = partsArray.map((part, index) => {
+        return part === "Originator" ? index : -1;
+    }).find(index => index !== -1); 
+    
+    let DrawingTypeIndex = partsArray.map((part, index) => {
+        return (part === "DrawingType" || part === "DocumentType") ? index : -1;
+    }).find(index => index !== -1);     
+    
+    if (OriginatorIndex !== -1 && OriginatorIndex !== undefined) {
+        let TradeList = typeMetaInfo.schemaFields[OriginatorIndex+1]?.isList?.split('|')[0] || '';
+        if(TradeList !== '') {
+
+            tradeValue = FilenameArray[OriginatorIndex];
+            
+            if (DrawingTypeIndex !== -1 && DrawingTypeIndex !== undefined) {     
+                DrawingTypeValue = FilenameArray[DrawingTypeIndex]; 
+                if(DrawingTypeValue.toLowerCase() !== 'm3d')
+                    if(tradeValue.toLowerCase() !== 'dar')
+                        mesg =`The specified DrawingType '${DrawingTypeValue}' does not match the Originator '${tradeValue}'`; 
+                else
+                    return mesg;         
+            }
+            
+            if(mesg === ''){
+                let isExist = await isTradeMatched(TradeList, tradeValue, 'darOriginator');
+                
+                if(!isExist)
+                    mesg =`The specified Originator '${tradeValue}' does not match the folder's Originator '${_darTrade}'`;
+            }
+        }
+    } 
+
     return mesg;
 }
 
@@ -1368,6 +1511,27 @@ var isItemFound = async function(selectedRow, operation, item){
         console.error("Error retrieving item:", error);
     });
 }
+
+var isTradeMatched = async function(TradeList, tradeValue, columnName){   
+
+    let isExist = false;      
+    const camlFilter = `<View>                            
+                            <Query>
+                                <Where>	
+                                    <And>								
+                                        <Eq><FieldRef Name='Title'/><Value Type='Text'>${tradeValue}</Value></Eq>	
+                                        <Eq><FieldRef Name='${columnName}'/><Value Type='MultiChoice'>${_darTrade}</Value></Eq>	
+                                    </And>					
+                                </Where>
+                            </Query>
+                        </View>`;
+
+    const existingItems = await pnp.sp.web.lists.getByTitle(TradeList).getItemsByCAMLQuery({ ViewXml: camlFilter });
+    if(existingItems.length > 0) 
+        isExist = true;
+    
+    return isExist;
+}
 //#endregion
 
 //#region CRUD OPERATION FOR tempLOD/RLOD/SLOD
@@ -1434,6 +1598,7 @@ var insertLODItems= async function(){
 }
 
 var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
+    //Insert to RLOD
     const list = _web.lists.getByTitle(_RLOD);
     var batch = pnp.sp.createBatch(); // eg: 10 min
     
@@ -1517,8 +1682,24 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
         if(_CheckRevision.toLocaleLowerCase() === 'no')
           update_MetaInfo_For_CheckRevision(_item, filename, delimeter, schemDelivType.containsRev);
         
-        if(doUpdate)
+        if(doUpdate){
+
+            if(_isDesign && _exact_Filename_Match === 'yes'){
+
+                item['DarTrade'] = _darTrade;
+                item['CDSTitle'] = _cdsTitle;
+
+                item['Category'] = category;
+                item['FileName'] = filename;
+                item[_filterField] = _lodRef;
+                item['Status'] = 'Pending';
+
+                if(!_ignoreChecking)
+                    await splitFileName(schema, delimeter, item)
+            }
+
             list.items.getById(_item.Id).inBatch(batch).update(item);
+        }
       } 
       else {
         item['Category'] = category;
@@ -1667,6 +1848,7 @@ function isAllDigits(str) {
 }
 
 var validateExactFileNameMatch = async function(deliverableType, title,  filename, roldItem){
+    debugger;
     let typeMetaInfo = _fncSchemas[deliverableType];
     let containsRev = (typeMetaInfo.containsRev !== null && typeMetaInfo.containsRev !== undefined) ? typeMetaInfo.containsRev : false;
     let revStartWith = (typeMetaInfo.revStartWith !== null && typeMetaInfo.revStartWith !== undefined) ? typeMetaInfo.revStartWith : '';
@@ -1694,7 +1876,7 @@ var validateExactFileNameMatch = async function(deliverableType, title,  filenam
       else if (fncRev != rlodRev)
         checkLogic = true;
      
-    if (_lodRef !== rlodLODRef && rlodFullFilename === filename)
+    if (_lodRef !== rlodLODRef && rlodFullFilename === filename && containsRev)
       return `Filename was previously submitted under ${rlodLODRef}`;
     
      if(checkLogic && containsRev){
