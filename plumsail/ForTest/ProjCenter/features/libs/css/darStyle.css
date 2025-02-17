@@ -1,0 +1,57 @@
+﻿#gwadar:hover {
+    background-color: rgba(83, 82, 82, 0.80);
+    border-radius: 5px;
+    background-position: center center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    width: 35px;
+    height: 35px;
+    position: absolute;
+    top: 140px;
+    left: 20px;
+    background-image: url('../img/gwadarIcon.png');
+}
+
+#gwadar {
+    background-color: rgba(102, 102, 102, 0.8);
+    border-radius: 5px;
+    background-position: center center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    width: 35px;
+    height: 35px;
+    position: absolute;
+    top: 140px;
+    left: 20px;
+    background-image: url('../img/gwadarIcon.png');
+}
+
+#HomeButton {
+    position: absolute;
+    top: 95px;
+    left: 20px;
+    z-index: 50;
+}
+
+html, body, #map {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+}
+
+#BasemapToggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 50;
+}
+
+.wordwrap {
+    white-space: pre-wrap; /* CSS3 */
+    white-space: -moz-pre-wrap; /* Firefox */
+    white-space: -pre-wrap; /* Opera <7 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* IE */
+}
+
+

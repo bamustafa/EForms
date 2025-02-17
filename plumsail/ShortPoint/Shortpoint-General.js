@@ -1,5 +1,5 @@
 var layout = '/_layouts/15/PCW/General/EForms';
-var scriptUrl = layout + '/plumsail/Others/ShortpointFunctions.js' + '?t=' + new Date().getTime();
+var scriptUrl = layout + '/plumsail/ShortPoint/ShortpointFunctions.js' + '?t=' + new Date().getTime();
  
 async function loadScriptAsync(src) {
     return new Promise((resolve, reject) => {

@@ -30,11 +30,15 @@ var onRender = async function (moduleName){
 		if(moduleName == 'SPointLoad')
 		{
             //debugger; 
-            let isSiteADM = _spPageContextInfo.;
+            let isSiteADM = _spPageContextInfo.isSiteAdmin;
             const url = _spPageContextInfo.webAbsoluteUrl;
-            await loadScriptAsync(`${url}${_layout}/common libs/jquery/jquery.min.js`); 
-            await PreloaderScripts();
-            await loadScripts();
+
+            debugger;
+         
+            await loadScriptAsync().then(async ()=>{       
+                //showPreloader(); 
+                //preloader_btn(false, true);      
+            })          
             
             _ProjectId = localStorage.getItem(`${_ProjectNumber}-ProjectId`);
             _ProjectName = localStorage.getItem(`${_ProjectNumber}-ProjectName`);
@@ -416,8 +420,11 @@ var onRender = async function (moduleName){
 	catch (e) {		
 		console.log(e);	
 	}
+    finally {      
+        //hidePreloader();
+    }
 
-    preloader("remove");
+    //preloader("remove");
 }
 
 //#region Additional Function
@@ -704,74 +711,6 @@ function htmlEncode(str) {
     });
 }
 
-async function loadScripts(){
-	// const libraryUrls = [		
-	// 	_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
-	// 	_layout + '/plumsail/js/commonUtils.js'        
-	// ];
-  
-	// const cacheBusting = '?t=' + new Date().getTime();
-	//   libraryUrls.map(url => { 
-	// 	  $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
-	// 	});
-		
-	const stylesheetUrls = [
-		//_layout + '/controls/tooltipster/tooltipster.css',
-        _layout + '/plumsail/css/ShortPointStyle.css'      		
-	];
-  
-	stylesheetUrls.map((item) => {
-	  var stylesheet = item;
-	  $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
-	});
-
-    // const fontStyles = `
-	// 	@font-face {
-	// 		font-family: 'SegoeUIRegular';
-	// 		src: url('${_layout}/plumsail/js/FabricIcons/segoeui-regular.woff2') format('woff2'),
-	// 			 url('${_layout}/plumsail/js/FabricIcons/segoeui-regular.woff') format('woff');
-	// 	}
-	// 	@font-face {
-	// 		font-family: 'SegoeUILight';
-	// 		src: url('${_layout}/plumsail/js/FabricIcons/segoeui-light.woff2') format('woff2'),
-	// 			 url('${_layout}/plumsail/js/FabricIcons/segoeui-light.woff') format('woff');
-	// 	}
-	// 	@font-face {
-	// 		font-family: 'FabricIcons53';
-	// 		src: url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.53.woff2') format('woff2'),
-	// 			 url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.53.woff') format('woff'),
-	// 			 url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.53.ttf') format('truetype');
-	// 	}
-	// 	@font-face {
-	// 		font-family: 'FabricIcons23';
-	// 		src: url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.23.woff2') format('woff2'),
-	// 			 url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.23.woff') format('woff'),
-	// 			 url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.23.ttf') format('truetype');
-	// 	}
-	// 	@font-face {
-	// 		font-family: 'FabricIcons354';
-	// 		src: url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-3.54.woff') format('woff');
-	// 	}
-	// `;
-
-	// // Append font styles to head
-	// $('<style>')
-	// 	.prop('type', 'text/css')
-	// 	.html(fontStyles)
-	// 	.appendTo('head');
-}
-
-async function PreloaderScripts(){
-  
-	await loadScriptAsync(_layout + '/controls/preloader/jquery.dim-background.min.js')
-		.then(() => {
-			return loadScriptAsync(_layout + '/plumsail/js/preloader.js');
-		})
-		.then(() => {
-			preloader();
-		});	    
-}
-
 var setButtonToolTip = async function(_btnText, toolTipMessage){  
         
     var btnElement = $('span').filter(function(){ return $(this).text() == _btnText; }).prev();
@@ -819,7 +758,7 @@ var checkIfUserIsSiteAdmin = function () {
         } else { 
             $('.ControlZone-control').css('marginTop', '-32px');
             $('.ms-CommandBar.root_75be230e.shortpoint-proxy-neutral-lighter--bg.shortpoint-proxy-neutral-primary--text.shortpoint-proxy-theme-command-bar').css('display', 'none');
-            $('.commandBarWrapper').css('display', 'none');                 
+            $('.commandBarWrapper').css('display', 'none');
             console.log("The current user is Normal User.");
         }
     } catch (error) {
@@ -827,23 +766,65 @@ var checkIfUserIsSiteAdmin = function () {
     }
 }
 
-async function loadScriptAsync(src) {
-    return new Promise((resolve, reject) => {
-        var script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = src;
+async function loadScriptAsync() {
+    const scriptUrls = [
+        _layout + '/common libs/jquery/jquery.min.js',
+        _layout + '/controls/preloader/jquery.dim-background.min.js',
+        _layout + '/plumsail/js/preloader.js'
+    ];
 
-        script.onload = function() {
-            resolve(); // Resolve the promise when the script loads successfully
-        };
+    const stylesheetUrls = [
+        _layout + '/plumsail/css/ShortPointStyle.css'
+    ];
 
-        script.onerror = function() {
-            console.error('Error loading script:', src); // Log an error if the script fails to load
-            reject(new Error(`Failed to load script: ${src}`)); // Reject the promise on error
-        };
+    const cacheBusting = `?v=${Date.now()}`;
 
-        document.head.appendChild(script);
-    });
+    // Function to load a single script
+    const loadScript = (src) => {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = src;
+            script.async = true;
+
+            script.onload = () => resolve();
+            script.onerror = () => {
+                console.error('Error loading script:', src);
+                reject(new Error(`Failed to load script: ${src}`));
+            };
+
+            document.head.appendChild(script);
+        });
+    };
+
+    // Function to load stylesheets
+    const loadStylesheets = (urls) => {
+        urls.forEach((url) => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = url;
+            document.head.appendChild(link);
+        });
+    };
+
+    try {
+        // Load scripts sequentially
+        for (const url of scriptUrls) {
+            await loadScript(url + cacheBusting);
+        }
+        console.log("All scripts loaded successfully.");
+    } catch (error) {
+        console.error("Error loading scripts:", error);
+    }
+
+    // Load stylesheets
+    try {
+        loadStylesheets(stylesheetUrls);
+        console.log("All stylesheets loaded successfully.");
+    } catch (error) {
+        console.error("Error loading stylesheets:", error);
+    }
 }
 
 function addHorizontalNavItemWithDropdown(title, href, path, subItems = []) {
@@ -1088,19 +1069,30 @@ var fetchProjectInfoMethod = async function (ProjectNo){
 
         const GetProjectTeamNodes = ProjectTeam.getElementsByTagName("Table1");      
 
-        for (let i = 0; i < GetProjectTeamNodes.length; i++) {
+        if(GetProjectTeamNodes.length > 0) {
+            for (let i = 0; i < GetProjectTeamNodes.length; i++) {
 
-            const projectNode = GetProjectTeamNodes[i];
+                const projectNode = GetProjectTeamNodes[i];
 
-            // Extracting data from each projectNode
-            _ProjectId = projectNode.getElementsByTagName("ProjectId")[0]?.textContent || '';
-            _ProjectName = projectNode.getElementsByTagName("ProjectName")[0]?.textContent || ''; 
-            _WorkType = projectNode.getElementsByTagName("WorkType")[0]?.textContent || ''; 
+                // Extracting data from each projectNode
+                _ProjectId = projectNode.getElementsByTagName("ProjectId")[0]?.textContent || '';
+                _ProjectName = projectNode.getElementsByTagName("ProjectName")[0]?.textContent || ''; 
+                _WorkType = projectNode.getElementsByTagName("WorkType")[0]?.textContent || ''; 
+
+                localStorage.setItem(`${ProjectNo}-ProjectId`, _ProjectId);
+                localStorage.setItem(`${ProjectNo}-ProjectName`, _ProjectName);
+                localStorage.setItem(`${ProjectNo}-WorkType`, _WorkType);       
+            } 
+        }
+        else {
+            _ProjectId = '23045';
+            _ProjectName = 'Pilot Design Project'; 
+            _WorkType = 'Design'; 
 
             localStorage.setItem(`${ProjectNo}-ProjectId`, _ProjectId);
             localStorage.setItem(`${ProjectNo}-ProjectName`, _ProjectName);
-            localStorage.setItem(`${ProjectNo}-WorkType`, _WorkType);       
-        }                 
+            localStorage.setItem(`${ProjectNo}-WorkType`, _WorkType);
+        }                
 	}
 	catch (e) {	
 		console.log(e);	

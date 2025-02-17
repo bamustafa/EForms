@@ -548,7 +548,9 @@ function fixTableCols(dtName){
 const enable_Disable_Tabs = async function(TabNames, isDisabled){
 	TabNames.map(tabName=>{
 	  let susIndex = getTabIndex(tabName.title, tabName.tooltip, isDisabled);
+    debugger;
 	  let tab = fd.container(tabName.masterTab).tabs[susIndex];
+    let element = tab.$el.style = 'cursor: not-allowed'
 	  tab.disabled = isDisabled;
 	})
 }

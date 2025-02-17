@@ -4,7 +4,8 @@ var _RLOD = 'RLOD', _SLOD = 'SLOD', _MIDP = 'MIDP', _AllowedExtensions = 'Allowe
     _CDS = 'CDS', _UploadDeliverables = 'Upload Deliverables', _Deliverables = 'Deliverables', _Trades = 'Trades',
     _LeadTask = 'LeadTasks', _PartTask = 'PartTasks';
 
-const submitText = 'Finalize' // FOR PROJECT CENTER 
+const submitText = 'Finalize' // FOR PROJECT CENTER
+const submitDefault = 'Submit' // FOR PERFORMANCE MANAGEMENT GOALS
 
 //#region EFORMS MAIN MODULE HEADER TITLE
 var leadTaskHeaderTitle = 'CM Task',

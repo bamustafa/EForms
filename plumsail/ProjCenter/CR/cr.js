@@ -22,6 +22,7 @@ var onCompletionReportRender = async function(){
     
     await getItems()
     .then(async (items)=>{
+      debugger;
         if(items.length > 0){
             handleType(items);
         }else{
@@ -120,8 +121,16 @@ let handleType = async function(items){
           }, 100);
     }
 
-    formFields.Phases.$on("change", async function (phase){
-       
+    //formFields.Phases
+    var latestPhaseVisit = '';
+    fd.field("Phases").$on("change", async function (phase){
+
+       if(phase){
+            if(latestPhaseVisit === phase)
+              return;
+            else latestPhaseVisit = phase
+       }
+
         $('#pmtrade').remove()
      
         if(phase !== null && phase !== ''){
@@ -137,6 +146,26 @@ let handleType = async function(items){
                 
               return item.Phases === phase && item.Title !== 'PM'
             });
+
+
+            if(filterItems.length === 0){
+              await getItems()
+                    .then(async (items)=>{
+                        if(items.length > 0){
+                          filterItems = items.filter((item)=>{ 
+                            if(item.Phases === phase && item.Title === 'PM'){
+                              let linkUrl = `${_webUrl}/SitePages/PlumsailForms/${listnameFromUrl}/Item/EditForm.aspx?item=${item.Id}`;
+                              pmLink = `<a id="pmtrade" itemid="${item.Id}" role="button" href= ${linkUrl} onclick="openInCustomWindow(event)">Proceed to finalize PM task</a>`
+                            }
+                            
+                          if(item.Phases === phase && item.Title !== 'PM' && item.Status !== 'Approve')
+                            isTradesApproved = false
+                            
+                          return item.Phases === phase && item.Title !== 'PM'
+                        });
+                      }
+                    })
+            }
 
             if(!isTradesApproved)
               pmLink = ''; // remove pmlink if not all trades approved for phase

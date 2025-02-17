@@ -290,13 +290,15 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 					fd.validators.push({
 						error: "Please upload the softcopy",
 						validate: function(value) {	
+							debugger;
 							if(isSubmit && _isPart && moduleName != 'SLF'){
 								if (fd.field('Code').value === null || fd.field('Code').value === ""){
 									this.error = "Code is required.";
 									return false;
 								}
 							}
-
+							else if(moduleName === 'MAT' && !_isDigitalForm)
+								return true
 							else if(isOneFile)
 							{
 								if(fd.field('Attachments').value.length == 0)

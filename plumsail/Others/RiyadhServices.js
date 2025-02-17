@@ -565,7 +565,12 @@ async function GetEmpGrade(LoginName){
         EmployeeID = EmployeeIDNumber.toString().padStart(6, '0');
     }  
 
-	fd.field('Title').value = EmployeeID;  
+	fd.field('Title').value = EmployeeID; 
+
+    if(EmployeeID === 0)
+        fd.field('Title').disabled = false; 
+    else
+        fd.field('Title').disabled = true; 
 }
 
 async function GetItemCT(LoginName){

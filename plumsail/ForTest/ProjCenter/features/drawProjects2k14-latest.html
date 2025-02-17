@@ -1,0 +1,57 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=emulateie9" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+
+    <title>Dar World</title>
+    <link rel="stylesheet" type="text/css" href="libs/css/esri.css">
+    <link rel="stylesheet" type="text/css" href="libs/css/darStyle.css">
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <!-- <script src="http://www.jqueryautocomplete.com/js/jquery/jquery-1.7.1.min.js"></script> -->
+   
+   
+    <!--<link rel="stylesheet" href="http://js.arcgis.com/3.9/js/dojo/dijit/themes/tundra/tundra.css">-->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css">
+    <!-- <link rel="stylesheet" href="http://www.jqueryautocomplete.com/js/jquery/smoothness/jquery-ui-1.8.16.custom.css" /> -->
+      <script src="libs/js/jquery.js"></script>
+    <script src="drawProjects2k14.-latest.js"></script>
+  
+    <script>
+       
+    </script>
+    <style>
+                .transp {
+            
+            opacity:0.85;
+            filter:alpha(opacity=85); /* For IE8 and earlier */
+
+        }
+    </style>
+</head>
+<body>
+    <div id="viewDiv"></div>
+    <div id="srchDiv" style="display: block; top: 25px; z-index: 99999; background-color: white; border: 1px solid rgba(0, 0, 0, 0.31); text-justify: distribute">
+
+        <!--<input id="txtSearch" type="text" style="height: 20px; width: 310px; border: medium none;" placeholder="Start typing to search..." />-->
+        <img id="polyImg" type="POLYGON" src="libs/img/poly_off.png" title="Draw Polygon" mode="off" style="position: absolute;z-index:999; width: 48px; height: 48px; top: 40px; right: 375px;cursor: pointer;" onclick="makeSelection(this);" />
+        <img id="lineImg" type="LINE" src="libs/img/line_off.png" title="Draw Polyline" mode="off" style="position: absolute;z-index:999; width: 48px; height: 48px; top: 40px; right: 415px;cursor: pointer;" onclick="makeSelection(this);" />
+        <img id="pointImg" type="POINT" src="libs/img/Pen_off.png" title="Draw Point" mode="off" style="position: absolute;z-index:999; width: 48px; height: 48px; top: 40px; right: 455px;cursor: pointer;" onclick="makeSelection(this);" />
+
+        <!--<img style="height: 24px; position: relative; top: 5px; cursor: pointer; right: 5px; width:24px" onclick="srchPlot()" src="images/searchGray.png" />-->
+    </div>
+    <div id="map" class="map">
+            <div id="Home"></div>
+
+        <div id="BasemapToggle"></div>
+    </div >
+    <div id="gwadar" role="button"  title="Open Gw@dar"  >
+
+    </div>
+    
+    
+</body>
+</html>
+

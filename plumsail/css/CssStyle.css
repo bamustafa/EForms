@@ -55,6 +55,7 @@
   @media screen and (min-width: 1024px) {
     [dir=ltr] .leftMargin .nav_b5013a39 + .container_b5013a39 {
         left: 0px !important;
+        margin-left: 0px !important;
     }
   }
   

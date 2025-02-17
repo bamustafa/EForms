@@ -40,6 +40,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
     try {
         await getGlobalParameters(relativeLayoutPath, moduleName, formType); // GET LAYOUT PATH FROM SOAP SERVICE
 
+        
         if(_module === 'MAP')
           await onMAPRender();
         else if(_module === 'DCC')

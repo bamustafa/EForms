@@ -62,6 +62,8 @@ fd.spBeforeSave(function()
 
 var Compliance_editForm = async function(){
 
+	debugger;
+
 	fd.toolbar.buttons[0].style="display: none;";
     fd.toolbar.buttons[1].style="display: none;";
     //fd.toolbar.buttons[1].text = "Cancel";
@@ -69,16 +71,18 @@ var Compliance_editForm = async function(){
     //fixTextArea();
     
     fd.toolbar.buttons.push({
-	        icon: 'Cancel',
-	        class: 'btn-outline-primary',
-	        text: 'Cancel',
-			//style: 'background-color: #3CDBC0; color: white;',
-	        click: async function() {
-                fd.close();
-            }			
-		});	
+		icon: 'Cancel',
+		class: 'btn-outline-primary',
+		text: 'Cancel',
+		//style: 'background-color: #3CDBC0; color: white;',
+		click: async function() {
+			fd.close();
+		}			
+	});	
 	
-    _status = fd.field('Status').value; 
+    _status = fd.field('Status').value;
+	var actionCode =  fd.field('Action').value;
+
     $(fd.field('Status').$parent.$el).hide(); 
     $(fd.field('Action').$parent.$el).hide(); 
     $(fd.field('ReasonofRejection').$parent.$el).hide();  
@@ -138,7 +142,12 @@ var Compliance_editForm = async function(){
     	} 
         
         fd.field('Response').required = true;
-        fd.field('Attachments').required = true;       
+        fd.field('Attachments').required = true; 
+		
+		if(actionCode.toLowerCase() === 'rejected'){
+			$(fd.field('ReasonofRejection').$parent.$el).show();
+			fd.field('ReasonofRejection').disabled = true;
+		}
         
     	fd.toolbar.buttons.push({
 	        icon: 'Accept',
@@ -177,7 +186,7 @@ var Compliance_editForm = async function(){
 				RecordforOffice = fd.field('RecordforOffice').value;
 				Response = fd.field('Response').value;
 
-				var EmailbodyHeader = "Kindly be informed that the ISO 27001 audit in Dar " + Office + " has been successfully completed. I have reviewed the requirements outlined in the audit, and all necessary records have been attached for your reference.";
+				var EmailbodyHeader = "Kindly be informed that I have reviewed the requirements below, and all necessary records have been attached for your reference.";
 
 				var Result = {  Control: Control, 
 					Office: Office, 
@@ -190,11 +199,14 @@ var Compliance_editForm = async function(){
 
 				var Subject = 'ISO 27001 Compliance Check ' + Office + ' - ' + Year + ' - Sent for Review';
 				var encodedSubject = htmlEncode(Subject);
-				var Body = GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName);
+				var Body = GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName, "Assigned");
 				var encodedBody = htmlEncode(Body);
 
+				const itemId = fd.itemId;
+				let query = `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${itemId}</Value></Eq></Where>`;
+
 				if(fd.isValid)
-					await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', '', notificationName, '', CurrentUser);
+					await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, query, '', notificationName, '', CurrentUser);
 
                 fd.save();            
             }			
@@ -250,7 +262,7 @@ var Compliance_editForm = async function(){
 
 					var notificationName = 'Compliance_TaskApproved';
 
-					var EmailbodyHeader = "Thank you for the update regarding the completion of the ISO 27001 audit in Dar " + Office + ". We have reviewed the requirements outlined in the audit, and We've pleased to confirm that all necessary records have been Approved.";
+					var EmailbodyHeader = "Thank you for fulfilling the requirements outlined below. We have reviewed your submission and are pleased to confirm that all necessary records have been approved.";
 
 					var Result = {  Control: Control, 
 						Office: Office, 
@@ -265,11 +277,14 @@ var Compliance_editForm = async function(){
 					var Subject = 'ISO 27001 Compliance Check ' + Office + ' - ' + Year + ' - Approved';
 
 					var encodedSubject = htmlEncode(Subject);
-					var Body = GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName);
+					var Body = GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName, "Approved");
 					var encodedBody = htmlEncode(Body);
 
+					const itemId = fd.itemId;
+					let query = `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${itemId}</Value></Eq></Where>`;
+
 					if(fd.isValid)
-						await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', AssignedToEmail, notificationName, '', CurrentUser);
+						await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, query, AssignedToEmail, notificationName, '', CurrentUser);
 				}
 				else if(Action === 'Rejected')
 				{
@@ -291,11 +306,14 @@ var Compliance_editForm = async function(){
 					var Subject = 'ISO 27001 Compliance Check ' + Office + ' - ' + Year + ' - Rejected';
 
 					var encodedSubject = htmlEncode(Subject);
-					var Body = GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName);
+					var Body = GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName, "Rejected");
 					var encodedBody = htmlEncode(Body);
 
+					const itemId = fd.itemId;
+					let query = `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${itemId}</Value></Eq></Where>`;
+
 					if(fd.isValid)
-						await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, '', AssignedToEmail, notificationName, '', CurrentUser);
+						await _sendEmail(_modulename, encodedSubject + '|' + encodedBody, query, AssignedToEmail, notificationName, '', CurrentUser);
 				}				
 				
                 fd.save();            
@@ -445,7 +463,7 @@ function htmlEncode(str) {
     });
 }
 
-function GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName){	
+function GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName, actionType){	
 
 	var Body = "<html>";
 	Body += "<head>";
@@ -455,12 +473,29 @@ function GetHTMLBody(Result, EmailbodyHeader, AssignedToLoginName){
 	Body += "<body style='font-family: Verdana, sans-serif; font-size: 12px; line-height: 1.5; color: #333;'>";
 	Body += "<div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9;'>"; 			
 	Body += "<p style='margin: 0 0 10px;'>"+ EmailbodyHeader + "</p>";
-	Body += "<table style='table style='width:300px;border-collapse:collapse;margin-bottom:10px;'>" +
-			"<tr>" +
-			"<td style='padding:4px;text-align:center;font-size:12px;font-family:Verdana;'><a style='color:#616A76;font-weight: bold;font-size:13px' href='" + _ListFullUrl + "/EditForm.aspx?ID=" + fd.itemId + "'>Reply</a></td>" +
-			"<td style='padding:4px;text-align:center;font-size:12px;font-family:Verdana;'><a style='color:#616A76;font-weight: bold;font-size:13px' href ='" + _ListFullUrl + "/AllItems.aspx'>View All</a></td>" +
-			"</tr>" +
-			"</table>";
+	if(actionType === 'Assigned'){
+		Body += "<table style='table style='width:300px;border-collapse:collapse;margin-bottom:10px;'>" +
+				"<tr>" +
+				"<td style='padding:4px;text-align:center;font-size:12px;font-family:Verdana;'><a style='color:#616A76;font-weight: bold;font-size:13px' href='" + _ListFullUrl + "/EditForm.aspx?ID=" + fd.itemId + "'>Reply</a></td>" +
+				"<td style='padding:4px;text-align:center;font-size:12px;font-family:Verdana;'><a style='color:#616A76;font-weight: bold;font-size:13px' href ='" + _ListFullUrl + "/To Review Items.aspx'>View All</a></td>" +
+				"</tr>" +
+				"</table>";
+	}
+	else if(actionType === 'Approved'){
+		Body += "<table style='table style='width:300px;border-collapse:collapse;margin-bottom:10px;'>" +
+				"<tr>" +				
+				"<td style='padding:4px;text-align:center;font-size:12px;font-family:Verdana;'><a style='color:#616A76;font-weight: bold;font-size:13px' href ='" + _ListFullUrl + "/My Tasks.aspx'>View All</a></td>" +
+				"</tr>" +
+				"</table>";
+	}
+	else if(actionType === 'Rejected'){
+		Body += "<table style='table style='width:300px;border-collapse:collapse;margin-bottom:10px;'>" +
+				"<tr>" +
+				"<td style='padding:4px;text-align:center;font-size:12px;font-family:Verdana;'><a style='color:#616A76;font-weight: bold;font-size:13px' href='" + _ListFullUrl + "/EditForm.aspx?ID=" + fd.itemId + "'>Reply</a></td>" +
+				"<td style='padding:4px;text-align:center;font-size:12px;font-family:Verdana;'><a style='color:#616A76;font-weight: bold;font-size:13px' href ='" + _ListFullUrl + "/My Tasks.aspx'>View All</a></td>" +
+				"</tr>" +
+				"</table>";
+	}
 	Body += "<table style='width: 100%; border-collapse: collapse; margin-bottom: 10px;'>";			
 
 	for (var column in Result) {

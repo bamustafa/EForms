@@ -65,6 +65,8 @@ var onAUSRender = async function() {
         await setTableRowsReadOnly();
         await setIds();
       }
+
+      $(fields.WFStatus.$parent.$el).hide();
 }
 
 //#region APPROVAL STATUS
@@ -83,8 +85,10 @@ let handleApproval = async function(){
     }
    
     if(_isEdit){
+        debugger;
         let wfStatus = fields.WFStatus.value
         let code = fields.Code.value
+
 
         fields.Code.$on("change", async function (value){
             let isReq = false
@@ -115,6 +119,7 @@ let handleApproval = async function(){
        }
 
         if(_isManager && wfStatus === 'Sent to Manager'){
+            fields.Code.required = true;
             enable_Disable_Tabs(tabs, true)
         }
         else if(_isSenior && (wfStatus === 'Pending' || wfStatus === 'Return to Senior')){
@@ -122,18 +127,33 @@ let handleApproval = async function(){
 
             if(wfStatus === 'Pending')
                 $(fields.Code.$parent.$el).hide();
-            else fd.field('Code').disabled = true
+            else{
+                fields.Code.disabled = true
+                fields.RejRemarks.disabled = true
+            }
         }
         else{
-            alert('Only Quality Manager is allowed to Approve the form')
-            fd.close()
+            if(wfStatus === 'Completed'){
+                await disableSubmission('form is already completed');
+            }
+            else{
+                let mesg = 'Only Quality Manager is allowed to Approve the form';
+                if(_isManager && (wfStatus === 'Pending' || wfStatus === 'Return to Senior'))
+                    mesg = 'Only Quality Senior is allowed to Submit the form';
+
+                alert(mesg)
+                fd.close()
+            }
         }
+
+      
     }
 
 
 }
 
 let setFormReadOnly = async function(){
+
 }
 
 function disableAuditTab(){
@@ -872,18 +892,16 @@ let addAUSItem = async function(){
    
     let item = {};
 
-    // let officeId = fields.Office.field.value !== null ? fields.Office.field.value.LookupId : null;
-    // let disciplineId = fields.Discipline.field.value !== undefined && fields.Discipline.field.value !== null ? 
-    //                    fields.Discipline.field.value.LookupId : null;
-    // let projectId = fields.Project.field.value !== undefined && fields.Project.field.value !== null ? 
-    //                 fields.Project.field.value.LookupId : null;
-
     let officeId = fields.Office.field.value ? fields.Office.field.value.LookupId : null;
     let disciplineId = fields.Discipline.field.value ? fields.Discipline.field.value.LookupId : null;
     let projectId = fields.Project.field.value ? fields.Project.field.value.LookupId : null;
 
     let reference = _isNew ? fields.Reference.placeholder : fields.Reference.value
     let fullRef = fields.FullRef.value
+
+    let code = fields.Code.value;
+    let rejRemarks = fields.RejRemarks.value;
+
     item['Title'] = fullRef //FullRef.substring(0, FullRef.lastIndexOf('-'))
     item['Reference'] = reference
 
@@ -903,7 +921,22 @@ let addAUSItem = async function(){
 
     item['Remarks'] = fields.Remarks.value
 
+    debugger;
+    if(_isSenior)
+      item['WFStatus'] = 'Sent to Manager';
+
+    if(_isManager &&  code === 'Approve')
+        item['WFStatus'] = 'Completed';
+    else  if(_isManager &&  code === 'Reject')
+        item['WFStatus'] = 'Return to Senior';
     
+    
+    if(code)
+      item['Code'] = code
+
+    if(rejRemarks)
+        item['RejRemarks'] = rejRemarks;
+
     addUpdate(AuditSchedule, `Title eq '${fullRef}'`, item, true, reference)
     await addAUSActivities(); //MASTER PLAN & ACTIVITIES
 }

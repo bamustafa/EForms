@@ -1,7 +1,7 @@
 var _layout = "/_layouts/15/PCW/General/EForms";
 
 var _modulename = "", _formType = "";
-var countryURL = 'https://4ce.dar.com/sites/CountryCodes';
+var countryURL = 'https://4ce22.dar.com/sites/CountryCodes';
 
 var _OutProceed = 0, _Proceed = 0;
 
@@ -1141,6 +1141,16 @@ async function RR_IsUserInGroup(group)
 							if(fd.field('Approval_x0020_Status').value == 'Sent for Approval')
 							{
 								fd.toolbar.buttons[0].style = "display: none;";
+
+								fd.toolbar.buttons.push({
+									icon: 'Save',
+									class: 'btn-outline-primary',
+									text: 'Save',
+									click: function() {										
+										fd.save();
+									}
+								});
+
 								fd.toolbar.buttons.push({
 									icon: 'Accept',
 									class: 'btn-outline-primary',
@@ -1150,6 +1160,7 @@ async function RR_IsUserInGroup(group)
 										setTimeout(function(){ fd.save(); }, 300);		
 									}
 								});
+
 								fd.toolbar.buttons.push({
 									icon: 'Reply',
 									class: 'btn-outline-primary',
@@ -1777,15 +1788,18 @@ var TQ_editForm = async function(){
 		var isSiteAdmin = _spPageContextInfo.isSiteAdmin; 		
 		const _firstVisitNumber = await GetColumnValueByID('WorkflowStatus');	
 
-		var TQUsers = fd.field('TQAction').value;	
-		let _isAllowed = false
+		debugger;
+		var LeadTradeName = fd.field('LeadTrade').value;// TQUsers = fd.field('TQAction').value;
+		var itemTrade = await GetQappTradeTeamFromSharepoint(LeadTradeName);
+		let _isAllowed = false;		
 		var currentUser = await pnp.sp.web.currentUser.get();	
+
 		$(fd.field('TQAction').$parent.$el).hide();					
 
 		var WorkflowStatus = fd.field('WorkflowStatus').value;
 		fd.field('WorkflowStatus').disabled = true;
 	
-		const GroupName = await CheckifUserinTMorATM();	
+		const GroupName = await CheckifUserinTMorATM();			
 			
 		if (GroupName === "TM" || GroupName === "Admin")
 		{
@@ -2005,19 +2019,19 @@ var TQ_editForm = async function(){
 							}
 						}													
 							
-						//$(fd.field('Reassigned').$parent.$el).show();	
+						$(fd.field('Reassigned').$parent.$el).show();	
 						$(fd.field('AnsweredbyLead').$parent.$el).show();
 						$(fd.field('SendToTM').$parent.$el).show();
 						$(fd.field('Answered').$parent.$el).show();
 						$(fd.field('Reject').$parent.$el).show();
 						
-						//fd.field('Reassigned').value = false;		
+						fd.field('Reassigned').value = true;		
 						fd.field('AnsweredbyLead').value = false;	
 						fd.field('SendToTM').value = false;			
 						fd.field('Answered').value = false;			
 						fd.field('Reject').value = false;
 						
-						//$(fd.field('Reassigned').$parent.$el).hide();	
+						$(fd.field('Reassigned').$parent.$el).hide();	
 						$(fd.field('AnsweredbyLead').$parent.$el).hide();
 						$(fd.field('SendToTM').$parent.$el).hide();
 						$(fd.field('Answered').$parent.$el).hide();
@@ -2355,9 +2369,13 @@ var TQ_editForm = async function(){
 		else if (GroupName === "Trade")
 		{	
 			if(!isSiteAdmin)
-			{		
-				TQUsers.map(item =>{if(item.displayName == currentUser.Title)
-						  _isAllowed = true;});
+			{	
+				// item.displayName == currentUser.Title	
+				// TQUsers.map(item =>{if(item.email.toLowerCase() == currentUser.Email.toLowerCase())
+				// 		  _isAllowed = true;});
+
+				itemTrade.map(item =>{if(item == currentUser.Id)
+					_isAllowed = true;});
 	
 				if(!_isAllowed)
 				{
@@ -2956,6 +2974,26 @@ async function GetItemVersionnumber(){
 		});
 
 		return VersionNumber;
+}
+
+var GetQappTradeTeamFromSharepoint = async function(TradeName){   
+
+    const listTitle = 'Trades';
+    const camlFilter = `<View>                            
+                            <Query>
+                                <Where>                                    
+                                    <Eq>
+                                        <FieldRef Name='Title' /><Value Type='Text'>${TradeName}</Value>
+                                    </Eq>                        
+                                </Where>
+                            </Query>
+                        </View>`;
+
+    const existingItems = await pnp.sp.web.lists.getByTitle(listTitle)
+        .getItemsByCAMLQuery({ ViewXml: camlFilter });
+
+	const assignedToIDs = existingItems.filter(item => item.TQActionId).map(item => item.TQActionId);
+    return assignedToIDs[0];       
 }
 //#endregion
 

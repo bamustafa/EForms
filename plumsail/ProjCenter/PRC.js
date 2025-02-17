@@ -32,7 +32,7 @@ var appBarItems, isgetTradeRoleFinalized = false;
 const blueColor = '#6ca9d5', greenColor = '#5FC9B3', redColor = '#F28B82'; // Buttons Colors
 
 var onRender = async function (relativeLayoutPath, moduleName, formType) {
-  _layout = relativeLayoutPath;
+  _layout = relativeLayoutPath;  
 
     try{
       
@@ -42,7 +42,8 @@ var onRender = async function (relativeLayoutPath, moduleName, formType) {
       }
 
       await loadScripts().then(async ()=>{
-        preloader_btn(false, true);
+        //preloader_btn(false, true);
+        showPreloader();
         await extractValues(moduleName, formType);
       })
       
@@ -76,12 +77,16 @@ var onRender = async function (relativeLayoutPath, moduleName, formType) {
         else await setCustomButtons()
       }
 
-      Remove_Pre(true);
+      //Remove_Pre(true);
     }
     catch (e){
-      preloader();
+      //preloader();
+      showPreloader();
       fd.toolbar.buttons[0].style = "display: none;";
       console.log(e);
+    }
+    finally {      
+      hidePreloader();
     }
 
     //setPreviewForm();
@@ -167,7 +172,6 @@ var extractValues = async function(moduleName, formType){
     if(_isMain)
       _isConfidential = fd.field('IsConfidential').value;
      
-      debugger
       await getCurrentUserRole()
       if (!_isUserAllowed){
         //if(!_isSiteAdmin){
@@ -273,7 +277,6 @@ var setCustomButtons = async function () {
    
     if(!_hideSubmit){
 
-      debugger
       if(_module !== 'GIS' && ((_module === 'DPIR' || _module === 'CR') && _isGLMain) )
         await setButtonActions("Save", "Save", `${blueColor}`);
 
@@ -371,7 +374,7 @@ const setButtonActions = async function(icon, text, bgColor){
                     return;
                   }
                   
-                  debugger;
+  
                   let {mesg,items} = await getTabFields('DPIRTabs');
                 
                   if(mesg === ''){
@@ -394,7 +397,7 @@ const setButtonActions = async function(icon, text, bgColor){
 
                     if(mesg === ''){
                       if (confirm('Are you sure you want to Submit?')){
-                        debugger;
+                        
                         let itemMetaInfo = await getFieldsData(MatrixFields);
                         let query = `Title eq '${projectNo}'`;
                         let {dpirItems} = await isDPIR_RowValid()
@@ -484,8 +487,8 @@ var onPINTRender = async function (){
     fd.control('firmdt').filter = 'IsActive eq 1';
     fd.control('otherfirmdt').filter = 'IsActive eq 1';
 
-    // if(_isMain)
-    //   GetDictionaries(fd.field('Title').value), // Dictionaries.js
+     if(_isMain)
+      GetDictionaries(fd.field('Title').value), // Dictionaries.js
 
      await Promise.all([
       

@@ -1,0 +1,819 @@
+/* ORIGINAL FILE PATH CUSTOMIZED BY HANA HASSAN  */
+:root{
+    /* customized by hana hassan  */
+    --darkgreen: #61aba2;
+    /* customized by hana hassan  */
+    --lightgreen: rgb(104,152,154); 
+    --lightgray: #eaf5f5;
+    --white: white;
+    --bordercolor: #ffffff24;
+    --btnborder: #ababab;
+    /* customized by hana hassan  */
+    --black:black;
+    /* customized by hana hassan  */
+    --boxshadow: rgba(0, 0, 0, 0.1);
+    --sucat-color: #6a898a;
+    --hover-bg: #f0f0f0;
+    --hover-color: #333333;
+    --background-color : rgb(146,156,165);
+    --dar-main-color:#49c4b1;
+    --accordion-color: #f4f4f4;
+    --table-header-bgcolor:linear-gradient(to right, #ffe8e3, #feb47b8a, #e9c4bb);
+  }
+  
+  /* FOR MOBILE */
+  
+  @media screen and (min-width: 1024px) {
+    [dir="ltr"] .leftMargin .nav_b5013a39 + .container_b5013a39 {
+        left: 43px;
+    }
+  }
+  
+  @media (max-width: 768px){
+    /* FOR BILAL */
+    .ctlStyle{ width: 100% !important; }
+  
+    .vsb-main{ width: 100% !important; }
+  
+    /* FOR ALI */
+    .SPCanvas, .commandBarWrapper{ padding-left: 200px; }
+  
+    .pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1 { margin-left: 0px; }
+  
+    .fd-form .justify-content-end { justify-content: flex-start !important; /* Overrides to flex-start */ }  
+  
+    .fd-form .row {  display: block; }
+  
+    .moveup { margin-top: 0px !important; }
+    
+    .btn-primary { width: 100% !important; height: 100% !important; }
+  
+    .fd-form-toolbar[data-v-68f8f33f]{ height: 50px; }
+  
+    label{ float: none !important; }
+  
+    .ms-siteHeader-siteName { text-align: center; }
+  
+    .col-sm-2, .col-sm-4, .col-sm-6 { width: 100% !important } 
+  }
+  
+  /* Start vanillaSelectBox */
+  .vsb-main{
+    width: 40%;
+    box-shadow: 0 4px 14px var(--boxshadow);
+  }
+  body{
+    background-color: var(--white);
+    background-image:  url("https://th.bing.com/th/id/R.31800a18838fd1c469440426aced73ef?rik=mRbAS69Td7foCg&riu=http%3a%2f%2fupload.wikimedia.org%2fwikipedia%2fcommons%2f2%2f28%2fDarLogo2016.png&ehk=MNU1rta%2fb5IPsZtZk9%2b0jVO8CMYO833i32chsjvR4G4%3d&risl=&pid=ImgRaw&r=0");
+    background-repeat:no-repeat;
+    background-size:150px;
+    background-position-y:45px;
+    background-position-x: 70px;
+    
+  }
+  .vsb-js-search-zone{
+    position: relative !important;
+    width: 100% !important;
+  }
+  /* end vanillaSelectBox */
+  
+  
+  /* START CLASSIFICATION TABLE */
+  .modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Arial', sans-serif; 
+    box-shadow: 0 2px 10px var(--boxshadow);
+    /* background-color: #beeae3; */
+    background: var(--table-header-bgcolor);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .modern-table th {
+    color:  var(--black);
+    font-size: 12px;
+    font-weight: bold;
+    /* padding-left: 10px;  */
+    
+    padding: 8px; 
+    border-bottom: 1px solid #ddd;
+  }
+  .modern-table th label.d-flex.fd-field-title.col-form-label.center-text {
+    color: var(--black) !important;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .modern-table td {
+    border-bottom: 1px solid var(--bordercolor);
+    font-size: 14px;
+    /* background-color: #d6dcdd47; */
+    /* color: var(--darkgreen); */
+    font-weight: bold;
+    /* padding: .5rem 1rem;   */
+  
+    padding: 8px; 
+    border-bottom: 1px solid #ddd;
+  }
+  
+  /* Set your desired color for the header row
+  .modern-table tr:nth-child(1) {
+    background-color: var(--tab-color) !important; 
+    color: var(--black) !important;
+  } 
+  */
+  
+  .modern-table tr:nth-child(odd):not(:first-child) {
+    background-color: var(--white) !important; /* Light grey for even rows */
+  }
+  
+  .modern-table tr:nth-child(even):nth-child(n+2) {
+    background-color: var(--white) !important; /* White for odd rows */
+  }
+  
+  .modern-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  #tblItemsId th {
+    color: var(--black);  
+  }
+  
+  .ctlStyle{
+    width: 40%;
+    height: 30px;
+    box-shadow: 0 4px 14px var(--boxshadow);
+    border: 0px solid var(--white);
+  }
+  .border{
+    border-radius: 4px !important;
+    box-shadow: 0 2px 4px var(--boxshadow);
+    padding-left: 8px !important;
+  }
+  /*For Toggle (used in Showw all Subcategories)*/
+  .form-check.form-switch{
+    margin-left: -55px;
+  }
+  /* END CLASSIFICATION TABLE */
+  
+  
+  /* START BACKGROUND INFO */
+  .accordion-button { 
+    background-color: var(--accordion-color) !important;
+    color: var(--black) !important; 
+    font-weight: bold !important;
+    display: flow !important;
+  }
+  /* END BACKGROUND INFO */
+  
+  
+  /* START DATATABLE */
+  .fd-sp-datatable-wrapper{  border: 0px !important }
+  
+  /* .k-grid-header-wrap { background-color: var(--tab-color)!important; color: var(--black) !important; } */
+  
+  
+  .k-grid-header-wrap { background: var(--table-header-bgcolor)!important; color: var(--black) !important; }
+  
+  .fd-form .fd-sp-datatable-wrapper .fd-sp-datatable-toolbar { padding: 6px; }
+  
+  .fd-form .fd-sp-datatable-wrapper>.fd-sp-datatable {border: 1px solid var(--white) !important}
+  /* END DATATABLE */
+  
+  
+  
+  /* START TABS */
+  
+  
+  /* made commented by hana hassan  */
+  /* .fd-form .nav{
+    padding-left: 7px !important;
+  } */
+   /* made commented by hana hassan  */
+  
+  
+  
+  
+  .fd-form .nav-tabs .nav-item {
+    /* margin-bottom: 5px; */
+    width: 215px;
+    text-align: center;
+  }
+  
+  /* added on 25-7-2024 */
+  .fd-form .nav-tabs{
+    border-bottom: 0px !important
+  }
+  
+  /*  start of customized by hana hassan  */
+  
+  
+  
+  .fd-form .nav-tabs .nav-link.active, .fd-form .nav-tabs .nav-item.show .nav-link {
+    background-color:transparent;
+    border-color:transparent !important;
+    box-shadow: none;
+  }
+  .fd-field-lookup{
+    background-color: hsl(180, 35%, 94%);
+  }
+  
+  /* master buttons hover  */
+  
+  .nav.nav-tabs .nav-item{
+    border-color:hsl(171, 51%, 83%);
+    background-color: hsl(171, 51%, 83%) ;
+  }
+  .nav.nav-tabs .nav-item:hover{
+    color: var(--white) !important;
+    background-color: var(--dar-main-color) !important;
+    border: var(--dar-main-color) !important;
+    box-shadow: var(--dar-main-color) !important;
+  }
+  
+  /* style for inner table rows bg color */
+  .k-master-row{
+    background-color:var(--white)!important;}
+  
+  
+  /* style for the textareas color */
+    textarea{
+    background-color:var(--white)!important;
+  }
+  /* container div */
+  .fd-grid .container-fluid{
+    background-color: transparent !important;
+    padding-top: 10px !important;
+    border-color: 3px solid var(--white) !important;
+  }
+  
+  /*   style of color of secondary buttons */
+  .fd-form .nav-link{
+    color:var(--black) !important;
+  }
+  .fd-form .nav-link:hover{
+    color:var(--dar-main-color) !important;
+    font-weight: bolder !important;
+  }
+  
+  
+  /* style for hover of secdondary buttons */
+  .nav-link{
+    border-bottom: 3px solid hsl(171, 51%, 83%) !important;
+  
+  }
+  
+  .nav-link.active:not(:hover){
+    border-bottom: 3px solid var(--dar-main-color) !important;
+  
+  }
+  
+   .nav-tabs li, .nav li{
+    border-bottom: none !important;
+  }
+  
+  .nav-tabs li:hover{
+  border-bottom: none !important;
+  }
+  .nav-tabs li:focus{
+    border-bottom: none !important;
+    }
+  
+  /* style for select files button & selected dropdown  */
+  .k-button{
+    background-color: hsl(180, 35%, 94%)!important;
+    border-color: hsl(180, 35%, 78%) !important;
+  }
+  
+  .k-button:hover{
+   background-color: var(--dar-main-color) !important;
+  }
+  
+  .k-list .k-item.k-state-selected, .k-list-optionlabel.k-state-selected {
+    color: black;
+    background-color: #eaf5f5;
+  }
+  
+  /* style for date and calender pop up */
+  .k-calendar .k-calendar-td.k-state-selected .k-link {
+    border-color: hsl(180, 35%, 94%) !important;
+    background-color: hwb(180 92% 4%) !important ;
+  }
+  
+  /* style for the radio buttons selected */
+  .fd-form .form-check-input:checked {
+    background-color: var(--dar-main-color) !important;
+    border-color: hsl(184, 21%, 41%)!important;
+  
+  }
+  
+  
+  
+  /* style for button of adding adding new item */
+  .fd-form .btn-primary:hover {
+    color: var(--white) !important ;
+    background-color: var(--dar-main-color) !important;
+    
+  }
+  .fd-form .btn-primary {
+    color: var(--black) !important;
+    background-color: var(--white) !important;
+  
+  }
+  
+  
+   /* style for checkbox selected when editing or deleteing current items */
+   .k-checkbox:focus{
+    border-color:var(--white) !important;
+    color: var(--white) !important;
+    background-color: var(--dar-main-color) !important; 
+   }
+  .k-checkbox:checked, .k-checkbox.k-checked {
+    border-color:var(--white) !important;
+    color: var(--white) !important;
+    background-color:var(--dar-main-color) !important; 
+    
+  }
+  .k-grid tr.k-state-selected>td {
+    color: var(--white) !important;
+    background-color: var(--white) !important;
+  }
+  
+  .fd-form .btn-secondary:hover {
+      color: var(--white) !important;
+      background-color: var(--dar-main-color) !important ;
+  
+  }
+  
+  
+  /* style for input bg color in general info tab */
+  .k-grid-content.k-auto-scrollable{
+    background-color: var(--white) !important;
+  }
+  
+  input, .k-multiselect-wrap.k-floatwrap{
+    background-color: var(--white) !important;
+  }
+  .fd-form .k-dropdown .k-dropdown-wrap {
+    border-color: var(--white);
+    color: #373a3c;
+    background-color: var(--white);
+  }
+  .k-upload .k-dropzone {
+    border-color: var(--white);
+    color: #212529;
+    background-color: var(--white);
+  }
+  
+  /* style for when master button is selected */
+  .fd-form .nav-tabs .active.nav-link {
+    background-color: var(--dar-main-color) !important;
+    
+    /* border-color: var(--darkgreen) ;  */
+    color: var(--white) !important; /* White text for better contrast */
+    font-weight: bold;
+  
+    /* box-shadow: 0 2px 4px var(--boxshadow);
+    font-size: 13px;
+    font-family: 'Arial';
+    border-top-right-radius: 6px;
+    border-top-left-radius: 6px; */
+  }
+  
+  
+  .accordion-body{
+    background-color: var(--white) !important;
+  }
+  
+  .k-grid-header{
+    background-color: var(--white) !important;
+  }
+  
+  
+  .k-state-hover{
+    background-color: var(--dar-main-color) !important;
+    border-color: var(--white);
+  }
+  
+  
+  
+  
+  /* 
+  .fd-form .nav-tabs .nav-link:hover {
+     margin-bottom: none !important; 
+    background: none !important;
+    border:none !important; 
+    border-top-left-radius:none !important;
+    border-top-right-radius: none !important;
+  } */
+  
+  
+  
+  /* style for the master button when not active */
+  .fd-form .nav-tabs .nav-link {  
+    /* transition: background-color 0.2s ease, color 0.2s ease; */
+    /* border-color: var(--bordercolor); */
+    background-color: hsl(171, 51%, 83%) !important;
+    color: black !important;
+    /* box-shadow: 0 2px 4px var(--boxshadow);
+    border-radius: 2px;
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0; */
+  
+    font-size: 13px;
+    font-family: 'Arial';
+    /* border-top-right-radius: 6px; */
+  }
+  
+  
+  /* end of customized by hana hassan  */
+  
+  
+  .fd-form .nav-tabs .nav-link:hover {
+    /* background-color: var(--lightgreen);
+    color: var(--white);
+    border-color: var(--bordercolor);
+  
+    font-size: 13px;
+    font-family: 'Arial';
+    border-top-right-radius: 6px; */
+  }
+  
+  
+  
+  .fd-form .tabset { 
+    margin-bottom: 0px !important; 
+    margin-top: 5px;
+  }
+  /*END TABS */
+  
+  
+  /* START BUTTONS */
+  .fd-form-toolbar{ margin-top: 20px !important; }
+  
+  .fd-form .btn-primary {
+    color: #444;
+    background-color: #fdfdfd;
+    border: 1px solid #ababab;
+    padding: 5px 30px;
+    display: inline-block;
+    margin: 2px 2px;
+    border-radius: 6px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.95em;
+    font-weight: bold;
+    width: max-content;
+  }
+  
+  .btn-outline-primary {
+    background-color: var(--white); 
+    color: var(--black);
+    border: 1px solid var(--btnborder);
+    cursor: pointer;
+    width: 170px;
+    height: 100%;
+    margin: 2px 2px !important;
+    border-radius: 6px !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 0.96em !important;
+    font-weight: bold !important;
+    /* transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;  */
+  }
+  
+  .btn-outline-primary:hover {
+    background-color: 
+    transparent!important; /* Change to your desired hover background color */
+    color: var(--hover-color) !important;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow for the hover effect */
+  }
+  
+  .fd-toolbar-primary-commands{
+    display: flex; 
+    justify-content: flex-end;
+  }
+  
+  
+  
+  /* END BUTTONS */
+  
+  
+  /* START GENERAL */
+  .fd-form { background-color: transparent !important;    }
+  
+  .fd-sp-field-text input{ box-shadow: 0 2px 4px var(--boxshadow); }
+  
+  
+  
+  /* commented on 25-7-2024
+  .fd-form-container .container-fluid{ padding: 15px 12px 0px 12px; }
+  */
+  /* customized by hana hassan  */
+  .fd-form a:not(.nav-link):not(.disabled) { color: var(--black) !important; font-weight: 500; } 
+  /* customized by hana hassan  */
+  
+  
+  /* START ROOT HEADER (LOGO WITH TITLE) */
+  .ms-compositeHeader{ padding-bottom: 0px !important; }
+  
+  .ms-compositeHeader-topWrapper{ height: 5px !important; }
+  
+  .ms-compositeHeader-mainLayout { height: 45px; }
+  
+  .title-75 { font-size: 22px; }
+   /* End ROOT HEADER */
+  
+  .col, .d-md-block{ padding: 0px 10px 0 10px !important; }
+  
+  .CanvasComponent{ padding: 0.7% 0 0 0.5% !important; }
+  
+  
+  
+  
+  .ControlZone {
+    box-sizing: border-box;
+    background-image: url("9.png");
+    background-size: auto;
+  background-position:center;
+  background-position-y:top;
+  background-repeat:no-repeat;
+    background-color: white;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+  }
+  
+  
+  .fd-title-wrap{
+    font-weight: bold;
+    font-size: 13px !important;
+    font-family: Arial;
+    color:var(--black);
+  }
+  
+  .fd-form .fd-field-control:not(.col-sm)>.col-form-label {
+    font-size: 13px;
+    color: var(--black);
+  }
+  
+  /* FOR SHOW ALL SUB-CATEGORY CHECKBOX */
+  .fd-form .form-check .form-check-input{
+    margin-left: 19px !important;  
+  }
+  
+   /* HEADER TITLE  var(--darkgreen); */
+  .dumTitle{  
+    padding: 4px;
+    text-align: center;
+    font-size: 20px;
+    font-family: 'Roboto', 'Arial', 'Helvetica', sans-serif;
+    font-weight: 700;
+    /* color: #ffffff;
+    background-color: var(--sucat-color);  */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* transition: background-color 0.3s ease, color 0.3s ease; */
+    border-top-right-radius: 8px;
+    border-top-left-radius: 8px;
+  }
+  
+  .FormTitle{
+    color: #4e778f;
+    font-weight: bold;
+    font-size: 25px;
+    text-align: center;
+    padding-bottom: 15px !important;
+       /* position: relative; left: 42%;  520px */
+   }
+  
+   /* ATTACHMENT FIELD */k
+  .k-upload .k-dropzone .k-dropzone-hint { text-align: left; padding-left: 10px; }
+  
+  .k-numeric-wrap.k-state-default,
+  input.k-formatted-value,
+  textarea.form-control.fd-textarea,
+  .k-state-default input,
+  span.k-picker-wrap.k-state-default,
+  .fd-form .k-dropdown-wrap .k-input,
+  span.k-dropdown-wrap.k-state-default,
+  html .k-upload, 
+  .k-datepicker .k-picker-wrap,
+  .k-timepicker .k-picker-wrap,
+  .k-datetimepicker .k-picker-wrap,
+  .k-multiselect-wrap{
+    border-radius: 4px !important;
+    box-shadow: 0 2px 4px var(--boxshadow);
+  }
+  /* END GENERAL */
+  
+  
+   /* Start NAVIGATOR */
+  .ms-FocusZone, .ms-searchux-searchbox{ display: none; }
+  
+  .pageContainer_e9e4af8d, .container_e9e4af8d, .pageContainer_5a558a10, .pageContainer_972f0ed1 { 
+    margin-left: -163px; 
+  }
+   /* End NAVIGATOR */
+  
+  
+  /* START ERROR MESSAGES */
+  b[data-v-386d995a]{ color:red !important; }
+  .alert-heading{ color: #ce830e !important; }
+  /* END ERROR MESSAGES */
+  
+  
+  /* START OTHERS */
+  .moveup { margin-top: -22px; }
+  
+  /* Hide the default browser tooltip */
+  .custom-tooltip {
+    color: var(--white);
+    border-radius: 4px;
+    top: -30px; /* Adjust this value to position the tooltip */
+    left: 0;
+  }
+  
+  ::placeholder { font-weight: 500; font-size: 13px; }
+  /* END OTHERS */
+  
+  
+  
+  
+  /* Review Department Initiation*/
+  .center-text {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .PageTitle
+  {
+      font-family: Arial;
+      font-size: 19px;
+      color: Black;
+      font-weight: bold;
+  }
+  
+  .Legend
+  {
+      color: Black;
+      font-size: 12px;
+      font-weight: normal;
+      letter-spacing: 0.5px;
+  }
+  /* END Review Department Initiation */
+  
+  
+  /* .sp-appBar{
+      display: block;
+      background: #f3f2f1;
+      z-index: 12;
+      border-right: 1px solid #edebe9;
+      color: #605e5c;
+      position: absolute;
+  }
+  
+  .sp-appBar-linkContainer {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .sp-appBar-linkLi {
+    max-width: 50px;
+    width: 50px;
+    height: 47px;
+    display: block;
+    box-sizing: border-box;
+    margin: 2px 0 2px 0;
+  }
+  
+  .appBar-link {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center;
+    font-size: 16px;
+    width: 47px;
+    height: 47px;
+    position: relative;
+    background: 0 0;
+    border: none;
+    color: inherit !important;
+    padding: 0;
+    cursor: pointer;
+  }
+  
+  .sp-appBar-tooltipDiv {
+    position: relative;
+    right: -54px;
+    width: 80px;
+  }
+  
+  .sp-appBar-tooltip {
+    display: inline-block;
+  } */
+  
+  
+  .sp-appBar-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: rgb(96, 94, 92);
+    text-decoration: none;
+    padding: 14px;
+    /* transition: background-color 0.3s ease, color 0.3s ease; */
+    border-radius: 14px;
+  }
+  
+  .sp-appBar-link:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: rgb(50, 50, 50);
+    width: 28px;
+    height: 28px;
+  }
+  
+  .sp-appBar-borderLeft {
+    height: 20px;
+    width: 1px;
+    background-color: rgb(96, 94, 92);
+    margin-left: 10px;
+  }
+  
+  .sp-appBar {
+    background-color: #ebeeec;
+    position: absolute;
+    /* border-bottom-left-radius: 10px; */
+  }
+  
+  .sp-appBar-linkContainer {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: absolute;
+    background-color: #f3f2f1;
+    border-bottom-left-radius: 10px;
+  }
+  
+  .sp-appBar-linkLi {
+    display: inline-block;
+    position: relative;
+  }
+  
+  .sp-appBar-linkLiDiv {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    width: 50px;
+  }
+  
+  .sp-appBar-tooltipDiv {
+    display: none;
+    position: absolute;
+    right: -67%;
+    background-color: rgb(0 0 0);
+    color: #fff;
+    border-radius: 3px;
+    font-size: 13px;
+    white-space: nowrap;
+    width: max-content;
+    font-weight: bold;
+    padding: 4px;
+  }
+  
+  .sp-appBar-tooltipDiv::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 100%; /* Adjusts the arrow to the left of the tooltip */
+    margin-top: -5px; /* Centers the arrow vertically with respect to the tooltip */
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent rgb(0 0 0) transparent transparent; /* Arrow points left */
+  
+    /* content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent; */
+  }
+  
+  .sp-appBar-linkLi:hover .sp-appBar-tooltipDiv {
+    display: block; /* Show the tooltip on hover */
+  }
+  
+  .dimmed-svg {
+    opacity: 0.5; /* Dim the SVG by reducing its opacity */
+    pointer-events: none; /* Make the SVG not clickable */
+  }
+  
+  /* .sp-appBar-tooltipDiv {
+    position: relative;
+    right: -54px;
+    width: 80px;
+  }
+  
+  .sp-appBar-tooltip {
+    display: inline-block; 
+    font-size: 12px;
+  } */

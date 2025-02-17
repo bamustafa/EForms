@@ -293,8 +293,9 @@ const enable_Disable_Tabs = async function(TabNames, isDisabled){
 }
   
 function getTabIndex(tabTitle, tabTooltip, isDisabled){
-	let index;
-  //$('div.tab-content ul li a')
+	 
+  let index;
+
 	$('div.tabset ul li a').each(function(i, element){
 	  var title = $(this).text();
 	   if(title.toLowerCase() === tabTitle.toLowerCase()){

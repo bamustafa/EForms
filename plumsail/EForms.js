@@ -420,7 +420,7 @@ var onMATRender = async function (moduleName, formType, hFields, isLead, isPart)
   if (formType == "New"){
     hFields = ["AttachFiles", "Submit", "Status"];
 
-    if(_isCompliedWithConvention !== undefined){
+    //if(_isCompliedWithConvention !== undefined){
       if(!_isCompliedWithConvention){
         let schema = await getAutReferenceFormat();
         await renderFieldsOnForm(schema);
@@ -431,7 +431,7 @@ var onMATRender = async function (moduleName, formType, hFields, isLead, isPart)
         catch{}
       }
       else setNamingConvention('Reference');
-    }
+    //}
 
     if (moduleName == "SCR")
      fd.field('Question').placeholder = 'Question';

@@ -18,12 +18,12 @@ var GetDictionaries = async function (ProjectNo){
 	}
 }
 
-var fetchProjectTeamMethod = async function (ProjectNo){
+var fetchProjectTeamMethod = async function (ProjectNo, dynamicsPhase){
 	try {        
         (async () => {    
             try {
                 
-                const serviceUrl = `${restUrl}?command=GetProjectMembers&ProjectNo=${ProjectNo}`;                               
+                let serviceUrl = `${restUrl}?command=GetProjectMembers&ProjectNo=${ProjectNo}`;                               
                 let ProjectTeam = await fetchProjectTeam('GET', serviceUrl, true);             
 
                 const GetProjectTeamNodes = ProjectTeam.getElementsByTagName("Table1");
@@ -97,10 +97,11 @@ var fetchProjectTeamMethod = async function (ProjectNo){
 
                 //console.log(projectTeamByDepartmentAndRole);
     
-                let phases = ['Phase 3', '']; //['Phase 3','Phase 4', '']; // for test integration part
-                phases.forEach(async phase => {
-                    //debugger;
-                    let isFound = await ensureItemsExist(projectTeamByDepartmentAndRole, phase, false);    
+                //let phases = ['Phase 3', '']; //['Phase 3','Phase 4', '']; // for test integration part
+
+                await createPhases(ProjectNo);
+                if(dynamicsPhase){
+                    let isFound = await ensureItemsExist(projectTeamByDepartmentAndRole, dynamicsPhase, false);    
                     
                     if(isFound){
                         let pmMetaInfo = {
@@ -113,7 +114,11 @@ var fetchProjectTeamMethod = async function (ProjectNo){
                         
                         await ensureItemsExist(pmMetaInfo, phase, true); // CREATE PM TASK
                     }
-                });
+                    
+                    checkForLabelAndAppend(dynamicsPhase);
+                    //await onCompletionReportRender();
+                    hidePreloader();
+                }
 
             } catch (error) {
                 console.log("Error in getting filtered items:", error);
@@ -156,6 +161,11 @@ var fetchResult = async function (){
 async function ensureItemsExist(projectTeamByDepartmentAndRole, phase, isPM) {
     let itemValue = '';
     try {
+
+        if(phase){
+            if(!phase.startsWith("Phase"))
+                phase = `Phase ${phase}`
+        }
 
         let ListNames = isPM ? [CompReports] : [RevDepartments, CompReports];
         let selectedColumns = ['Title', 'MasterID/Id', 'GLMain/Id', 'GLMain/Title', 'GL/Id', 'GL/Title', 'TeamMembers/Id', 'TeamMembers/Title', 'ID'];
@@ -559,6 +569,104 @@ async function getGroupIdByName(groupName) {
         throw error;
     }
 }
+
+async function createPhases(ProjectNo){
+
+    if($('div.customPhases').length > 0)
+        return;
+
+    let phases = $("label:contains('Phases')").next();
+    let phaseBlankCell = phases.find('.d-sm-block').last(); //.eq(1);
+    let serviceUrl = `${restUrl}?command=project_phases&ProjectId=${ProjectNo}`;
+    let Array = await fetchRequestUrl('GET', serviceUrl, true);
+
+    let createBtn = false;
+    if(Array.length > 0){
+      let imgUrlLegend = `${_webUrl}${_layout}/Images/legend.png`
+        
+      let radioButton = '';
+      Array[0].Phases.forEach((phase, index) => {
+
+        let phaseName = `Phase ${phase}`
+        let isPhaseFound = phases.find(`label:contains('${phaseName}')`);
+        
+        if(isPhaseFound.length > 0){
+            return;
+        }
+        else createBtn = true;
+
+         radioButton += `
+            <div id= 'Phase${phase}' class="customPhases" style="padding-left: 8px">
+                <input type="radio" id="radio${index}" name="phases" value="${phaseName}">
+                <label for="radio${index}" style="padding: 4px;">${phaseName}</label>
+            </div>`;
+      });
+    
+      if(!createBtn){
+        phases.find('div.d-none').first().remove()
+        return
+      }
+      
+      let htmlCtlr = `<fieldset id='legId' style="padding:1px !important; border: 1px solid #666 !important;">
+                          <legend style="font-family: Calibri; font-size: 12pt; font-weight: bold;padding: 1px 10px !important;float:none;width:auto;">
+                             <img src="${imgUrlLegend}" style="width: 16px; vertical-align: middle;">
+                              <b id="phaseHeadId">Select phase below to create</b>
+                          </legend>`
+
+      phaseBlankCell.append(htmlCtlr) //("<b id='phaseHeadId'>Select phase below to create</b>");
+
+      debugger
+      let fieldset = $('#legId');
+      fieldset.append(radioButton); // Append the radio button to the target element
+
+        let button = $('<button>')
+            .text('Create Phase') // Set the button text
+            .addClass('btn btn-primary') // Add classes (e.g., Bootstrap classes)
+            .attr('type', 'button') // Set the type attribute
+            .css({
+                'margin-left': '12px', // Set margin-left
+                'margin-top': '11px'   // Set margin-top
+              })
+            //.attr('disabled', disableBtn)
+            .on('click', async function () { // Add an onClick event listener
+                let selectedInput = $('input[name="phases"]:checked');
+                if(selectedInput.length === 0){
+                alert('select phase to create');
+                return;
+                }
+
+                showPreloader();
+
+                let selectedOption = selectedInput.val();
+                let fldPhases = fd.field("Phases").options
+                fldPhases.push(selectedOption)
+
+                fd.field("Phases").options = fldPhases;
+
+                await fetchProjectTeamMethod(ProjectNo, selectedOption)
+
+                let inputId = selectedOption.replace(/\s+/g, '')
+                debugger;
+                setTimeout(() => {
+                    $(`#${inputId}`).remove();
+
+                    if($('div.customPhases').length === 0)
+                        fieldset.remove();
+
+                  }, 500); 
+                //$(this).prop('disabled', true);
+                
+            });
+            fieldset.append(button);
+    }
+}
+
+function checkForLabelAndAppend(selectedOption) {
+    let newOptionLabel = $("label:contains('Phases')").next().find(`label:contains('${selectedOption}')`);
+    if (newOptionLabel.length > 1) {
+        newOptionLabel.first().append('<span style="font-size: 12px; font-weight: bold; text-align: center; color: #936106cf;"> In Progress</span>');
+    }
+}
 //#endregion
 
 //#region Soap Call Function
@@ -595,7 +703,7 @@ function fetchRequestUrl(method, serviceUrl, isAsync){
         var xhr = new XMLHttpRequest();
         xhr.open(method, serviceUrl, isAsync);
 
-        xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function(){
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
                     const response = JSON.parse(xhr.responseText);

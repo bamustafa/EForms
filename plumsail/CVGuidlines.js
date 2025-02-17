@@ -1049,9 +1049,9 @@ var CVGuidlines_editForm = async function(){
             
             if (!parsedGrade || !parsedReference)
                 isTrue = false;
-            if (parsedGrade.level > parsedReference.level) {
+            if (parsedGrade !== null && parsedGrade.level > parsedReference.level) {
                 isTrue = true;
-            } else if (parsedGrade.level === parsedReference.level) {        
+            } else if (parsedGrade !== null && parsedGrade.level === parsedReference.level) {        
                 isTrue = parsedGrade.plus && parsedReference.plus;
             } else {
                 isTrue = false;
@@ -1295,15 +1295,16 @@ var CVGuidlines_displayForm = async function(){
     var isTrue = false;
 
     try {
+
         const referenceGrade = "P4+";
         const parsedGrade = parseGrade(EmpGrade);
         const parsedReference = parseGrade(referenceGrade);	
         
         if (!parsedGrade || !parsedReference)
             isTrue = false;
-        if (parsedGrade.level > parsedReference.level) {
+        if (parsedGrade !== null && parsedGrade.level > parsedReference.level) {
             isTrue = true;
-        } else if (parsedGrade.level === parsedReference.level) {        
+        } else if (parsedGrade !== null && parsedGrade.level === parsedReference.level) {        
             isTrue = parsedGrade.plus && parsedReference.plus;
         } else {
             isTrue = false;
@@ -1788,15 +1789,16 @@ async function GetEmpGrade(LoginName){
         isTrue = false;
     }
     else{
+        
     	const referenceGrade = "P4+";
     	const parsedGrade = parseGrade(EmpGrade);
         const parsedReference = parseGrade(referenceGrade);
     	
     	if (!parsedGrade || !parsedReference)
     	    isTrue = false;
-    	if (parsedGrade.level > parsedReference.level) {
+    	if (parsedGrade !== null && parsedGrade.level > parsedReference.level) {
             isTrue = true;
-        } else if (parsedGrade.level === parsedReference.level) {        
+        } else if (parsedGrade !== null && parsedGrade.level === parsedReference.level) {        
             isTrue = parsedGrade.plus && parsedReference.plus;
         } else {
             isTrue = false;

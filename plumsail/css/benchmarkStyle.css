@@ -1,0 +1,245 @@
+:root{
+  --darkgreen: #14987e94;
+  --lightgreen: #5dc7b2b0; 
+  --lightgray: #b5b5b54d;
+  --white: white;
+  --bordercolor: #ffffff24;
+  --btnborder: #ababab;
+  --black: black;
+  --boxshadow: rgba(0, 0, 0, 0.1);
+  --sucat-color: #2c3e507a ;
+  --hover-bg: #f0f0f0;
+  --hover-color: #333333;
+}
+
+.ctlStyle{
+  width: 40%;
+  height: 30px;
+  box-shadow: 0 4px 14px var(--boxshadow);
+  border: 0px solid var(--white);
+}
+.border{
+  border-radius: 4px !important;
+  box-shadow: 0 2px 4px var(--boxshadow);
+  padding-left: 8px !important;
+}
+/*For Toggle (used in Showw all Subcategories)*/
+.form-check.form-switch{
+  margin-left: -55px;
+}
+/* END CLASSIFICATION TABLE */
+
+
+/* START BACKGROUND INFO */
+.accordion-button { 
+  background-color: var(--sucat-color) !important;
+  color: var(--white) !important; 
+  font-weight: bold !important;
+  display: flow !important;
+}
+/* END BACKGROUND INFO */
+
+/* START TABS */
+.fd-form .nav{
+  padding-left: 7px !important;
+}
+
+.fd-form .nav-tabs .nav-item {
+  /* margin-bottom: 5px; */
+  /* width: 130px; */
+  text-align: center;
+}
+
+/* added on 25-7-2024 */
+.fd-form .nav-tabs{
+  border-bottom: 0px !important
+}
+
+.fd-form .nav-tabs .nav-link.active, .fd-form .nav-tabs .nav-item.show .nav-link {
+  background-color: #f7f7f7 !important;
+  border-color: transparent !important
+}
+
+.fd-form .nav-tabs .active.nav-link {
+  /* background-color: var(--darkgreen); */
+  /* border-color: var(--darkgreen);  */
+  /* color: var(--black); White text for better contrast */
+  font-weight: bold;  
+}
+
+.fd-form .nav-tabs .nav-link {  
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-color: var(--bordercolor);
+  background-color: #ffffff24;
+  color: var(--black);
+  border-radius: 2px;
+  box-shadow: 0 2px 4px var(--boxshadow);
+  font-size: 13px;
+  font-family: 'Arial';
+  border-top-right-radius: 6px;
+  border-top-left-radius: 6px;
+}
+
+.tabset, .tabs-top, .fd-grid, .container-fluid {
+  background: #efefef6b !important;  
+  padding-top: 10px !important;  
+}
+
+.fd-form .tabset { 
+  margin-bottom: 0px !important; 
+  margin-top: 5px;
+}
+/*END TABS */
+
+/* START BUTTONS */
+.fd-form-toolbar{ margin-top: 20px !important; }
+
+.fd-form .btn-primary {
+  color: #444;
+  background-color: #fdfdfd;
+  border: 1px solid #ababab;
+  padding: 5px 30px;
+  display: inline-block;
+  margin: 2px 2px;
+  border-radius: 6px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.95em;
+  font-weight: bold;
+  width: max-content;
+}
+
+.btn-outline-primary {
+  background-color: var(--white); 
+  color: var(--black);
+  border: 1px solid var(--btnborder);
+  cursor: pointer;
+  width: 170px;
+  height: 100%;
+  margin: 2px 2px !important;
+  border-radius: 6px !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 0.96em !important;
+  font-weight: bold !important;
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease; 
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--hover-bg) !important; /* Change to your desired hover background color */
+  color: var(--hover-color) !important;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow for the hover effect */
+}
+
+.fd-toolbar-primary-commands{
+  display: flex; 
+  justify-content: flex-end;
+}
+
+/* var(--sucat-color) */
+.lbldummyStyle{
+  background-color: #9aa3ab !important; 
+  color: var(--white) !important;
+}
+/* END BUTTONS */
+
+
+/* START GENERAL */
+.fd-form { background-color: transparent !important; }
+
+.fd-sp-field-text input{ box-shadow: 0 2px 4px var(--boxshadow); }
+
+
+/* commented on 25-7-2024
+.fd-form-container .container-fluid{ padding: 15px 12px 0px 12px; }
+*/
+
+.fd-form a:not(.nav-link):not(.disabled) { color: blue !important; font-weight: 500; }
+
+
+/* START ROOT HEADER (LOGO WITH TITLE) */
+.ms-compositeHeader{ padding-bottom: 0px !important; }
+
+.ms-compositeHeader-topWrapper{ height: 5px !important; }
+
+.ms-compositeHeader-mainLayout { height: 45px; }
+
+.title-75 { font-size: 22px; }
+ /* End ROOT HEADER */
+
+.col, .d-md-block{ padding: 0px 10px 0 10px !important; }
+
+.CanvasComponent{ padding: 0.7% 0 0 0.5% !important; }
+
+.ControlZone  {
+  box-sizing: border-box;
+  /* background: url('../css/Images/ImgCV.jpg') no-repeat center center fixed; */
+  background: linear-gradient(to right, rgb(218 237 216), rgb(187 229 218), rgb(158 214 224), rgb(150 182 235), rgb(175 169 240), rgb(175 168 240), rgb(168 165 239));
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+} 
+
+.fd-title-wrap{
+  font-weight: normal;
+  font-size: 13px !important;
+  font-family: Arial;
+  color:var(--black);
+}
+
+.fd-form .fd-field-control:not(.col-sm)>.col-form-label {
+  font-size: 13px;
+  color: var(--black);
+}
+
+/* FOR SHOW ALL SUB-CATEGORY CHECKBOX */
+.fd-form .form-check .form-check-input{
+  margin-left: 19px !important;  
+}
+
+ /* HEADER TITLE  var(--darkgreen); */
+.dumTitle{  
+  padding: 4px;
+  text-align: center;
+  font-size: 20px;
+  font-family: 'Roboto', 'Arial', 'Helvetica', sans-serif;
+  font-weight: 700;
+  /* color: #ffffff;
+  background-color: var(--sucat-color);  */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
+}
+
+.FormTitle{
+  color: #4e778f;
+  font-weight: bold;
+  font-size: 25px;
+  text-align: center;
+  padding-bottom: 15px !important;
+	 /* position: relative; left: 42%;  520px */
+ }
+
+ /* ATTACHMENT FIELD */k
+.k-upload .k-dropzone .k-dropzone-hint { text-align: left; padding-left: 10px; }
+
+.k-numeric-wrap.k-state-default,
+input.k-formatted-value,
+textarea.form-control.fd-textarea,
+.k-state-default input,
+span.k-picker-wrap.k-state-default,
+.fd-form .k-dropdown-wrap .k-input,
+span.k-dropdown-wrap.k-state-default,
+html .k-upload, 
+.k-datepicker .k-picker-wrap,
+.k-timepicker .k-picker-wrap,
+.k-datetimepicker .k-picker-wrap,
+.k-multiselect-wrap{
+  border-radius: 4px !important;
+  box-shadow: 0 2px 4px var(--boxshadow);
+}
+/* END GENERAL */
+
+/* START ERROR MESSAGES */
+b[data-v-386d995a]{ color:red !important; }
+.alert-heading{ color: #ce830e !important; }
+/* END ERROR MESSAGES */

@@ -626,7 +626,9 @@ public partial class CompileForm : System.Web.UI.Page
                         {
                             if (RIWItem.Attachments[0].ToLower().EndsWith("pdf"))
                             {
-                                Pdfhyplink.NavigateUrl = RIWItem.Attachments.UrlPrefix + RIWItem.Attachments[0];
+                                string attachmentUrl = SPContext.Current.Web.Url + "/" + RIWItem.ParentList.RootFolder.Url + "/Attachments/" + RIWItem.ID + "/" + RIWItem.Attachments[0];
+
+                                Pdfhyplink.NavigateUrl = attachmentUrl; // RIWItem.Attachments.UrlPrefix + RIWItem.Attachments[0];
                                 Pdfhyplink.Text = RIWItem.Attachments[0];
                             }
                             else
@@ -639,8 +641,8 @@ public partial class CompileForm : System.Web.UI.Page
                         }
                         else
                         {
-                            lblmsg.Text = "This Inspection has multiple attachments, you must close this Inspection from lead task.";
-                            return;
+                            //lblmsg.Text = "This Inspection has multiple attachments, you must close this Inspection from lead task.";
+                            //return;
                         }
                     }
                     #endregion
@@ -2399,8 +2401,8 @@ public partial class CompileForm : System.Web.UI.Page
                 }
                 else if (LeadItem.Attachments.Count > 1)
                 {
-                    lblmsg.Text = "Multiple attachements on Lead task found, only one final attachment required";
-                    return;
+                    //lblmsg.Text = "Multiple attachements on Lead task found, only one final attachment required";
+                    //return;
                 }
             }
 
@@ -4304,12 +4306,12 @@ public partial class CompileForm : System.Web.UI.Page
                     if (!string.IsNullOrEmpty(InspectionOutCO))
                     {
                         isInspectionOutCO = true;
-                        GetEmailsforEInspection(objweb, InspectionOutCO, ref MailInspectionOutCO);
+                        GetEmailsforEInspection(web, InspectionOutCO, ref MailInspectionOutCO);
                     }
                     if (!string.IsNullOrEmpty(InspectionOutDC))
                     {
                         isInspectionOutDC = true;
-                        GetEmailsforEInspection(objweb, InspectionOutDC, ref MailInspectionOutDC);
+                        GetEmailsforEInspection(web, InspectionOutDC, ref MailInspectionOutDC);
                     }
                     #endregion
 
@@ -4326,7 +4328,7 @@ public partial class CompileForm : System.Web.UI.Page
 
                     if (!string.IsNullOrEmpty(InspectionReviewCodes))
                     {
-                        SPList InspectionReviewCodesList = objweb.Lists[InspectionReviewCodes];
+                        SPList InspectionReviewCodesList = web.Lists[InspectionReviewCodes];
 
                         if (!string.IsNullOrEmpty(Code))
                             GetStatusFlagFromReviewCodes(InspectionReviewCodesList, Code, ref IsSenttoRE, ref IsSenttoDC);
@@ -4364,7 +4366,7 @@ public partial class CompileForm : System.Web.UI.Page
                         if (LeadItem.Attachments.Count > 0)
                         {
                             string CurrentdestinUrl = LeadItem.Attachments.UrlPrefix + LeadItem.Attachments[0];
-                            SPFile file = objweb.GetFile(CurrentdestinUrl);
+                            SPFile file = web.GetFile(CurrentdestinUrl);
 
                             string destinUrl = item.Attachments.UrlPrefix + file.Name.Trim();
 
@@ -4378,7 +4380,7 @@ public partial class CompileForm : System.Web.UI.Page
                     for (int i = 0; i < LeadItem.Attachments.Count; i++)
                     {
                         string fURL = LeadItem.Attachments.UrlPrefix + LeadItem.Attachments[i];
-                        SPFile f = objweb.GetFile(fURL);
+                        SPFile f = web.GetFile(fURL);
                         string fName = f.Name;// Trade.Replace("&", "") + "_" + f.Name;
                         bool insert = false;
                         for (int j = 0; j < item.Attachments.Count; j++)
@@ -4418,23 +4420,23 @@ public partial class CompileForm : System.Web.UI.Page
                         SPListItem listitem = listitems[0];
                         if (isToContractorDirectly)
                         {
-                            GenericEmailTemplate(objweb, _IssuedItem_Email, listitem, ref Body, ref EmaSubject);
+                            GenericEmailTemplate(web, _IssuedItem_Email, listitem, ref Body, ref EmaSubject);
                             if (DeliverableType == "SLF")
                             {
                                 isNewRow = false;
                                 string DummySubject = "";
-                                GenericEmailTemplate(objweb, "SLF_FORM_ITEMS", listitem, ref SLF_ITEMS_BODY, ref DummySubject);
+                                GenericEmailTemplate(web, "SLF_FORM_ITEMS", listitem, ref SLF_ITEMS_BODY, ref DummySubject);
                             }
                         }
                         else
-                            GenericEmailTemplate(objweb, _LeadTaskClose_Email, listitem, ref Body, ref EmaSubject);
+                            GenericEmailTemplate(web, _LeadTaskClose_Email, listitem, ref Body, ref EmaSubject);
                     }
                     #endregion
 
                     #region SEND LEAD ACTION EMAIL
                     string To = "";
 
-                    To = CCAssignedToTasks(objweb, LeadItem, "AssignedTo");
+                    To = CCAssignedToTasks(web, LeadItem, "AssignedTo");
 
                     var mailMessage = new MailMessage();
                     MailAddressCollection mailCCcol = new MailAddressCollection();
@@ -4444,20 +4446,20 @@ public partial class CompileForm : System.Web.UI.Page
                     for (int j = 0; j < PartDepartments.Count; j++)
                     {
                         string Dept2 = PartDepartments[j].ToString();
-                        string PartUsers = GetTradeReviewersleadPartEInspection(objweb, Dept2, "CC", DeliverableType);
+                        string PartUsers = GetTradeReviewersleadPartEInspection(web, Dept2, "CC", DeliverableType);
 
                         if (!string.IsNullOrEmpty(PartUsers))
                             To += "," + PartUsers;
 
-                        PartUsers = GetTradeReviewersleadPartEInspection(objweb, Dept2, "RE", DeliverableType);
+                        PartUsers = GetTradeReviewersleadPartEInspection(web, Dept2, "RE", DeliverableType);
                         if (!string.IsNullOrEmpty(PartUsers))
                             To += "," + PartUsers;
 
-                        PartUsers = GetTradeReviewersleadPartEInspection(objweb, Dept2, "TeamLeader", DeliverableType);
+                        PartUsers = GetTradeReviewersleadPartEInspection(web, Dept2, "TeamLeader", DeliverableType);
                         if (!string.IsNullOrEmpty(PartUsers))
                             To += "," + PartUsers;
 
-                        PartUsers = GetTradeReviewersleadPartEInspection(objweb, Dept2, "Inspectors", DeliverableType);
+                        PartUsers = GetTradeReviewersleadPartEInspection(web, Dept2, "Inspectors", DeliverableType);
                         if (!string.IsNullOrEmpty(PartUsers))
                             To += "," + PartUsers;
                     }
@@ -4468,17 +4470,17 @@ public partial class CompileForm : System.Web.UI.Page
                         mailMessage.CC.Add(FormatMultipleEmailAddresses(To));
                     }
 
-                    string subject = GetParameter(objweb, "ProjectName") + " - (" + Trade + ") - " + EmaSubject;
+                    string subject = GetParameter(web, "ProjectName") + " - (" + Trade + ") - " + EmaSubject;
                     if (isInspectionOutCO && IsSenttoRE)
-                        SendEmail(objweb, item, MailInspectionOutCO, mailMessage.CC, Body, subject);
+                        SendEmail(web, item, MailInspectionOutCO, mailMessage.CC, Body, subject);
 
                     else if (isInspectionOutDC && IsSenttoDC)
-                        SendEmail(objweb, item, MailInspectionOutDC, mailMessage.CC, Body, subject);
+                        SendEmail(web, item, MailInspectionOutDC, mailMessage.CC, Body, subject);
 
                     else
                     {
                         #region CHECK IF MULTI-CONTRACTOR IS ENABLED
-                        string isMultiContracotr = GetParameter(objweb, "isMultiContracotr");
+                        string isMultiContracotr = GetParameter(web, "isMultiContracotr");
                         string _Notification_Name = "IR Initiated";
 
                         if (DeliverableType == "SCR")
@@ -4496,10 +4498,10 @@ public partial class CompileForm : System.Web.UI.Page
                             else
                                 isMultiContracotr = "0";
 
-                            isValid = isValid_In_NotificationList(objweb, ContCode + "_" + _Notification_Name);
+                            isValid = isValid_In_NotificationList(web, ContCode + "_" + _Notification_Name);
                             if (!isValid)
                             {
-                                isValid = isValid_In_NotificationList(objweb, DeliverableType + " Initiated");
+                                isValid = isValid_In_NotificationList(web, DeliverableType + " Initiated");
                                 if (isValid)
                                     _Notification_Name = DeliverableType + " Initiated";
                             }
@@ -4507,7 +4509,7 @@ public partial class CompileForm : System.Web.UI.Page
                         }
                         else
                         {
-                            isValid = isValid_In_NotificationList(objweb, DeliverableType + " Initiated");
+                            isValid = isValid_In_NotificationList(web, DeliverableType + " Initiated");
                             if (isValid)
                                 _Notification_Name = DeliverableType + " Initiated";
                         }
@@ -4519,26 +4521,26 @@ public partial class CompileForm : System.Web.UI.Page
                         //GetNotificationList(web, ModuleName, ref MailTo, ref MailCC, "", false, false);
 
                         if (isMultiContracotr.ToLower() == "yes" || isMultiContracotr == "1")
-                            GetNotificationList(objweb, _Notification_Name, ref MailTo, ref MailCC, ContCode, false, true);
-                        else GetNotificationList(objweb, _Notification_Name, ref MailTo, ref MailCC, "", false, false);
+                            GetNotificationList(web, _Notification_Name, ref MailTo, ref MailCC, ContCode, false, true);
+                        else GetNotificationList(web, _Notification_Name, ref MailTo, ref MailCC, "", false, false);
 
                         if (MailTo != null && MailTo.Count > 0)
                             foreach (MailAddress em in MailTo) { mailMessage.CC.Add(em); }
 
-                        string InfoCc = GetDisciplineInfoCc(objweb, leadlist, item, "InfoCc");
+                        string InfoCc = GetDisciplineInfoCc(web, leadlist, item, "InfoCc");
                         foreach (MailAddress em in MailTo) { mailMessage.CC.Add(em); }
 
                         if (!string.IsNullOrEmpty(InfoCc))
                             mailMessage.CC.Add(FormatMultipleEmailAddresses(InfoCc));
 
-                        string IRInfoCc = GetDisciplineInfoCc(objweb, leadlist, item, DeliverableType + "InfoCc");
+                        string IRInfoCc = GetDisciplineInfoCc(web, leadlist, item, DeliverableType + "InfoCc");
                         if (!string.IsNullOrEmpty(IRInfoCc))
                             MailMessageCC(IRInfoCc, mailMessage.CC);
 
-                        string AllEmailsFromPackageList = GetPackageInfoCc(objweb, objweb.Lists["Package"], item);
+                        string AllEmailsFromPackageList = GetPackageInfoCc(web, web.Lists["Package"], item);
                         MailMessageCC(AllEmailsFromPackageList, mailMessage.CC);
 
-                        string InfoTo = GetDisciplineInfoCc(objweb, leadlist, item, "InfoTo");
+                        string InfoTo = GetDisciplineInfoCc(web, leadlist, item, "InfoTo");
                         if (!string.IsNullOrEmpty(InfoTo))
                         {
                             MailMessageCC(InfoTo, mailMessage.CC);
@@ -4547,15 +4549,15 @@ public partial class CompileForm : System.Web.UI.Page
                         #region Client Emails
                         string ClientCc = "";
 
-                        SPList Notificationlist = objweb.Lists["Notification"];
+                        SPList Notificationlist = web.Lists["Notification"];
                         MailAddressCollection ClientMailTo = new MailAddressCollection();
                         MailAddressCollection ClientMailCc = new MailAddressCollection();
 
                         if (CheckColumnExistance(Notificationlist, "ClientCc"))
                         {
-                            ClientCc = GetClientInfoCc(objweb, Notificationlist, _Notification_Name);
+                            ClientCc = GetClientInfoCc(web, Notificationlist, _Notification_Name);
 
-                            GetEmailsfromGroupSP(objweb, "", ClientCc, ref ClientMailTo, ref ClientMailCc);
+                            GetEmailsfromGroupSP(web, "", ClientCc, ref ClientMailTo, ref ClientMailCc);
 
                             foreach (MailAddress em in ClientMailCc) { mailMessage.CC.Add(em); }
                         }
@@ -4563,10 +4565,10 @@ public partial class CompileForm : System.Web.UI.Page
 
                         string HostValue = "";
 
-                        CheckExternalExternalHost(objweb, ref HostValue);
+                        CheckExternalExternalHost(web, ref HostValue);
 
                         subject = GetParameter(web, "ProjectName") + " - " + EmaSubject;
-                        SendEmail(objweb, item, MailCC, mailMessage.CC, subject, Body, HostValue);
+                        SendEmail(web, item, MailCC, mailMessage.CC, subject, Body, HostValue);
                     }
                     #endregion
                 }
