@@ -2,7 +2,7 @@ var $ = shortpoint.base.libs.$; // jQuery
 var _ = shortpoint.base.libs._; // Underscore
 var moment = shortpoint.base.libs.moment; // Moment.js
 
-var _layout = '/_layouts/15/PCW/General/EForms',
+var _layout = '/_layouts/15/PCW/General/EForms', 
     _ImageUrl = _spPageContextInfo.webAbsoluteUrl + '/Style%20Library/tooltip.png',
     _ListInternalName = _spPageContextInfo.serverRequestPath.split('/')[5],
     _ProjectNumber = _spPageContextInfo.serverRequestPath.split('/')[2],
@@ -21,42 +21,38 @@ const blueColor = '#6ca9d5', greenColor = '#5FC9B3', yellowColor = '#F7D46D', re
 
 var appBarItems;
 
-var onRender = async function (moduleName){
+var onRender = async function (moduleName){ 
 
-	try {
+	try { 
 
-        const startTime = performance.now();
+        const startTime = performance.now();	
 
 		if(moduleName == 'SPointLoad')
 		{
-            //debugger;
+            //debugger; 
             let isSiteADM = _spPageContextInfo.isSiteAdmin;
             const url = _spPageContextInfo.webAbsoluteUrl;
-
-            debugger;
-
-            await loadScriptAsync().then(async ()=>{
-                //showPreloader();
-                //preloader_btn(false, true);
-            })
-
+            await loadScriptAsync(`${url}${_layout}/common libs/jquery/jquery.min.js`); 
+            await PreloaderScripts();
+            await loadScripts();
+            
             _ProjectId = localStorage.getItem(`${_ProjectNumber}-ProjectId`);
             _ProjectName = localStorage.getItem(`${_ProjectNumber}-ProjectName`);
             _WorkType = localStorage.getItem(`${_ProjectNumber}-WorkType`);
-
+           
             if ((!_ProjectId && !_ProjectName)) {
                 await fetchProjectInfoMethod(_ProjectNumber);
             }
-
+            
             console.log(`ProjectId = ${_ProjectId}`);
             console.log(`ProjectName = ${_ProjectName}`);
             console.log(`WorkType = ${_WorkType}`);
 
             let LinkTitle = _ProjectId ? `${_ProjectNumber} - ${_ProjectName}` : _ProjectNumber;
-
+            
             const iconPath = url + '/_layouts/15/Images/animdarlogo1.png';
             const linkElement = `<a href="${url}" style="text-decoration: none; color: inherit; display: flex; align-items: center;font-size: 18px;">
-                                    <img src="${iconPath}" alt="Icon" style="width: 50px; height: 26px; margin-right: 14px;">
+                                    <img src="${iconPath}" alt="Icon" style="width: 50px; height: 26px; margin-right: 14px;">                                    
                                     ${LinkTitle}
                                 </a>`;
 
@@ -66,7 +62,7 @@ var onRender = async function (moduleName){
             const applyCommonCSS = () => {
                 $('div.ms-compositeHeader-rightControls').hide(); // OK
                 $('.ms-compositeHeader.root-73.shortpoint-proxy-theme-site-header').css('height', '46px'); // NO
-                $('.ms-compositeHeader-mainLayout').hide(); // admin
+                $('.ms-compositeHeader-mainLayout').hide(); // admin                
                 //$('.Files-rightPaneInteractionContainer').css('marginTop', '-14px'); // No Action
                 $('.pageTitle_dececfca').hide(); // OK
                 $('.ControlZone-control').css('marginTop', '-25px');
@@ -119,7 +115,7 @@ var onRender = async function (moduleName){
                     <path d="M4 6h8v1H4V6zm0 2h6v1H4V8zm0 2h8v1H4v-1z"/>
                 </svg>`
             };
-
+            
             Object.keys(icons).forEach(title => {
                 $(`.ms-HorizontalNavItem-link[title="${title}"]`).prepend(icons[title]);
             });
@@ -128,13 +124,13 @@ var onRender = async function (moduleName){
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-left: 3px;">
                 <path d="M6 9l6 6 6-6"></path>
                 </svg>
-            `);
+            `);         
 
             // Add Background on tab mouse hoover
             const css = `
                 .highlight {
                     background-color: #d6d6d6; /* Light gray background on hover */
-                    color: #333;               /* Change text color */
+                    color: #333;               /* Change text color */                
                 }
             `;
             // Create a style element and append to head
@@ -145,7 +141,7 @@ var onRender = async function (moduleName){
                 function() {
                     // Add highlight class when mouse enters
                     $(this).parent('.ms-HorizontalNavItem').addClass('highlight');
-                },
+                }, 
                 function() {
                     // Remove highlight class when mouse leaves
                     $(this).parent('.ms-HorizontalNavItem').removeClass('highlight');
@@ -156,18 +152,18 @@ var onRender = async function (moduleName){
                 function() {
                     // Add highlight class when mouse enters
                     $(this).parent('.ms-HorizontalNavItem').addClass('highlight');
-                },
+                }, 
                 function() {
                     // Remove highlight class when mouse leaves
                     $(this).parent('.ms-HorizontalNavItem').removeClass('highlight');
                 }
             );
-
+            
             // Remove the default menu arrow collapsed
             $('i[data-icon-name="ChevronDown"].ms-HorizontalNav-chevronDown').css('display', 'none');
 
             //Shorpoint Package icon Margin
-            $('.shortpoint-icon-normal').css('marginTop', '-5px');
+            $('.shortpoint-icon-normal').css('marginTop', '-5px');             
 
             checkIfUserIsSiteAdmin();
 
@@ -178,10 +174,10 @@ var onRender = async function (moduleName){
                 element.style.height = '46px';
             });
 
-            if ((_ProjectId && _ProjectName)) {
+            if ((_ProjectId && _ProjectName)) {          
 
                 $('.banner_972f0ed1').css('marginLeft', '50px');
-                $('.canvasWrapper_c1232e3b.shortpoint-proxy-theme-scroll-content').css('marginLeft', '50px');
+                $('.canvasWrapper_c1232e3b.shortpoint-proxy-theme-scroll-content').css('marginLeft', '50px'); 
 
                 const customAppBarItems = {
                     'D24117-General': [
@@ -246,10 +242,10 @@ var onRender = async function (moduleName){
                         svgPath: `
                         <!-- Top Triangle -->
                         <path d="M16.5,2.5L4,8.25L15,14L19.5,10.75L16.5,2.5Z" fill="#002050"/>
-
+                        
                         <!-- Bottom Triangle -->
                         <path d="M4,8.25L4,21.5L15,14L4,8.25Z" fill="#002050"/>
-
+            
                         <!-- Inner Triangle -->
                         <path d="M7,11L4,21.5L15,14L7,11Z" fill="#ffffff"/>
                       `,
@@ -260,7 +256,7 @@ var onRender = async function (moduleName){
                         editors: 'all',
                         readers: 'all'
                     }
-                ];
+                ];           
 
                 let projectNumbers = [];
 
@@ -269,16 +265,16 @@ var onRender = async function (moduleName){
                 }
                 appBarItems = getAppBarItemsForProjects(projectNumbers, customAppBarItems, commonAppBarItems);
 
-                appBar();
-
-                // #region Design Projects MENU BAR
+                appBar();               
+            
+                // #region Design Projects MENU BAR 
                 if(_WorkType.toLowerCase() === 'design'){
-
+                
                     // Project References and Procedures Tab
                     addHorizontalNavItemWithDropdown(
-                        'Project References and Procedures',
-                        '#',
-                        `<path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5"/>`,
+                        'Project References and Procedures', 
+                        '#', 
+                        `<path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5"/>`, 
                         [
                             { title: 'Applications', href: `${_webUrl}/PRPs/Applications` },
                             { title: 'Collected Data', href: `${_webUrl}/PRPs/Collected%20Data` },
@@ -292,15 +288,15 @@ var onRender = async function (moduleName){
 
                     // Communication Tab
                     addHorizontalNavItemWithDropdown(
-                        'Communication',
-                        '#',
-                        `<path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm9 1.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 0-1h-4a.5.5 0 0 0-.5.5M9 8a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 0-1h-4A.5.5 0 0 0 9 8m1 2.5a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1h-3a.5.5 0 0 0-.5.5m-1 2C9 10.567 7.21 9 5 9c-2.086 0-3.8 1.398-3.984 3.181A1 1 0 0 0 2 13h6.96q.04-.245.04-.5M7 6a2 2 0 1 0-4 0 2 2 0 0 0 4 0"/>`,
+                        'Communication', 
+                        '#', 
+                        `<path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm9 1.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 0-1h-4a.5.5 0 0 0-.5.5M9 8a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 0-1h-4A.5.5 0 0 0 9 8m1 2.5a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 0-1h-3a.5.5 0 0 0-.5.5m-1 2C9 10.567 7.21 9 5 9c-2.086 0-3.8 1.398-3.984 3.181A1 1 0 0 0 2 13h6.96q.04-.245.04-.5M7 6a2 2 0 1 0-4 0 2 2 0 0 0 4 0"/>`, 
                         [
                             //{ title: 'Calendar', href: `${_webUrl}/Lists/Calendar/Calendar.aspx` },
                             { title: 'Central Files', href: `${_webUrl}/SitePages/CentralFiling.aspx` },
                             //{ title: 'Contacts', href: `${_webUrl}/Lists/Contacts/AllItems.aspx` },
                             { title: 'Correspondences', href: `${_webUrl}/Correspondences/Forms/AllItems.aspx` },
-                            { title: 'Minutes of Meeting', href: `${_webUrl}/Minutes of Meeting/Forms/AllItems.aspx` },
+                            { title: 'Minutes of Meeting', href: `${_webUrl}/Minutes of Meeting/Forms/AllItems.aspx` },                     
                             //{ title: 'Notices', href: `${_webUrl}/Lists/Notices/AllItems.aspx` } //,
                             //{ title: 'Workflow Correspondences List', href: '#subitem6' }
                         ]
@@ -308,15 +304,15 @@ var onRender = async function (moduleName){
 
                     // Project Management Tab
                     addHorizontalNavItemWithDropdown(
-                        'Project Management',
-                        '#',
+                        'Project Management', 
+                        '#', 
                         `<path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v1H3V2z"/>
                         <path d="M2 3h12a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm1 1v9h10V4H3z"/>
-                        <path d="M4 6h8v1H4V6zm0 2h6v1H4V8zm0 2h8v1H4v-1z"/>`,
-                        [
+                        <path d="M4 6h8v1H4V6zm0 2h6v1H4V8zm0 2h8v1H4v-1z"/>`, 
+                        [                        
                             { title: 'Confidential', href: `${_webUrl}/Confidential/Forms/AllItems.aspx` },
-                            {
-                                title: 'Project Management Folders',
+                            { 
+                                title: 'Project Management Folders', 
                                 href: '#subitem4',
                                 children: [
                                     { title: 'Checklist for Project Submittal', href: `${_webUrl}/Project Management/Checklist%20for%20Project%20Submittal` },
@@ -325,111 +321,108 @@ var onRender = async function (moduleName){
                                     { title: 'Monthly Progress Reports', href: `${_webUrl}/Project Management/Monthly%20Progress%20Reports` },
                                     { title: 'Organization Chart', href: `${_webUrl}/Project Management/Organization%20Chart` },
                                     { title: 'Schedule', href: `${_webUrl}/Project Management/Schedule` },
-                                    { title: 'Supplier Control', href: `${_webUrl}/Project Management/Supplier%20Control` }
-                            ]},
+                                    { title: 'Supplier Control', href: `${_webUrl}/Project Management/Supplier%20Control` } 
+                            ]},                                          
                             { title: 'DRD Guidelines', href: `${_webUrl}/SitePages/PlumsailForms/DRDGuidelines/Item/NewForm.aspx` },
-                            {
-                                title: 'RACI',
-                                href: '#subitem1',
+                            { 
+                                title: 'RACI', 
+                                href: '#subitem1', 
                                 children: [
                                 { title: 'Change Log', href: `${_webUrl}/Lists/Change Log/AllItems.aspx` },
                                 { title: 'Design Codes & Regulations', href: `${_webUrl}/Lists/LocalDesignCode/AllItems.aspx` },
                                 { title: 'Risk Register', href: `${_webUrl}/Lists/RiskRegister/AllItems.aspx` }
-                            ]},
-                            { title: 'Restricted', href: `${_webUrl}/Restricted/Forms/AllItems.aspx` }
+                            ]},                     
+                            { title: 'Restricted', href: `${_webUrl}/Restricted/Forms/AllItems.aspx` }                    
                             //{ title: 'Workflow Correspondences List', href: '#subitem6' }
                         ]
                     );
 
                     // Design Workspace Tab
                     addHorizontalNavItemWithDropdown(
-                        'Design Workspace',
-                        '#',
+                        'Design Workspace', 
+                        '#', 
                         `<path d="M4 16s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-5.95a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
-                        <path d="M2 1a2 2 0 0 0-2 2v9.5A1.5 1.5 0 0 0 1.5 14h.653a5.4 5.4 0 0 1 1.066-2H1V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v9h-2.219c.554.654.89 1.373 1.066 2h.653a1.5 1.5 0 0 0 1.5-1.5V3a2 2 0 0 0-2-2z"/>`,
+                        <path d="M2 1a2 2 0 0 0-2 2v9.5A1.5 1.5 0 0 0 1.5 14h.653a5.4 5.4 0 0 1 1.066-2H1V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v9h-2.219c.554.654.89 1.373 1.066 2h.653a1.5 1.5 0 0 0 1.5-1.5V3a2 2 0 0 0-2-2z"/>`, 
                         [
                             { title: 'Shared', href: `${_webUrl}/Shared/Forms/AllItems.aspx` },
                             { title: 'Sustainability Documents', href: `${_webUrl}/Sustainability Documents/Forms/AllItems.aspx` },
-                            { title: 'Work In Progress', href: `${_webUrl}/WIP/Forms/AllItems.aspx` }
+                            { title: 'Work In Progress', href: `${_webUrl}/WIP/Forms/AllItems.aspx` }                        
                         ]
                     );
 
                     // Departmental Project Filing Tab
                     addHorizontalNavItemWithDropdown(
-                        'Departmental Project Filing',
-                        '#',
-                        `<path d="M12 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2m-1.146 6.854-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>`,
+                        'Departmental Project Filing', 
+                        '#', 
+                        `<path d="M12 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2m-1.146 6.854-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>`, 
                         [
                             { title: 'BIM Internal Checking', href: `${_webUrl}/Design%20Project%20Filing/BIM%20Internal%20Checking` },
                             { title: 'Departmental Tender Documents', href: `${_webUrl}/Design%20Project%20Filing/Departmental%20Tender%20Documents` },
                             { title: 'Design and Safety Review', href: `${_webUrl}/Design%20Project%20Filing/Design%20and%20Safety%20Review` },
                             { title: 'Design Calculation', href: `${_webUrl}/Design%20Project%20Filing/Design%20Calculation` },
-                            { title: 'Engineering Reports and Studies', href: `${_webUrl}/Design%20Project%20Filing/Engineering%20Reports%20and%20Studies` },
-                            { title: 'Interdepartmental Checking', href: `${_webUrl}/Design%20Project%20Filing/Interdepartmental%20Checking` }
+                            { title: 'Engineering Reports and Studies', href: `${_webUrl}/Design%20Project%20Filing/Engineering%20Reports%20and%20Studies` },  
+                            { title: 'Interdepartmental Checking', href: `${_webUrl}/Design%20Project%20Filing/Interdepartmental%20Checking` }                     
                         ]
                     );
 
                     // Departmental Project Filing Tab
                     addHorizontalNavItemWithDropdown(
-                        'Quality Management',
-                        '#',
+                        'Quality Management', 
+                        '#', 
                         `<path d="M10.854 8.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L7.5 10.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
                         <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
-                        <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5z"/>`,
+                        <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5z"/>`, 
                         [
                             { title: 'Audit Reports', href: `${_webUrl}/Quality%20Management/Audit%20Reports%20-%20CARs` },
-                            { title: 'Audit Schedule', href: `${_webUrl}/Quality%20Management/Audit%20Schedule` }
+                            { title: 'Audit Schedule', href: `${_webUrl}/Quality%20Management/Audit%20Schedule` }                                            
                         ]
                     );
 
                     // Design Deliverables Tab
                     addHorizontalNavItemWithDropdown(
-                        'Design Deliverables',
-                        '#',
-                        `<path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3m-8.322.12q.322-.119.684-.12h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981z"/>`,
+                        'Design Deliverables', 
+                        '#', 
+                        `<path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3m-8.322.12q.322-.119.684-.12h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981z"/>`, 
                         [
                             { title: 'Initiate Submittals', href: `${_webUrl}/Lists/InitiateSubmittals/AllItems.aspx` },
                             { title: 'Design Tasks', href: `${_webUrl}/Lists/DesignTasks/ActiveTasks.aspx` },
                             { title: 'TentativeLOD', href: `${_webUrl}/TentativeLOD/Forms/AllItems.aspx` },
                             { title: 'Deliverables', href: `${_webUrl}/Deliverables/Forms/AllItems.aspx` },
                             { title: 'RLOD', href: `${_webUrl}/Lists/RLOD/AllItems.aspx` },
-                            { title: 'SLOD', href: `${_webUrl}/Lists/SLOD/AllItems1.aspx` }
+                            { title: 'SLOD', href: `${_webUrl}/Lists/SLOD/AllItems1.aspx` }                                       
                         ]
                     );
 
                     // Tender Management Tab
                     addHorizontalNavItemWithDropdown(
-                        'Tender Management',
-                        '#',
-                        `<path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>`,
+                        'Tender Management', 
+                        '#', 
+                        `<path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>`, 
                         [
                             { title: 'Bidders', href: `${_webUrl}/Lists/Bidders/AllItems.aspx` },
                             { title: 'TenderLibrary', href: `${_webUrl}/TenderLibrary/Forms/AllItems.aspx` },
-                            { title: 'QApp', href: `${_webUrl}/Lists/Tender Query/AllItems.aspx` }
+                            { title: 'QApp', href: `${_webUrl}/Lists/Tender Query/AllItems.aspx` }                                       
                         ]
                     );
                 }
                 //#endregion
             }
-        }
+        }      
 
         const endTime = performance.now();
         const elapsedTime = endTime - startTime;
         console.log(`Execution time SPointLoad: ${elapsedTime} milliseconds`);
 	}
-	catch (e) {
-		console.log(e);
+	catch (e) {		
+		console.log(e);	
 	}
-    finally {
-        //hidePreloader();
-    }
 
-    //preloader("remove");
+    preloader("remove");
 }
 
 //#region Additional Function
 
-async function loadingButtons(){
+async function loadingButtons(){  
 
     fd.toolbar.buttons.push({
         icon: 'CheckMark',
@@ -437,32 +430,32 @@ async function loadingButtons(){
         disabled: false,
         text: 'Acknowledge',
         style: `background-color:${greenColor}; color:white; width:200px !important`,
-        click: async function() {
+        click: async function() {  	
             if(fd.isValid){
-                await PreloaderScripts();
+                await PreloaderScripts();          
                 fd.field('Acknowledged').value = true;
                 fd.field('LastAccessedDate').value = new Date();
                 fd.save();
-            }
+            }            
         }
-    });
-
+    });   
+    
     fd.toolbar.buttons.push({
         icon: 'Cancel',
         class: 'btn-outline-primary',
-        text: 'Cancel',
+        text: 'Cancel',	
         style: `background-color:${redColor}; color:white; width:200px !important`,
         click: async function() {
             await PreloaderScripts();
             fd.close();
-        }
-	});
+        }			
+	});           
 }
 
 async function processClosedWindowResult() {
 
-    const folderUrl = `${_spPageContextInfo.siteServerRelativeUrl}/CORLibrary/${_refNo}`;
-    try {
+    const folderUrl = `${_spPageContextInfo.siteServerRelativeUrl}/CORLibrary/${_refNo}`;    
+    try {        
         const files = await pnp.sp.web.getFolderByServerRelativeUrl(folderUrl).files();
         return files.length;
     } catch (error) {
@@ -471,23 +464,23 @@ async function processClosedWindowResult() {
 }
 
 function formatingButtonsBar(){
-
+    
     $('div.ms-compositeHeader').remove()
     $('span.o365cs-nav-brandingText').text(`${_ProjectNumber} - Job Architecture Form`);
     $('i.ms-Icon--PDF').remove();
-
+          
     let toolbarElements = document.querySelectorAll('.fd-toolbar-primary-commands');
     toolbarElements.forEach(function(toolbar) {
         toolbar.style.display = "flex";
         //toolbar.style.justifyContent = "flex-end";
-        toolbar.style.marginLeft = "44px";
+        toolbar.style.marginLeft = "44px";            
     });
 
     let commandBarElement = document.querySelectorAll('[aria-label="Command Bar."]');
-        commandBarElement.forEach(function(element) {
-        element.style.paddingTop = "16px";
+        commandBarElement.forEach(function(element) {        
+        element.style.paddingTop = "16px";       
     }) ;
-
+    
     document.querySelectorAll('.CanvasZoneContainer.CanvasZoneContainer--read').forEach(element => {
         element.style.marginTop = '7px';
         element.style.marginLeft = '-100px';
@@ -496,7 +489,7 @@ function formatingButtonsBar(){
     var fieldTitleElements = document.querySelectorAll('.fd-form .row > .fd-field-title');
 
     fieldTitleElements.forEach(function(element) {
-        element.style.fontWeight = 'bold';
+        element.style.fontWeight = 'bold';      
         element.style.borderTopLeftRadius = '6px';
         element.style.borderBottomLeftRadius = '6px';
         element.style.width = '200px';
@@ -514,184 +507,184 @@ function formatingButtonsBar(){
     document.querySelectorAll('.ControlZone').forEach(element => {
         // Uncomment the line below if you want to use the gradient background
         // element.style.background = "linear-gradient(to right, rgb(218, 237, 216), rgb(187, 229, 218), rgb(158, 214, 224), rgb(150, 182, 235), rgb(175, 169, 240), rgb(175, 168, 240), rgb(168, 165, 239))";
-
+                
         element.style.background = "#ffffff";
     });
 }
 
-function ReadOnly(elem){
+function ReadOnly(elem){ 
     $(elem).prop("readonly", true).css({
 	    "background-color": "transparent",
 	    "border": "0px"
-	});
+	});  
 }
 
 function fixTextArea(){
-	$("textarea").each(function(index){
+	$("textarea").each(function(index){		
 		$(this).css('height', '150px');
 		var height = (this.scrollHeight + 5) + "px";
         $(this).css('height', height);
 	});
 }
 
-function FixListTabelRows(){
-
+function FixListTabelRows(){ 
+    
     let tables = $("table[role='grid']");
     tables.each(function(tblIndex, tbl){
         $(tbl).find('tr').each(function(trIndex, tr) {
-
-    	    if (trIndex === 0 ){
+    	  
+    	    if (trIndex === 0 ){    	
     		   let childs = tr.children;
     		   if(childs.length > 0){
     		     childs[0].style.textAlign = 'center';
     			 childs[1].style.textAlign = 'center';
-                }
+                }                  		   
     		}
-
+    		
     	   $(tr).find('td').each(function(tdIndex, td) {
                 let $td = $(td);
-
+                
                 if (tdIndex === 0 || tdIndex === 1)
                     td.style.textAlign = 'center';
-
+                    
                 else{
                     if(_formType !== 'Display')
                         $td.children().css('whiteSpace', 'nowrap');
                 }
-
+                 
                 if(_formType !== 'Display')
                     $td.css('whiteSpace', 'nowrap');
-    		});
+    		});                			
         });
-    });
+    });    
 }
 
 function FixWidget(dt){
     FixListTabelRows();
-    var Clientwidth = dt.$el.clientWidth;
-    //Clientwidth = Clientwidth * 96 / 100;
+    var Clientwidth = dt.$el.clientWidth; 
+    //Clientwidth = Clientwidth * 96 / 100;  
     var Rwidget = dt.widget;
-    var columns = Rwidget.columns;
+    var columns = Rwidget.columns;  
     var ColumnsLength = columns.length;
     var width = Clientwidth/(ColumnsLength-1);
-
+    
     var RemainingWidth = 0;
     var RemainingWidth2 = 0;
     var RemainingWidth3 = 0;
     var RemainingWidth4 = 0;
     var RemainingWidth5 = 0;
     var RemainingWidth6 = 0;
-
+            
     for (let i = 1; i < ColumnsLength; i++) {
-
-        var field = columns[i].field;
-
+    
+        var field = columns[i].field;	
+        
         if(field === 'Reviewed'){
             var ReviewedWidth = 80;
-            RemainingWidth = width - ReviewedWidth;
-            dt._columnWidthViewStorage.set(field, ReviewedWidth);
-            Rwidget.resizeColumn(columns[i], ReviewedWidth);
-        }
+            RemainingWidth = width - ReviewedWidth;            
+            dt._columnWidthViewStorage.set(field, ReviewedWidth); 
+            Rwidget.resizeColumn(columns[i], ReviewedWidth); 
+        }  
         else if(field === 'LinkTitle'){
             var ReviewedWidth = 350;
-            RemainingWidth2 = width - ReviewedWidth;
-            dt._columnWidthViewStorage.set(field, ReviewedWidth);
-            Rwidget.resizeColumn(columns[i], ReviewedWidth);
-        }
+            RemainingWidth2 = width - ReviewedWidth;            
+            dt._columnWidthViewStorage.set(field, ReviewedWidth); 
+            Rwidget.resizeColumn(columns[i], ReviewedWidth); 
+        } 
         else if(field === 'FieldOfSpecialization'){
             var ReviewedWidth = 180;
-            RemainingWidth3 = width - ReviewedWidth;
-            dt._columnWidthViewStorage.set(field, ReviewedWidth);
-            Rwidget.resizeColumn(columns[i], ReviewedWidth);
-        }
+            RemainingWidth3 = width - ReviewedWidth;            
+            dt._columnWidthViewStorage.set(field, ReviewedWidth); 
+            Rwidget.resizeColumn(columns[i], ReviewedWidth); 
+        } 
         else if(field === 'Qualifications'){
             var ReviewedWidth = 400;
-            RemainingWidth4 = width - ReviewedWidth;
-            dt._columnWidthViewStorage.set(field, ReviewedWidth);
-            Rwidget.resizeColumn(columns[i], ReviewedWidth);
-        }
+            RemainingWidth4 = width - ReviewedWidth;            
+            dt._columnWidthViewStorage.set(field, ReviewedWidth); 
+            Rwidget.resizeColumn(columns[i], ReviewedWidth); 
+        }  
         else if(field === 'From'){
             var ReviewedWidth = 90;
-            RemainingWidth5 = width - ReviewedWidth;
-            dt._columnWidthViewStorage.set(field, ReviewedWidth);
-            Rwidget.resizeColumn(columns[i], ReviewedWidth);
-        }
+            RemainingWidth5 = width - ReviewedWidth;            
+            dt._columnWidthViewStorage.set(field, ReviewedWidth); 
+            Rwidget.resizeColumn(columns[i], ReviewedWidth); 
+        } 
         else if(field === 'To'){
             var ReviewedWidth = 90;
-            RemainingWidth6 = width - ReviewedWidth;
-            dt._columnWidthViewStorage.set(field, ReviewedWidth);
-            Rwidget.resizeColumn(columns[i], ReviewedWidth);
-        }
-        else if(i == (ColumnsLength - 1)){
-            dt._columnWidthViewStorage.set(field, (width + RemainingWidth + RemainingWidth2 + RemainingWidth3 + RemainingWidth4 + RemainingWidth5 + RemainingWidth6));
-            Rwidget.resizeColumn(columns[i], (width + RemainingWidth + RemainingWidth2 + RemainingWidth3 + RemainingWidth4 + RemainingWidth5 + RemainingWidth6));
+            RemainingWidth6 = width - ReviewedWidth;            
+            dt._columnWidthViewStorage.set(field, ReviewedWidth); 
+            Rwidget.resizeColumn(columns[i], ReviewedWidth); 
+        } 
+        else if(i == (ColumnsLength - 1)){                  
+            dt._columnWidthViewStorage.set(field, (width + RemainingWidth + RemainingWidth2 + RemainingWidth3 + RemainingWidth4 + RemainingWidth5 + RemainingWidth6)); 
+            Rwidget.resizeColumn(columns[i], (width + RemainingWidth + RemainingWidth2 + RemainingWidth3 + RemainingWidth4 + RemainingWidth5 + RemainingWidth6)); 
         }
         else{
-            dt._columnWidthViewStorage.set(field, width);
-            Rwidget.resizeColumn(columns[i], width);
-        }
+            dt._columnWidthViewStorage.set(field, width); 
+            Rwidget.resizeColumn(columns[i], width); 
+        } 
     }
 
     const gridContent = dt.$el.querySelector('.k-grid-content.k-auto-scrollable');
     if (gridContent) {
         gridContent.style.overflowX = 'hidden';
     }
-
+    
     var rows = Rwidget._data;
-
+    
     // #32DAC4
     for (let i = 0; i < rows.length; i++) {
-        var Reviewed = rows[i].Reviewed;
+        var Reviewed = rows[i].Reviewed; 
         if(Reviewed === 'Yes'){
             const row = $(dt.$el).find('tr[data-uid="' + rows[i].uid+ '"');
             row[0].style.background = 'linear-gradient(to right, rgb(245, 255, 245), rgb(235, 250, 245), rgb(220, 255, 250), rgb(210, 220, 255), rgb(215, 205, 255), rgb(215, 205, 255), rgb(205, 205, 255))';
-        }
-    }
+        }           
+    }        
 }
 
 async function CheckifUserinSPGroup() {
 
-	let IsTMUser = "User";
+	let IsTMUser = "User"; 
 
 	try{
 		 await pnp.sp.web.currentUser.get()
          .then(async function(user){
 			await pnp.sp.web.siteUsers.getById(user.Id).groups.get()
 			 .then(async function(groupsData){
-				for (var i = 0; i < groupsData.length; i++) {
+				for (var i = 0; i < groupsData.length; i++) {				
 					if(groupsData[i].Title === "MC_Reviewer")
-					{
+					{					
 					   IsTMUser = "MC_Reviewer";
                        _DipN = user.Title;
 					   break;
-				    }
-				}
+				    }					
+				}				
 			});
 	     });
     }
 	catch(e){
         console.log(e);
     }
-	return IsTMUser;
+	return IsTMUser;				
 }
 
-function GetHTMLBody(EmailbodyHeader, ToName, DoneBy){
+function GetHTMLBody(EmailbodyHeader, ToName, DoneBy){	
 
 	var Body = "<html>";
 	Body += "<head>";
 	Body += "<meta charset='UTF-8'>";
-	Body += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
+	Body += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";				
 	Body += "</head>";
 	Body += "<body style='font-family: Verdana, sans-serif; font-size: 12px; line-height: 1.5; color: #333;'>";
-	Body += "<div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9;'>";
-
+	Body += "<div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9;'>"; 	
+    
     Body += "<div style='margin-top: 10px;'>";
 	Body += "<p style='margin: 0 0 10px;'>Dear <strong>" + ToName + "</strong>,</p>";
     Body += '</br>' ;
     Body += EmailbodyHeader ;
     Body += "<p style='margin: 0 0 10px;'>Best regards,</p>";
 	Body += "<p style='margin: 0 0 10px;'><strong>" + DoneBy + "</strong></p>";
-	Body += "</div>";
+	Body += "</div>";				
 	Body += "</div>";
 	Body += "</body>";
 	Body += "</html>";
@@ -711,17 +704,85 @@ function htmlEncode(str) {
     });
 }
 
-var setButtonToolTip = async function(_btnText, toolTipMessage){
+async function loadScripts(){
+	// const libraryUrls = [		
+	// 	_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
+	// 	_layout + '/plumsail/js/commonUtils.js'        
+	// ];
+  
+	// const cacheBusting = '?t=' + new Date().getTime();
+	//   libraryUrls.map(url => { 
+	// 	  $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
+	// 	});
+		
+	const stylesheetUrls = [
+		//_layout + '/controls/tooltipster/tooltipster.css',
+        _layout + '/plumsail/css/ShortPointStyle.css'      		
+	];
+  
+	stylesheetUrls.map((item) => {
+	  var stylesheet = item;
+	  $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
+	});
 
+    // const fontStyles = `
+	// 	@font-face {
+	// 		font-family: 'SegoeUIRegular';
+	// 		src: url('${_layout}/plumsail/js/FabricIcons/segoeui-regular.woff2') format('woff2'),
+	// 			 url('${_layout}/plumsail/js/FabricIcons/segoeui-regular.woff') format('woff');
+	// 	}
+	// 	@font-face {
+	// 		font-family: 'SegoeUILight';
+	// 		src: url('${_layout}/plumsail/js/FabricIcons/segoeui-light.woff2') format('woff2'),
+	// 			 url('${_layout}/plumsail/js/FabricIcons/segoeui-light.woff') format('woff');
+	// 	}
+	// 	@font-face {
+	// 		font-family: 'FabricIcons53';
+	// 		src: url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.53.woff2') format('woff2'),
+	// 			 url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.53.woff') format('woff'),
+	// 			 url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.53.ttf') format('truetype');
+	// 	}
+	// 	@font-face {
+	// 		font-family: 'FabricIcons23';
+	// 		src: url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.23.woff2') format('woff2'),
+	// 			 url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.23.woff') format('woff'),
+	// 			 url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-2.23.ttf') format('truetype');
+	// 	}
+	// 	@font-face {
+	// 		font-family: 'FabricIcons354';
+	// 		src: url('${_layout}/plumsail/js/FabricIcons/fabricmdl2icons-3.54.woff') format('woff');
+	// 	}
+	// `;
+
+	// // Append font styles to head
+	// $('<style>')
+	// 	.prop('type', 'text/css')
+	// 	.html(fontStyles)
+	// 	.appendTo('head');
+}
+
+async function PreloaderScripts(){
+  
+	await loadScriptAsync(_layout + '/controls/preloader/jquery.dim-background.min.js')
+		.then(() => {
+			return loadScriptAsync(_layout + '/plumsail/js/preloader.js');
+		})
+		.then(() => {
+			preloader();
+		});	    
+}
+
+var setButtonToolTip = async function(_btnText, toolTipMessage){  
+        
     var btnElement = $('span').filter(function(){ return $(this).text() == _btnText; }).prev();
 	if(btnElement.length === 0)
 	  btnElement = $(`button:contains('${_btnText}')`);
-
+	
     if(btnElement.length > 0){
 	  if(btnElement.length > 1)
 		btnElement = btnElement[1].parentElement;
       else btnElement = btnElement[0].parentElement;
-
+	  
       $(btnElement).attr('title', toolTipMessage);
 
       $(btnElement).tooltipster({
@@ -749,13 +810,13 @@ var checkIfUserIsSiteAdmin = function () {
         // }
 
         // const data = await response.json();
-        // const isSiteAdmin = data.d.IsSiteAdmin;
+        // const isSiteAdmin = data.d.IsSiteAdmin; 
 
         var isSiteAdmin = _spPageContextInfo.isSiteAdmin;
-
+        
         if (isSiteAdmin) {
-            console.log("The current user is a site admin.");
-        } else {
+            console.log("The current user is a site admin.");            
+        } else { 
             $('.ControlZone-control').css('marginTop', '-32px');
             $('.ms-CommandBar.root_75be230e.shortpoint-proxy-neutral-lighter--bg.shortpoint-proxy-neutral-primary--text.shortpoint-proxy-theme-command-bar').css('display', 'none');
             $('.commandBarWrapper').css('display', 'none');
@@ -766,65 +827,23 @@ var checkIfUserIsSiteAdmin = function () {
     }
 }
 
-async function loadScriptAsync() {
-    const scriptUrls = [
-        _layout + '/common libs/jquery/jquery.min.js',
-        _layout + '/controls/preloader/jquery.dim-background.min.js',
-        _layout + '/plumsail/js/preloader.js'
-    ];
+async function loadScriptAsync(src) {
+    return new Promise((resolve, reject) => {
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = src;
 
-    const stylesheetUrls = [
-        _layout + '/plumsail/css/ShortPointStyle.css'
-    ];
+        script.onload = function() {
+            resolve(); // Resolve the promise when the script loads successfully
+        };
 
-    const cacheBusting = `?v=${Date.now()}`;
+        script.onerror = function() {
+            console.error('Error loading script:', src); // Log an error if the script fails to load
+            reject(new Error(`Failed to load script: ${src}`)); // Reject the promise on error
+        };
 
-    // Function to load a single script
-    const loadScript = (src) => {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = src;
-            script.async = true;
-
-            script.onload = () => resolve();
-            script.onerror = () => {
-                console.error('Error loading script:', src);
-                reject(new Error(`Failed to load script: ${src}`));
-            };
-
-            document.head.appendChild(script);
-        });
-    };
-
-    // Function to load stylesheets
-    const loadStylesheets = (urls) => {
-        urls.forEach((url) => {
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.type = 'text/css';
-            link.href = url;
-            document.head.appendChild(link);
-        });
-    };
-
-    try {
-        // Load scripts sequentially
-        for (const url of scriptUrls) {
-            await loadScript(url + cacheBusting);
-        }
-        console.log("All scripts loaded successfully.");
-    } catch (error) {
-        console.error("Error loading scripts:", error);
-    }
-
-    // Load stylesheets
-    try {
-        loadStylesheets(stylesheetUrls);
-        console.log("All stylesheets loaded successfully.");
-    } catch (error) {
-        console.error("Error loading stylesheets:", error);
-    }
+        document.head.appendChild(script);
+    });
 }
 
 function addHorizontalNavItemWithDropdown(title, href, path, subItems = []) {
@@ -867,8 +886,8 @@ function addHorizontalNavItemWithDropdown(title, href, path, subItems = []) {
         dropdown.style.margin = '5px 0 0 0';
         dropdown.style.backgroundColor = '#fff'; // Background color for dropdown
         dropdown.style.border = '1px solid #ddd'; // Border
-        dropdown.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; // Light shadow
-        dropdown.style.zIndex = '9999';  // Ensure it's on top
+        dropdown.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)'; // Light shadow        
+        dropdown.style.zIndex = '9999';  // Ensure it's on top 
 
         // Create the icon element (use any icon or text for collapse/uncollapse)
         var dropdowncollapseIcon = document.createElement('span');
@@ -932,7 +951,7 @@ function addHorizontalNavItemWithDropdown(title, href, path, subItems = []) {
                 nestedDropdown.style.backgroundColor = '#fff';
                 nestedDropdown.style.border = '1px solid #ddd';
                 nestedDropdown.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
-                nestedDropdown.style.width = 'max-content'; //'max-content';
+                nestedDropdown.style.width = 'max-content'; //'max-content';                
 
                 subItem.children.forEach(function(nestedSubItem) {
                     var nestedSubItemElement = document.createElement('li');
@@ -942,10 +961,10 @@ function addHorizontalNavItemWithDropdown(title, href, path, subItems = []) {
                     //nestedSubItemElement.style.width = '100%'; //'max-content';
 
                     // Add hover effect
-                    nestedSubItemElement.addEventListener('mouseover', function() {
+                    nestedSubItemElement.addEventListener('mouseover', function() {                        
                         nestedSubItemElement.style.backgroundColor = '#f0f0f0'; // Highlight on hover
                     });
-                    nestedSubItemElement.addEventListener('mouseout', function() {
+                    nestedSubItemElement.addEventListener('mouseout', function() {                        
                         nestedSubItemElement.style.backgroundColor = ''; // Reset
                     });
 
@@ -969,8 +988,8 @@ function addHorizontalNavItemWithDropdown(title, href, path, subItems = []) {
 
                 // subItemElement.addEventListener('mouseout', function() {
                 //     nestedDropdown.style.display = 'none'; // Hide on mouse out
-                // });
-
+                // });  
+                
                 // Toggle the dropdown visibility when the icon is clicked
 
                 // Show nested dropdown on hover and change icon to collapse
@@ -984,8 +1003,8 @@ function addHorizontalNavItemWithDropdown(title, href, path, subItems = []) {
                     nestedDropdown.style.display = 'none'; // Hide dropdown on mouse out
                     collapseIcon.textContent = ' ▾'; // Change icon back to "uncollapse" (downward arrow)
                 });
-            }
-
+            } 
+            
             // Make the entire <li> clickable
             subItemElement.addEventListener('click', function() {
                 window.location.href = subItem.href; // Navigate to the href
@@ -1055,47 +1074,36 @@ function addHorizontalNavItemWithDropdown(title, href, path, subItems = []) {
             if (!newNavItem.contains(event.target)) {
                 dropdown.style.display = 'none'; // Hide dropdown
             }
-        });
+        });        
     }
 
     navItemsContainer.appendChild(newNavItem);
 }
 
 var fetchProjectInfoMethod = async function (ProjectNo){
-	try {
+	try {              
         const restUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx`
-        const serviceUrl = `${restUrl}?command=GetProjectInfo&ProjectNumber=${ProjectNo}`;
-        let ProjectTeam = await fetchProjectTeam('GET', serviceUrl, true);
+        const serviceUrl = `${restUrl}?command=GetProjectInfo&ProjectNumber=${ProjectNo}`;                               
+        let ProjectTeam = await fetchProjectTeam('GET', serviceUrl, true);             
 
-        const GetProjectTeamNodes = ProjectTeam.getElementsByTagName("Table1");
+        const GetProjectTeamNodes = ProjectTeam.getElementsByTagName("Table1");      
 
-        if(GetProjectTeamNodes.length > 0) {
-            for (let i = 0; i < GetProjectTeamNodes.length; i++) {
+        for (let i = 0; i < GetProjectTeamNodes.length; i++) {
 
-                const projectNode = GetProjectTeamNodes[i];
+            const projectNode = GetProjectTeamNodes[i];
 
-                // Extracting data from each projectNode
-                _ProjectId = projectNode.getElementsByTagName("ProjectId")[0]?.textContent || '';
-                _ProjectName = projectNode.getElementsByTagName("ProjectName")[0]?.textContent || '';
-                _WorkType = projectNode.getElementsByTagName("WorkType")[0]?.textContent || '';
-
-                localStorage.setItem(`${ProjectNo}-ProjectId`, _ProjectId);
-                localStorage.setItem(`${ProjectNo}-ProjectName`, _ProjectName);
-                localStorage.setItem(`${ProjectNo}-WorkType`, _WorkType);
-            }
-        }
-        else {
-            _ProjectId = '23045';
-            _ProjectName = 'Pilot Design Project';
-            _WorkType = 'Design';
+            // Extracting data from each projectNode
+            _ProjectId = projectNode.getElementsByTagName("ProjectId")[0]?.textContent || '';
+            _ProjectName = projectNode.getElementsByTagName("ProjectName")[0]?.textContent || ''; 
+            _WorkType = projectNode.getElementsByTagName("WorkType")[0]?.textContent || ''; 
 
             localStorage.setItem(`${ProjectNo}-ProjectId`, _ProjectId);
             localStorage.setItem(`${ProjectNo}-ProjectName`, _ProjectName);
-            localStorage.setItem(`${ProjectNo}-WorkType`, _WorkType);
-        }
+            localStorage.setItem(`${ProjectNo}-WorkType`, _WorkType);       
+        }                 
 	}
-	catch (e) {
-		console.log(e);
+	catch (e) {	
+		console.log(e);	
 	}
 }
 
@@ -1131,20 +1139,20 @@ const appBar = async function(){
     let masterNavBar = $('#SuiteNavPlaceHolder');
     let childMenu = `<div class="sp-appBar" id="sp-appBar" role="navigation" aria-label="App bar" tabindex="-1">
                         <ul class="sp-appBar-linkContainer">`;
-
+                        
     appBarItems.map(item=>{
           let editors = item.editors;
           let readers = item.readers;
           let className = item.iconTitle;
-
+          
           childMenu += `<li class="sp-appBar-linkLi" data-automation-id="sp-appBar-linkLi-globalnav">
                                 <div class="sp-appBar-linkLiDiv">
                                   <a class="sp-appBar-link ${className}" role="button" href="${item.redirectUrl}" onclick="openInCustomWindow(event)" style="display: flex; flex-direction: column; align-items: center; text-decoration: none;">
                                     <svg class= ${className} xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="22" height="22" viewBox="${item.viewBox}">
-                                      ${item.svgPath}
+                                      ${item.svgPath}                                  
                                     </svg>
-                                  <span style="font-size: 10px; color: black; margin-top: 3px;">${item.iconTitle}</span>
-                                  </a>
+                                  <span style="font-size: 10px; color: black; margin-top: 3px;">${item.iconTitle}</span>                                                             
+                                  </a>                              
                                   <div class="sp-appBar-tooltipDiv" style="position: absolute; left: 100%; top: 50%; transform: translateX(10px) translateY(-50%);">
                                     <span class="sp-appBar-tooltip" role="tooltip" id="sp-appbar-tooltiplabel-globalnav">${item.tooltip}</span>
                                   </div>
@@ -1161,7 +1169,7 @@ function getClassName(module){
       case 'Roles':
           className = !_isPD && !_isPM ? 'dimmed-svg' : '';
       break;
-
+      
       case 'D365':
         className = !_isPD && !_isPM ? 'dimmed-svg' : '';
         break;
@@ -1174,10 +1182,10 @@ function getAppBarItemsForProjects(projectNumbers, customAppBarItems, commonAppB
     if (!Array.isArray(projectNumbers)) {
       projectNumbers = [projectNumbers];
     }
-
+  
     // Collect all project-specific app bar items
     const projectSpecificItems = projectNumbers.flatMap(projectNumber => customAppBarItems[projectNumber] || []);
-
+  
     // Return combined common and project-specific app bar items
     return [...projectSpecificItems, ...commonAppBarItems ];
 }

@@ -97,7 +97,7 @@ var onCRTardeFormsRender = async function(){
  
     let color = 'orange', display = '';
     if(status === 'Approve'){
-        color = 'green'
+        color = '#49c4b1'
         display = 'Approved'
     }
     else if(status === 'Reject'){

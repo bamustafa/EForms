@@ -29,8 +29,27 @@
     .SPCanvas, .commandBarWrapper{
       padding-left: 0px;
     }
+
+    .fd-form-container 
+    .container-fluid {
+        padding-top: 20px !important;
+    }
+
+    .fd-toolbar-primary-commands{
+        margin-left: 5px !important;
+    }
+
+    .responsive-text {
+        max-width: 100% !important; /* Full width on mobile */
+    }
   } 
-  /* #endregion */
+
+  @media (min-width: 769px) {
+    .responsive-text {
+        max-width: 50% !important; /* Half screen on desktop */
+    }
+  }
+/* #endregion */
 
 .ControlZone  {
  box-sizing: border-box;

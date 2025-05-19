@@ -3,9 +3,10 @@ var _layout = '/_layouts/15/PCW/General/EForms',
     _ListInternalName = _spPageContextInfo.serverRequestPath.split('/')[5],
     _ProjectNumber = _spPageContextInfo.serverRequestPath.split('/')[2],
     _ListFullUrl = _spPageContextInfo.webAbsoluteUrl + '/Lists/' + _ListInternalName;
-    _webUrl = _spPageContextInfo.webAbsoluteUrl;
+_webUrl = _spPageContextInfo.webAbsoluteUrl;
 
 let Inputelems = document.querySelectorAll('input[type="text"]');
+let ListNamebyOffice = '', officeName = '';
 
 var _modulename = "", _formType = "";
 let fontSize = '17px';
@@ -16,6 +17,12 @@ const itemsToRemove = ['Status', 'State', 'Code', 'WorkflowStatus'];
 const blueColor = '#6ca9d5', greenColor = '#5FC9B3', yellowColor = '#F7D46D', redColor = '#F28B82';
 
 let previewWindow = null, checkPreviewInterval = null;
+
+let GetserviceUrl = '', PostserviceUrl = '', PostAdminserviceUrl = '';
+
+var Body = '';
+let realEmail = ''; 
+let realDisplayName = ''; 
 
 let CurrentUser;
 let _proceed = false;
@@ -30,7 +37,7 @@ var onRender = async function (moduleName, formType){
 		_modulename = moduleName;
 		_formType = formType;
 
-		if(moduleName == 'JobAr')
+		if(moduleName == 'JobAr' || moduleName == 'DC'|| moduleName == 'SA'|| moduleName == 'AN'|| moduleName == 'AE'|| moduleName == 'EJ'|| moduleName == 'OA')
 			await onJobArRender(formType);       
 
         const endTime = performance.now();
@@ -39,27 +46,32 @@ var onRender = async function (moduleName, formType){
 	}
 	catch (e) {
 		//alert(e);
-		console.log(e);	
+        console.log(e);       
 	}
 }
 
 var onJobArRender = async function (formType){	
 
-    await PreloaderScripts(); 			
-	await loadScripts();
- 
-    clearLocalStorageItemsByField(itemsToRemove);
+    try { 
 
-    CurrentUser = await GetCurrentUser();
+        await loadScripts().then(async ()=>{           
 
-	if(formType === 'New'){        
-		await JobAr_newForm();        
-    } 	
-    else if(formType === 'Edit'){        
-		await JobAr_editForm();       
-    }    
-    else if(formType === 'Display'){      
-		await JobAr_displayForm();     
+            if(formType === 'New'){        
+                await JobAr_newForm();        
+            } 	
+            else if(formType === 'Edit'){        
+                await JobAr_editForm();       
+            }    
+            else if(formType === 'Display'){      
+                await JobAr_displayForm();     
+            }  
+        }) 
+    }
+    catch (e){      
+        console.log(e);       
+    }
+    finally{
+        hidePreloader();
     }    
 }
 
@@ -68,32 +80,135 @@ var JobAr_newForm = async function(){
     try {      
      
         fd.toolbar.buttons[0].style = "display: none;";
-        fd.toolbar.buttons[1].style = "display: none;";
+        fd.toolbar.buttons[1].style = "display: none;";        
         
-        CustomclearStoragedFields(fd.spForm.fields); 
+        await loadingButtons();
+        formatingButtonsBar();  
         
-        let realLoginName = '';
-        await pnp.sp.web.currentUser.get().then(user => {            
-            realLoginName = user.LoginName.split('|')[1];
-        }); 
+        //CustomclearStoragedFields(fd.spForm.fields); 
         
-        debugger;
-        let RetValue = await GetEmployeeFromSharepoint(realLoginName);
-        let EmpID = "";
-        if(RetValue.length > 0){
-            EmpID = RetValue[0].ID;
-            window.location.href = `${_spPageContextInfo.webAbsoluteUrl}/SitePages/PlumsailForms/JobArchitecture/Item/EditForm.aspx?item=` + EmpID;
+        //let realLoginName = '';                   
+        
+        var spanPDElement = document.querySelector('.EditSection');
+        var notehtml = document.getElementById('noteD1');
+        var noteDiv = document.getElementById('noteDiv');
+        var noteD2 = document.getElementById('noteD2');
+
+        await pnp.sp.web.currentUser.get().then(user => {                  
+            //realLoginName = user.LoginName.split('|')[1];
+            realDisplayName = user.Title;
+            CurrentUser = user.Title;
+            realEmail = user.Email;       
+            //console.log(`LoginName: ${realLoginName}`);
+            console.log(`DisplayName: ${realDisplayName}`);
+            console.log(`Email: ${realEmail}`);
+        });
+
+        //debugger;
+
+        const HRAdmin = await CheckifUserinSPGroup();
+        console.log(`Group: ${HRAdmin}`);
+
+        await handleAchknowledge(realEmail, realDisplayName);
+
+        if(HRAdmin === 'HR'){
+
+            spanPDElement.style.marginTop = '8px';
+            fd.field('EditFlag').value = false;          
+            ['EditedUser', 'EmployeeTitle', 'EmployeeGrade'].forEach(hideField);            
+
+            fd.field('EditFlag').$on('change', async function (value) {
+                
+                if (value) { 
+                    
+                    fd.field('EditFlag').disabled = true;
+
+                    var buttons = fd.toolbar.buttons;
+                    var acknowledgeButton = buttons.find(button => button.text === 'Acknowledge'); 
+                    var cancelButton = buttons.find(button => button.text === 'Cancel');
+                    var updateButton = buttons.find(button => button.text === 'Update');
+
+                    if (!updateButton) {
+
+                        if (acknowledgeButton)
+                            acknowledgeButton.visible = false;
+                        if (cancelButton)
+                            cancelButton.visible = false;
+                    
+                        await loadingUpdateButtons();
+                    }
+                    
+                    ['EditedUser', 'EmployeeTitle', 'EmployeeGrade'].forEach(showField);
+                    fd.field('EditedUser').required = true;
+
+                    fd.field('EditedUser').value = '';
+                    fd.field('EmployeeTitle').value = '';
+                    fd.field('EmployeeGrade').value = '';
+
+                    notehtml.style.display = 'none';                
+                    noteD2.style.display = 'none';
+
+                    fd.field('EditedUser').$on('change', async function (value) {
+                        //debugger;
+                        if (value) { 
+
+                            //realLoginName = value.Description.split('|')[1];
+                            realDisplayName = value.DisplayText;
+                            realEmail = value.EntityData.Email;       
+                            //console.log(`LoginName: ${realLoginName}`);
+                            console.log(`DisplayName: ${realDisplayName}`);
+                            console.log(`Email: ${realEmail}`);
+
+                            GetserviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetEmployeeDetailsJobDescription&upn=${realEmail}`; 
+                            PostAdminserviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=PostAdminEmployeeJobDescription&upn=${realEmail}`; 
+                            let EmplyeeFromMaster = await getRestfulResult(GetserviceUrl);                     
+
+                            EmployeeGrade = EmplyeeFromMaster.Grade;
+                            EmployeeTitle = EmplyeeFromMaster.jobTitle;  
+                            officeName = EmplyeeFromMaster.Office; 
+                            
+                            fd.field('EmployeeTitle').value = EmployeeTitle;
+                            fd.field('EmployeeGrade').value = EmployeeGrade;
+
+                            fd.field('EmployeeTitle').required = true;
+                            fd.field('EmployeeGrade').required = true;
+                        }
+                        else {
+
+                            realDisplayName = '';
+                            realEmail = ''; 
+                            
+                            fd.field('EmployeeTitle').disabled = false;
+                            fd.field('EmployeeGrade').disabled = false;
+                            
+                            fd.field('EmployeeTitle').value = '';
+                            fd.field('EmployeeGrade').value = '';
+
+                            fd.field('EmployeeTitle').required = false;
+                            fd.field('EmployeeGrade').required = false;
+                        }
+                    });
+                }
+                else{
+                    fd.field('EditedUser').required = false;
+                    ['EditedUser', 'EmployeeTitle', 'EmployeeGrade'].forEach(hideField);
+
+                    notehtml.style.display = 'block';
+                    //noteDiv.style.display = 'block';
+                    noteD2.style.display = 'block';                   
+                }
+            });
         }
-        else{
-            alert("Apologies, Form not found. You do not have access to submit this form.");
-	    	fd.close();
-        }
+        else
+            spanPDElement.style.display = 'none';             
     }    
-    catch(err){
-        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, '', '', err.message, err.stack);        
-    }      
-    
-	preloader("remove");
+    catch (err) {
+        
+        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, '', '', err.message, err.stack);         
+        alert('Kindly be informed that we have been notified of the issue, and it will be resolved shortly.');
+        var webUrl = window.location.origin + _spPageContextInfo.siteServerRelativeUrl;
+        window.location.href = webUrl;
+    }  	
 }
 
 var JobAr_editForm = async function(){
@@ -214,6 +329,7 @@ var JobAr_editForm = async function(){
             $('#noteDiv').parent().append("<br>");           
             $('#my-html').parent().append(`<img id="ackimage" src=${_spPageContextInfo.webAbsoluteUrl}/_layouts/15/PCW/General/EForms/Images/MailSign.png alt="Acknowledge Image" style="display: block; margin-top: 10px;margin-left: -6px;">`);
             $('#my-html').parent().append("<br>");
+            $('#my-html').parent().append("<br>");
             $('#jobLegend').hide();
         }
         else{
@@ -235,7 +351,7 @@ var JobAr_displayForm = async function(){
     try {
 
         fixTextArea();
-        debugger;
+        //debugger;
 
         fd.toolbar.buttons[1].text = "Cancel";
         fd.toolbar.buttons[1].icon = "Cancel";
@@ -782,13 +898,27 @@ async function loadingButtons(){
         class: 'btn-outline-primary',
         disabled: false,
         text: 'Acknowledge',
-        style: `background-color:${greenColor}; color:white; width:200px !important`,
+        style: `background-color:${greenColor}; color:white; width:180px !important`,
         click: async function() {  	
             if(fd.isValid){
-                await PreloaderScripts();          
-                fd.field('Acknowledged').value = true;
-                fd.field('LastAccessedDate').value = new Date();
-                fd.save();
+
+                showPreloader();
+
+                const updateData = {
+                    isAcknowledged: "yes",
+                    isAcknowledgedDate: new Date().toISOString()
+                };
+
+                await postRestfulResult(PostserviceUrl, updateData);
+
+                var Subject = `Important Update: Job Architecture Framework Changes - ${realDisplayName}`;
+                var encodedSubject = htmlEncode(Subject); 
+                var encodedBody = htmlEncode(Body);
+                
+                await _sendEmail('JobArch', encodedSubject + '|' + encodedBody, '', realEmail, '', '');  
+          
+                var webUrl = window.location.origin + _spPageContextInfo.siteServerRelativeUrl;
+                window.location.href = webUrl;
             }            
         }
     });   
@@ -797,9 +927,69 @@ async function loadingButtons(){
         icon: 'Cancel',
         class: 'btn-outline-primary',
         text: 'Cancel',	
-        style: `background-color:${redColor}; color:white; width:200px !important`,
+        style: `background-color:${redColor}; color:white; width:180px !important`,
         click: async function() {
-            await PreloaderScripts();
+            showPreloader();
+            var webUrl = window.location.origin + _spPageContextInfo.siteServerRelativeUrl;
+            window.location.href = webUrl;
+        }			
+	});           
+}
+
+async function loadingUpdateButtons(){  
+
+    fd.toolbar.buttons.push({
+        icon: 'CheckMark',
+        class: 'btn-outline-primary',
+        disabled: false,
+        text: 'Update',
+        style: `background-color:${greenColor}; color:white; width:180px !important`,
+        click: async function() {  	
+            if(fd.isValid){
+
+                showPreloader(); 
+                
+                let EmployeeTitle = fd.field('EmployeeTitle').value;
+                let EmployeeGrade = fd.field('EmployeeGrade').value;
+
+                fd.field('EmployeeTitle').disabled = true;
+                fd.field('EmployeeGrade').disabled = true;
+
+                const updateData = {
+                    Grade: EmployeeGrade,
+                    jobTitle: EmployeeTitle,
+                    ModifiedBy: CurrentUser,
+                    ModifiedDate: new Date().toISOString(),
+                    isSeen: 'No',
+                    isSeenDate: null,
+                    isAcknowledged: 'No',
+                    isAcknowledgedDate: null
+                };
+
+                await postRestfulResult(PostAdminserviceUrl, updateData);
+
+                var Subject = `Important Update: Your Job Architecture - ${realDisplayName} is Updated`;
+                var encodedSubject = htmlEncode(Subject); 
+                ListNamebyOffice = getListNameByOffice(officeName);
+                let href = `${_webUrl}/Lists/${ListNamebyOffice}/NewForm.aspx`;
+                Body = `Kindly be informed that your Job Architecture information has been updated.  
+                        Please click <a href="${href}">here</a> to access it.`;
+                var encodedBody = htmlEncode(Body);
+                
+                await _sendEmail('JobArch-noAtt', encodedSubject + '|' + encodedBody, '', realEmail, '', '');  
+        
+                hidePreloader();
+            }            
+        }
+    });   
+    
+    fd.toolbar.buttons.push({
+        icon: 'Cancel',
+        class: 'btn-outline-primary',
+        text: 'Cancel',	
+        style: `background-color:${redColor}; color:white; width:180px !important`,
+        click: async function() {
+            showPreloader();
             fd.close();
         }			
 	});           
@@ -819,8 +1009,15 @@ async function processClosedWindowResult() {
 function formatingButtonsBar(){
     
     $('div.ms-compositeHeader').remove()
-    $('span.o365cs-nav-brandingText').text(`${_ProjectNumber} - Job Architecture Form`);
+    //$('span.o365cs-nav-brandingText').text(`Job Architecture Acknowledge Form`);
     $('i.ms-Icon--PDF').remove();
+
+    let titelValue = 'Job Architecture Acknowledge Form';
+
+    const iconPath = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/Images/animdarlogo1.png';
+    const linkElement = `<a href="${_spPageContextInfo.webAbsoluteUrl}" style="text-decoration: none; color: inherit; display: flex; align-items: center; font-size: 18px;">
+                            <img src="${iconPath}" alt="Icon" style="width: 50px; height: 26px; margin-right: 14px;">${titelValue}</a>`;
+    $('span.o365cs-nav-brandingText').html(linkElement);
           
     let toolbarElements = document.querySelectorAll('.fd-toolbar-primary-commands');
     toolbarElements.forEach(function(toolbar) {
@@ -863,6 +1060,22 @@ function formatingButtonsBar(){
                 
         element.style.background = "#ffffff";
     });
+   
+    document.querySelectorAll(".homePageContent_39ae25bf, .SPCanvas-canvas, .CanvasZone").forEach(element => {       
+        element.style.maxWidth = "98%";
+        element.style.marginLeft = "57px";
+        element.style.setProperty("max-width", "98%", "important");
+        element.style.setProperty("margin-left", "57px", "important");
+    });
+
+    document.querySelectorAll(".fd-form-container .container-fluid").forEach((el) => {
+        el.style.setProperty("float", "left", "important");
+        el.style.setProperty("margin-top", "-22px", "important");
+    }); 
+    
+    document.querySelectorAll(".ms-CommandBar.fd-form.fd-form-toolbar").forEach((el) => {        
+        el.style.setProperty("margin-top", "15px", "important");
+    });    
 }
 
 function parseGrade(grade) {
@@ -1014,10 +1227,9 @@ async function CheckifUserinSPGroup() {
 			await pnp.sp.web.siteUsers.getById(user.Id).groups.get()
 			 .then(async function(groupsData){
 				for (var i = 0; i < groupsData.length; i++) {				
-					if(groupsData[i].Title === "MC_Reviewer")
+					if(groupsData[i].Title === "HR")
 					{					
-					   IsTMUser = "MC_Reviewer";
-                       _DipN = user.Title;
+					   IsTMUser = "HR";                     
 					   break;
 				    }					
 				}				
@@ -1030,7 +1242,13 @@ async function CheckifUserinSPGroup() {
 	return IsTMUser;				
 }
 
-function GetHTMLBody(EmailbodyHeader, ToName, DoneBy){	
+function GetHTMLBody(EmailbodyHeader, ToName, DoneBy) {	
+    
+    var currentDate = new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
 
 	var Body = "<html>";
 	Body += "<head>";
@@ -1041,11 +1259,14 @@ function GetHTMLBody(EmailbodyHeader, ToName, DoneBy){
 	Body += "<div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9;'>"; 	
     
     Body += "<div style='margin-top: 10px;'>";
-	Body += "<p style='margin: 0 0 10px;'>Dear <strong>" + ToName + "</strong>,</p>";
     Body += '</br>' ;
-    Body += EmailbodyHeader ;
+	Body += "<p style='margin: 0 0 10px;'>Dear <strong>" + ToName + "</strong>,</p>";    
+    Body += EmailbodyHeader;
     Body += "<p style='margin: 0 0 10px;'>Best regards,</p>";
-	Body += "<p style='margin: 0 0 10px;'><strong>" + DoneBy + "</strong></p>";
+    Body += "<p style='margin: 0 0 10px;'><strong>" + DoneBy + "</strong></p>";
+    Body += '</br>' ;
+    Body += "<p style='margin: 0 0 10px;'><strong>Acknowledged Date:</strong> " + currentDate + "</p>";
+    Body += '</br>' ;
 	Body += "</div>";				
 	Body += "</div>";
 	Body += "</body>";
@@ -1180,10 +1401,15 @@ function htmlEncode(str) {
 }
 
 var loadScripts = async function(){
-	const libraryUrls = [		
-		_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
-		_layout + '/plumsail/js/commonUtils.js'        
-	];
+	const libraryUrls = [
+      _layout + '/controls/preloader/jquery.dim-background.min.js',
+      _layout + "/plumsail/js/buttons.js",
+      _layout + '/plumsail/js/customMessages.js',
+      _layout + '/controls/tooltipster/jquery.tooltipster.min.js',
+      _layout + '/plumsail/js/preloader.js',
+      _layout + '/plumsail/js/commonUtils.js',
+      _layout + '/plumsail/js/utilities.js'
+    ];
   
 	const cacheBusting = '?t=' + new Date().getTime();
 	  libraryUrls.map(url => { 
@@ -1192,8 +1418,8 @@ var loadScripts = async function(){
 		
 	const stylesheetUrls = [
 		_layout + '/controls/tooltipster/tooltipster.css',
-        _layout + '/plumsail/css/CssStyleCV.css',
-		_layout + '/plumsail/css/CssStyleCVMain.css'		
+        _layout + '/plumsail/css/CssStyleCV.css' + `?t=${Date.now()}`,
+        _layout + '/plumsail/css/CssStyleCVMain.css' + `?t=${Date.now()}`,      
 	];
   
 	stylesheetUrls.map((item) => {
@@ -1466,5 +1692,251 @@ var GetEmployeeFromSharepoint = async function(LoginName){
 
     const existingItems = await pnp.sp.web.lists.getByTitle(listTitle).getItemsByCAMLQuery({ ViewXml: camlFilter });
     return existingItems; 
+}
+
+function getListNameByOffice(officeName) {
+   
+    const officeMap = {
+        'beirut': 'DCJArch',
+        'dubai': 'KSAArcJob',
+        'amman': 'AgloJAroB',
+        'abu dhabi': 'UJoAEArch',
+        'cairo': 'EgJoArJCh',
+        'oman': 'OJoAbArch'
+    };
+
+    return officeMap[officeName.toLowerCase()] || ''; // Return mapped value or empty string if not found
+}
+
+function checkAccessAndRedirect(moduleName, office) {
+
+    const restrictions = {
+        'jobar': ['beirut'],
+        'dc': ['dubai'],
+        'sa': ['riyadh'],
+        'an': ['amman'],
+        'ae': ['amman'],
+        'ej': ['amman'],
+        'oa': ['amman'],
+    };
+
+    moduleName = moduleName.toLowerCase();
+    office = office.toLowerCase();
+
+    if (restrictions[moduleName] && !restrictions[moduleName].includes(office)) {
+        alert("Apologies, you have accessed a link that is not related to your area.");
+
+        var webUrl = window.location.origin + _spPageContextInfo.siteServerRelativeUrl;
+        window.location.href = webUrl;
+    }
+}
+
+var getRestfulResult = async function(serviceUrl){
+
+    try {
+
+        const response = await Promise.race([
+          fetch(serviceUrl, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+          }),
+          new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Request timed out')), 10000) // 5 seconds timeout
+          )
+        ]);
+   
+        const responseText = await response.text();
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (error) {
+            throw new Error(`Unexpected response format: ${responseText || "N/A"} ${realEmail || "N/A"} ${realDisplayName || "N/A"}`);
+        }
+        
+        if (data.detail) {
+            throw new Error(data.detail);
+        }
+
+        return data; 
+
+    } catch (error) {
+      console.error('Error getRestfulResult:', error.message);
+      throw error; // Rethrow or handle as needed
+      showPreloader();
+    }
+}
+
+var postRestfulResult = async function(apiUrl, updateData) {
+
+    try {
+        
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"                
+            },
+            body: JSON.stringify(updateData),
+        });
+
+        const text = await response.text(); // Read response as text first
+
+        if (response.ok) {
+            const result = text ? JSON.parse(text) : {}; // Parse JSON only if text is not empty
+            console.log("Record updated successfully:", result);
+        } else {
+            const errorMessage = text ? JSON.parse(text) : "Unknown error";
+            console.error("Error updating record:", errorMessage);
+        }
+    } catch (error) {
+        console.error("Network error:", error.message);
+    }
+}
+
+var handleAchknowledge = async function(realEmail, realDisplayName){
+
+    // ${_currentUser.Email}`;
+
+    let Acknowledged = '';
+    let Seen = '';
+    let Department = '';
+    let Office = '';
+    let EmployeeGrade = '';
+    let EmployeeTitle = '';
+    let AcknowdledgeDate = '';
+    let SeenDate = ''; 
+    
+    GetserviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetEmployeeDetailsJobDescription&upn=${realEmail}`;        
+    PostserviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=PostEmployeeJobDescription&upn=${realEmail}`;   
+
+    let EmplyeeFromMaster = await getRestfulResult(GetserviceUrl); 
+
+    //debugger;
+
+    EmployeeGrade = EmplyeeFromMaster.Grade;
+    EmployeeTitle = EmplyeeFromMaster.jobTitle;
+    Office = EmplyeeFromMaster.Office;
+    Department = EmplyeeFromMaster.Department;
+    Acknowledged = EmplyeeFromMaster.isAcknowledged;
+    AcknowdledgeDate = EmplyeeFromMaster.isAcknowledgedDate;
+    Seen = EmplyeeFromMaster.isSeen;
+    SeenDate = EmplyeeFromMaster.isSeenDate;   
+
+    checkAccessAndRedirect(_modulename, Office);    
+
+    if (Seen && Seen.toLowerCase() === "no") {
+
+        const updateData = {
+            isSeen: "yes",
+            isSeenDate: new Date().toISOString(),
+        };
+
+        let isSeenPost = await postRestfulResult(PostserviceUrl, updateData);
+    }     
+    
+    //var isSiteAdmin = _spPageContextInfo.isSiteAdmin; 
+    
+    var content = `
+        <div style="max-width: 50%; width: 100%; font-size: ${fontSize}; text-align: left;" class="responsive-text">
+            </br><p>Dear <span style="font-weight: bold;">${realDisplayName},</span></p></br> 
+
+            <p>We have an important update related to the recent implementation of our new Job Architecture (JA) framework.</p></br> 
+
+            <p>As part of this new framework, there have been changes to your role, specifically in your job title and grade. 
+                These adjustments are based on the comprehensive review we have undertaken to ensure our structure is aligned 
+                with both our strategic goals and industry best practices. Please be assured that there will be no changes to your compensation or benefits as a result of this update.</p></br> 
+
+            <p>Your new Grade - <span style="font-weight: bold;">${EmployeeGrade}</span></p>
+            <p>Your new Job Title - <span style="font-weight: bold;">${EmployeeTitle}</span></p></br> 
+
+            <p>It is important that you acknowledge and confirm your understanding of these changes, as they form an update to your current terms of employment.</p>
+            <p>For any questions regarding your new title and grade, please reach out to your line manager. They will be able to provide further clarity and support.</p></br> 
+        
+            <p>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p></br> 
+            
+            <p>Best regards,</p>                       
+            <p><span style="font-weight: bold;">${Office}</span>, <span style="font-weight: bold;">${Department}</span></p>
+        </div>`;
+    
+    var EmailbodyHeader =  `<p>As part of this new framework, there have been changes to your role, specifically in your job title and grade. 
+                These adjustments are based on the comprehensive review we have undertaken to ensure our structure is aligned 
+                with both our strategic goals and industry best practices. Please be assured that there will be no changes to your compensation or benefits as a result of this update.</p>
+
+            <p>Your new Grade - <span style="font-weight: bold;">${EmployeeGrade}</span></p>
+            <p>Your new Job Title - <span style="font-weight: bold;">${EmployeeTitle}</span></p>
+
+            <p>It is important that you acknowledge and confirm your understanding of these changes, as they form an update to your current terms of employment.</p>
+            <p>For any questions regarding your new title and grade, please reach out to your line manager. They will be able to provide further clarity and support.</p>
+        
+            <p>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p></br>`;
+    
+    Body = GetHTMLBody(EmailbodyHeader, realDisplayName, `${Office}, ${Department}`);
+
+    $('#my-html').append(content);
+
+    let imgUrlLegend = `${_webUrl}${_layout}/Images/legend.png`;          
+    let imgUrlSettled = `${_webUrl}${_layout}/Images/Settle.png`;
+    
+    let legendTbl = `<table style="border: 0px solid black;" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td>
+                                <fieldset style="background-color: #ffe9991a;color: #333;padding: 4px;border-radius: 6px;border: 1px solid #ccc;">
+                                    <legend style="font-family: Calibri; font-size: 13pt; font-weight: bold;padding: 1px 10px !important;float:none;width:auto;">
+                                        <img src="${imgUrlLegend}" style="width: 16px; vertical-align: middle;">
+                                        <span style="vertical-align: middle;">Legend</span>
+                                    </legend>
+                                    <table style="font-size: 11px; font-family: Calibri;" cellspacing="0" cellpadding="1" width="100%" border="0">
+                                        <tbody>                                                   
+                                            <tr height="25">
+                                                <td align="center">
+                                                    <img title="Issue Settled" src="${imgUrlSettled}" style="height: 14px; width: 14px; border-width: 0px;">
+                                                </td>
+                                                <td>
+                                                    <span style="font-family: Calibri; font-size: 11pt;"><span style="font-weight: bold;">Acknowledge:</span> Click the "Acknowledge" button to confirm that you have read the message.</span>
+                                                    <span style="margin-right: 10px;"></span>
+                                                </td>
+                                            </tr>   
+                                                <tr height="10">
+                                                <td colspan="2">&nbsp;</td>
+                                            </tr>                                                 
+                                        </tbody>
+                                    </table>
+                                </fieldset>
+                            </td>
+                        </tr>                                                            
+                    </table>`;
+
+    $('#jobLegend').append(legendTbl);         
+    
+    var buttons = fd.toolbar.buttons;
+    var acknowledgeButton = buttons.find(button => button.text === 'Acknowledge'); 
+
+    if(Acknowledged && Acknowledged.toLowerCase() === "yes") {                      
+        acknowledgeButton.disabled = true;
+        acknowledgeButton.style = `background-color: #737373; color:white; width:200px !important`;             
+
+        $('#noteDiv').show();
+        
+        const lastAccessedDate = new Date(`${AcknowdledgeDate}`);
+
+        const formattedDate = lastAccessedDate.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        document.getElementById("acknowledgeDate").innerHTML = `<span style="font-weight: bold;">${formattedDate}</span>`;
+        $('#noteDiv').parent().append("<br>");           
+        $('#my-html').parent().append(`<img id="ackimage" src=${_spPageContextInfo.webAbsoluteUrl}/_layouts/15/PCW/General/EForms/Images/MailSign.png alt="Acknowledge Image" style="display: block; margin-top: 10px;margin-left: -6px;">`);
+        $('#my-html').parent().append("<br>");
+        $('#jobLegend').hide();        
+    }
+    else{
+        acknowledgeButton.disabled = false;             
+        $('#my-html').parent().append(`<img id="ackimage" src=${_spPageContextInfo.webAbsoluteUrl}/_layouts/15/PCW/General/EForms/Images/MailSign.png alt="Acknowledge Image" style="display: block; margin-top: 10px;margin-left: -6px;">`);
+        $('#my-html').parent().append("<br>"); 
+        $('#jobLegend').parent().append("<br>");        
+    }    
 }
 //#endregion

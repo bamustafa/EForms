@@ -32,8 +32,12 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 		if(relativeLayoutPath !== undefined && relativeLayoutPath !== null && relativeLayoutPath !== '')
 		_layout = relativeLayoutPath;
 
-		await PreloaderScripts();		
-		await loadScripts();
+		//await PreloaderScripts();		
+		//await loadScripts();
+
+		await loadScripts().then(async ()=>{
+			showPreloader();			
+		})
 
 		clearLocalStorageItemsByField(itemsToRemove);
 		
@@ -63,13 +67,16 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 		await setButtonToolTip('Submit for Approval', submitMesg);
 		await setButtonToolTip('Cancel', cancelMesg);
 
-		preloader("remove");
+		//preloader("remove");
 	}
 	catch (e) {
 		alert(e);
 		console.log(e);		
 		preloader();
 	}
+	finally{      
+        hidePreloader();
+    }
 }
 
 var onCLRender = async function (formType){
@@ -298,7 +305,8 @@ var onICDRender = async function (formType){
 
 				if(fd.isValid){
 
-					await PreloaderScripts();
+					//await PreloaderScripts();
+					showPreloader();
 
 					refICDNo = await updateCounter();				
 
@@ -321,7 +329,8 @@ var onICDRender = async function (formType){
 			text: 'Cancel',	
 			style: `background-color:${redColor}; color:white; width:150px !important;`,
 			click: async function() {
-				await PreloaderScripts();
+				//await PreloaderScripts();
+				showPreloader();
 				fd.close();
 			}			
 		});
@@ -387,7 +396,8 @@ var onICDRender = async function (formType){
 
 				if(fd.isValid){
 
-					await PreloaderScripts();					
+					//await PreloaderScripts();	
+					showPreloader();				
 					await _CreatFolderStructure('ICD', 'ICDLibrary', fd.itemId, refICDNo, 'ICD_Reviewed');
                     fd.save();               
 				}
@@ -400,7 +410,8 @@ var onICDRender = async function (formType){
 			text: 'Cancel',	
 			style: `background-color:${redColor}; color:white; width:150px !important;`,
 			click: async function() {
-				await PreloaderScripts();
+				//await PreloaderScripts();
+				showPreloader();
 				fd.close();
 			}			
 		});
@@ -479,6 +490,11 @@ async function disableAllFields(GroupName)
 	fd.field('WE').disabled = true;
 	fd.field('TR').disabled = true;
 
+	if(fd.field('DSS'))
+		fd.field('DSS').disabled = true;
+	if(fd.field('WW'))
+		fd.field('WW').disabled = true;
+
 	await pnp.sp.web.lists.getByTitle("Change Log").get().then(()=>{
 		return pnp.sp.web.lists.getByTitle("Change Log").fields.getByInternalNameOrTitle('DSS').get().then(field => {
 			fd.field('DSS').disabled = true;
@@ -556,6 +572,11 @@ async function disablePMFields()
 	fd.field('WE').disabled = true;
 	fd.field('TR').disabled = true;
 	
+	if(fd.field('DSS'))
+		fd.field('DSS').disabled = true;
+	if(fd.field('WW'))
+		fd.field('WW').disabled = true;	
+
 	await pnp.sp.web.lists.getByTitle("Change Log").get().then(()=>{
 		return pnp.sp.web.lists.getByTitle("Change Log").fields.getByInternalNameOrTitle('DSS').get().then(field => {
 			fd.field('DSS').disabled = true;
@@ -1590,6 +1611,7 @@ var TQ_newForm = async function(){
 	const GroupName = await CheckifUserinTMorATM();	
 	
 	try{
+		
 		$(fd.field('PackageAcronym').$parent.$el).hide();
 		$(fd.field('Package').$parent.$el).hide();
 
@@ -1615,11 +1637,12 @@ var TQ_newForm = async function(){
 		fd.field("Package").ready().then(function() {
 			fd.field("Package").value = null;
 			fd.field("Package").filter = "ListName eq 'Package'";
-			 fd.field("Package").refresh();	      
+			fd.field("Package").refresh();	      
 		});
 	}	
 		
-	fd.field("Contractor").ready().then(function() {
+	fd.field("Contractor").ready().then(function() {		
+
 		fd.field("Contractor").value = null;
 		fd.field("Contractor").filter = "ListName eq 'Tenderer'";
 	 	fd.field("Contractor").refresh();		
@@ -3544,10 +3567,10 @@ function fixTextArea(){
 var loadScripts = async function(){
 	const libraryUrls = [
 		_layout + '/plumsail/js/commonUtils.js',
-		//_layout + '/controls/preloader/jquery.dim-background.min.js',
+		_layout + '/controls/preloader/jquery.dim-background.min.js',
 		_layout + "/plumsail/js/customMessages.js",
 		_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
-		//_layout + '/plumsail/js/preloader.js',
+		_layout + '/plumsail/js/preloader.js',
 		_layout + '/plumsail/js/utilities.js'
 	];
   
@@ -3636,11 +3659,12 @@ var onDDSRender = async function (formType){
     }
 }
 
-var PreloaderScripts = async function(){
-    await _spComponentLoader.loadScript(_layout + '/controls/preloader/jquery.dim-background.min.js');
-    await _spComponentLoader.loadScript(_layout + '/plumsail/js/preloader.js');
-    preloader();
-}
+// var PreloaderScripts = async function(){
+//     await _spComponentLoader.loadScript(_layout + '/controls/preloader/jquery.dim-background.min.js');
+//     await _spComponentLoader.loadScript(_layout + '/plumsail/js/preloader.js');
+//     //preloader();
+// 	showPreloader(); 
+// }
 
 function formatingButtonsBar(){   
 

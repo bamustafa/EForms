@@ -1,5 +1,5 @@
 var htLicenseKey = 'e9cca-b5ee4-f18a2-5492c-9fd49';
-var _RLOD = 'RLOD', _SLOD = 'SLOD', _MIDP = 'MIDP', _AllowedExtensions = 'AllowedExtensions', _MajorTypes = 'MajorTypes', 
+var _RLOD = 'RLOD', _SLOD = 'SLOD', _MIDP = 'MIDP', _AllowedExtensions = 'AllowedExtensions', _MajorTypes = 'MajorTypes',
     _InitiateSubmittals = 'InitiateSubmittals', _WorkflowSteps = 'WorkflowSteps', _DesignTasks = 'DesignTasks',
     _CDS = 'CDS', _UploadDeliverables = 'Upload Deliverables', _Deliverables = 'Deliverables', _Trades = 'Trades',
     _LeadTask = 'LeadTasks', _PartTask = 'PartTasks';

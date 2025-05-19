@@ -48,7 +48,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
     await validateBeforeLoad();
 
     await ensureFunction('getGridMType', _web, _webUrl, _module, _isDesign); //set mtItem
- 
+
     var colsInternal = [], colsType = [];
     if(mtItem.colArray.length > 0){
         _colArray = mtItem.colArray;
@@ -56,7 +56,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
         _filterField = mtItem.targetFilter;
         _revNumStart = mtItem.revNumStart;
         _updateTitle = mtItem.updateTitle;
-    
+
         _colArray.map(item =>{
             colsInternal.push(item.data);
             colsType.push(item.type);
@@ -74,7 +74,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
 
     if(!_isNew)
      _data = await _getData(_web, _RLOD, _filterField, _lodRef , colsInternal, colsType);
-    
+
     if(_data.length < batchSize){
         var remainingLength = batchSize - _data.length;
         for (var i = 0; i < remainingLength; i++) {
@@ -83,7 +83,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
         }
     }
 
-    _spComponentLoader.loadScript(_htLibraryUrl).then(_setData);   
+    _spComponentLoader.loadScript(_htLibraryUrl).then(_setData);
     $('.handsontable .htDimmed').addClass('ErrorMesg');
 
     if(_isDesign)
@@ -98,15 +98,15 @@ var _getData = async function(_web, _listname, _filterfld, _refNo, _colsInternal
 
     if(_isEdit && _isDesign)
         _query += ` and DarTrade eq '${fd.field('Trade').value}'`
-     
+
     var filterArray = _colsInternalArray.filter(item => item !== 'Mesg' && item !== _defaultStatusImgCol);
     const _cols = filterArray.join(',');
 
     var items = await _web.lists.getByTitle(_listname).items.filter(_query).select(_cols).getAll();
-    
+
     if(items.length === 0)
      items = await _web.lists.getByTitle(_SLOD).items.filter(_query).select(_cols).getAll();
-         
+
      if(items.length > 0){
         items.forEach(item => {
             for(var j = 0; j < _colsInternalArray.length; j++){
@@ -152,10 +152,10 @@ const _setData = (Handsontable) => {
             //       var _mesg = _hot.getDataAtCell(selectedRow, msgColIndex);
             //       if (!_mesg.includes('is submitted previously in'))
             //         await isItemFound(selectedRow);
-    
+
             //        //Remove the row from the data
             //       _hot.alter("remove_row", selectedRow);
-    
+
             //        //Render the changes
             //       _hot.render();
             //     },
@@ -256,14 +256,14 @@ const _setData = (Handsontable) => {
             if($('#totalId').length > 0)
               $('#totalId').remove();
             remove_preloader();
-            
-            
+
+
             // setTimeout(() => {
             //     _hot.render();
             // }, 200);
         }
     });
-    
+
    if(!_isNew)
      setRowsReadOnly();
 
@@ -276,10 +276,10 @@ const _setData = (Handsontable) => {
 async function performAfterChangeActions(callback) {
     var isLoadingData = false;
     function addRowsInBatch(startIndex, endIndex) {
-        var newData = []; 
+        var newData = [];
 
         for (var i = startIndex; i < endIndex; i++) {
-            var rowData = { id: i + 1, value: 'Row ' + (i + 1) }; 
+            var rowData = { id: i + 1, value: 'Row ' + (i + 1) };
             newData.push(rowData);
         }
 
@@ -293,24 +293,24 @@ async function performAfterChangeActions(callback) {
     }
 
     function handleScroll() {
-     
+
         var scrollElement = _container.querySelector('.wtHolder');
         var scrollPosition = scrollElement.scrollTop;
         //console.log('scrollPosition = ' + scrollPosition);
-  
+
         //var visibleHeight = _container.offsetHeight;
         var totalHeight = scrollElement.scrollHeight - _container.scrollHeight; // - 50;
-  
+
         // Calculate the scroll position at the bottom of the table
         //var bottomScrollPosition = totalHeight - visibleHeight;
-      
+
         // Check if the user has scrolled to the bottom of the table
          if (!isLoadingData && scrollPosition >= totalHeight) {
              isLoadingData = true;
-  
+
           var startIndex = _hot.countRows();
           var endIndex = startIndex + batchSize;
-          //if(!isContractor && !_isTeamLeader) 
+          //if(!isContractor && !_isTeamLeader)
            addRowsInBatch(startIndex, endIndex);
         }
     }
@@ -318,7 +318,7 @@ async function performAfterChangeActions(callback) {
     function customizeContextMenu(options) {
         if(!_isDesign)
          return options;
-    
+
         var selectedCell = _hot.getSelectedLast();
         var rowIndex = selectedCell[0];
         // const fnColumnIndex = _hot.propToCol('FullFileName');
@@ -327,7 +327,7 @@ async function performAfterChangeActions(callback) {
         let statusIndex = _hot.propToCol('Status');
         let status = _hot.getDataAtCell(rowIndex, statusIndex);
 
-        
+
         //if (Status == "pending" || Status == "rejected")
         // let isFound = false;
         // const items = _web.lists.getByTitle(_RLOD).items.select("Id, Status").filter(`FullFileName eq '${filename}'`).top(1).get()
@@ -336,7 +336,7 @@ async function performAfterChangeActions(callback) {
         //     status = items[0]['Status'];
         // })
         // .then(()=>{
-            
+
         // });
 
         if(!_isNew){
@@ -344,7 +344,7 @@ async function performAfterChangeActions(callback) {
                 if(feature.key === 'cancel'){
                     if(status !== null && status.toLowerCase() !== 'pending' && status.toLowerCase() !== 'rejected')
                       feature.disabled = true;
-                    else feature.disabled = false;    
+                    else feature.disabled = false;
                 }
             });
         }
@@ -359,12 +359,12 @@ async function performAfterChangeActions(callback) {
       let fullfilename = filename;
       if(!_ignoreChecking){
         var schemDelivType = _fncSchemas[deliverableType];
-        
-        if(schemDelivType.containsRev){      
-            CurrentRevisionNumber = filename.substring(filename.lastIndexOf('-') + 1); // part after the last '-'            
+
+        if(schemDelivType.containsRev){
+            CurrentRevisionNumber = filename.substring(filename.lastIndexOf('-') + 1); // part after the last '-'
             filename = filename.substring(0, filename.lastIndexOf('-'));
         }
-      }     
+      }
 
        var _query = isExactMatch ? `FullFileName eq '${fullfilename}'`: `FileName eq '${filename}'`;
 
@@ -379,7 +379,7 @@ async function performAfterChangeActions(callback) {
                 rlodItem: item
             }
         }
-        else {      
+        else {
             _query = `FileName eq '${filename}'`;
             items = await list.items.select("Id, Revision, FullFileName, Status, Title, "+_filterField).filter(_query).top(1).get();
             if (items.length > 0)
@@ -396,15 +396,15 @@ async function performAfterChangeActions(callback) {
             }
         }
     }
-    
+
 
     _hot.addHook('afterScrollVertically', handleScroll);
 
     _hot.addHook('afterChange', async (changes, source) => {
-        
+
         const startTime = performance.now();
         if(_ignoreChange || changes === null || !changes.hasOwnProperty('length')) //_ignoreChecking
-           return;        
+           return;
 
         const latestColumns = {};
         for (const [value, column] of changes) {
@@ -462,26 +462,26 @@ async function performAfterChangeActions(callback) {
 
                         if (mesg === ''){
                             if(latestColumns[rowIndex] === prop){
-                            
+
                                 var fname = filename;
                                 filename = '';
 
-                                if(fname !== ''){                                 
+                                if(fname !== ''){
                                     let subject = _hot.getDataAtCell(rowIndex, _hot.propToCol('Title'));
                                     const delivColIndex = _hot.propToCol('DeliverableType');
                                     var deliverableType = _hot.getDataAtCell(rowIndex, delivColIndex);
                                     var result = await setNamingConvention(rowIndex, columnIndex, fname, deliverableType);
-                                    mesg = result.mesg;                          
+                                    mesg = result.mesg;
                                     let res, isFound, isVisited = false;
                                     if(_exact_Filename_Match === 'yes' && mesg !== ''){
                                         if(mesg.toLowerCase().startsWith('revision number')){
                                             res = await isFilenameExist(deliverableType, fname, '', true);
-                                            isFound = res.isFound;                                            
-                                            let revStart = _revStartWithNeeded;                                   
+                                            isFound = res.isFound;
+                                            let revStart = _revStartWithNeeded;
                                             let CuRev = parseInt(res.RevisionNumber, 10); // parse as base 10 integer
                                             let ExRev = parseInt(res.ExistRev, 10);       // parse as base 10 integer
-                                            
-                                            if (revStart) {                                               
+
+                                            if (revStart) {
                                                 CuRev = parseInt(res.RevisionNumber.replace(revStart, ''), 10);
                                                 ExRev = parseInt(res.ExistRev.replace(revStart, ''), 10);
                                             }
@@ -492,7 +492,7 @@ async function performAfterChangeActions(callback) {
                                                 if(!isNaN(CuRev) && !isNaN(ExRev) && (CuRev - (ExRev + 1) !== 0))
                                                     mesg = `revision number must be ${ExRev + 1} instead of ${CuRev}`;
                                                 else if(isNaN(CuRev) && isNaN(ExRev)){}
-                                                else 
+                                                else
                                                     mesg = '';
                                             }
                                         isVisited = true;
@@ -512,7 +512,7 @@ async function performAfterChangeActions(callback) {
                                             mesg = 'filename is already Cancelled. Contact IT admin to re-open';
 
                                         else if(_exact_Filename_Match === 'yes'){
-                                            
+
                                             mesg = await validateExactFileNameMatch(deliverableType, subject, fname, res.rlodItem);
                                             if(mesg === undefined || mesg === null)
                                             mesg = '';
@@ -525,11 +525,11 @@ async function performAfterChangeActions(callback) {
                                     //         let tempfilename = fname;
                                     //         if(!_ignoreChecking){
                                     //             var schemDelivType = _fncSchemas[deliverableType];
-                                                
+
                                     //             if(schemDelivType.containsRev)
                                     //               tempfilename = fname.substring(0, fname.lastIndexOf('-'));
                                     //         }
-                                        
+
                                     //         var _query = "FileName eq '" + tempfilename + "'";
                                     //         const list = _web.lists.getByTitle(_RLOD);
                                     //         const items = await list.items.select("Id").filter(_query).top(1).get();
@@ -538,7 +538,7 @@ async function performAfterChangeActions(callback) {
                                     //             var _objValue = { };
                                     //             _objValue['Title'] = subject;
                                     //             _updateItems.push({
-                                    //                 id: items[0].Id, 
+                                    //                 id: items[0].Id,
                                     //                 metaInfo: _objValue
                                     //             });
                                     //         }
@@ -557,7 +557,7 @@ async function performAfterChangeActions(callback) {
                                         if(_isOriginatorChecker && mesg == ''){
                                             mesg = await checkOriginatorChecker(deliverableType, fname, subject);
                                         }
-                                    }                               
+                                    }
 
                                     return{
                                         rowIndex: rowIndex,
@@ -573,7 +573,7 @@ async function performAfterChangeActions(callback) {
                             }
                         }
 
-                        
+
                     }
                     else{
                         //const msgColumnIndex = _hot.propToCol('Mesg');
@@ -587,7 +587,7 @@ async function performAfterChangeActions(callback) {
                     }
                 }
             });
-        
+
 
         let results = await Promise.all(promises);
         results = results.filter((item)=>{
@@ -620,7 +620,7 @@ async function performAfterChangeActions(callback) {
                       }
                 }
             }
-           
+
         });
 
         // Call the callback function after afterChange is completed
@@ -634,10 +634,10 @@ async function performAfterChangeActions(callback) {
           console.log(`Execution time onRender: ${elapsedTime} milliseconds`);
     });
 
-     _hot.addHook('afterRemoveRow', function(index, amount, changes, source) {     
+     _hot.addHook('afterRemoveRow', function(index, amount, changes, source) {
         changes.map(index =>{
             removeError(index);
-        });   
+        });
 
         if(Object.keys(_masterErrors).length > 0)
           $('span').filter(function () { return $(this).text() == 'Submit'; }).parent().css('color', '#737373').attr("disabled", "disabled");
@@ -659,16 +659,16 @@ var loadScripts = async function(){
       ];
 
     const cacheBusting = `?v=${Date.now()}`;
-      libraryUrls.map(url => { 
-          $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
+      libraryUrls.map(url => {
+          $('head').append(`<script src="${url}${cacheBusting}" async></script>`);
         });
-        
+
     const stylesheetUrls = [
         _layout + '/controls/tooltipster/tooltipster.css',
         _layout + '/controls/handsonTable/libs/handsontable.full.min.css',
         _layout + '/plumsail/css/CssStyle.css'
         ];
-  
+
     stylesheetUrls.map((item) => {
       var stylesheet = item;
       $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
@@ -691,7 +691,7 @@ var renderControls = async function(){
         //   retry++;
         //   await delay(delayTime);
         // }
-    //} 
+    //}
 
     var fields = ['Title','Status'];
     HideFields(fields, true);
@@ -736,36 +736,36 @@ const setButtonActions = async function(icon, text){
 }
 
 function delay(time) {
-    return new Promise(function(resolve) { 
+    return new Promise(function(resolve) {
         setTimeout(resolve, time)
     });
 }
 
 var getSoapRequest = async function(method, serviceUrl, isAsync, soapContent){
-	var xhr = new XMLHttpRequest(); 
-    xhr.open(method, serviceUrl, isAsync); 
-    xhr.onreadystatechange = async function() 
+	var xhr = new XMLHttpRequest();
+    xhr.open(method, serviceUrl, isAsync);
+    xhr.onreadystatechange = async function()
     {
-        if (xhr.readyState == 4) 
-        {   
-            try 
+        if (xhr.readyState == 4)
+        {
+            try
             {
                 if (xhr.status == 200)
-                {                
+                {
 					const obj = this.responseText;
 					var xmlDoc = $.parseXML(this.responseText),
 					xml = $(xmlDoc);
-					
+
                     var value= xml.find("GLOBAL_PARAMResult");
                     if(value.length > 0){
                         text = value.text();
                         _layout = value[0].children[0].textContent;
                     }
-                }            
+                }
             }
-            catch(err) 
+            catch(err)
             {
-                console.log(err + "\n" + text);             
+                console.log(err + "\n" + text);
             }
         }
     }
@@ -792,7 +792,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
           _ignoreChecking = true;
 
         _CheckRevision = await getParameter('CheckRevision');
-        if(_CheckRevision === '') 
+        if(_CheckRevision === '')
            _CheckRevision = 'yes';
     }
 
@@ -811,7 +811,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
         //     $(fd.field('Trade').$parent.$el).show();
              _darTrade = fd.field('Trade').value;
         //     $(fd.field('Trade').$parent.$el).hide();
-  
+
         //     $(fd.field('CDSTitle').$parent.$el).show();
              _cdsTitle = fd.field('CDSTitle').value;
         //     $(fd.field('CDSTitle').$parent.$el).hide();
@@ -837,7 +837,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
 
     // var script = document.createElement("script");
     // script.src = _layout + "/plumsail/js/config/lodConfig.js";
-    // document.head.appendChild(script);  
+    // document.head.appendChild(script);
 
     var types = ['DWG','DOC','TRM','GEN', 'MOD'];
     types.forEach(async function(type) {
@@ -846,13 +846,13 @@ var getLODGlobalParameters = async function(moduleName, formType){
 
             var item = items[0];
             var delimeter = item.Delimeter;
-    
+
             var schema = item.Schema;
             schema = schema.replace(/&nbsp;/g, '');
             schema = JSON.parse(schema);
-    
-            var scheamResult = await setFilenameText(schema, delimeter);       
-     
+
+            var scheamResult = await setFilenameText(schema, delimeter);
+
             var containsRev = false;
             var revStartWith;
             schema.map(fld => {
@@ -870,7 +870,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
                 var category = '';
                 if(majorItems.length > 0)
                   category = majorItems[0].Category;
-                
+
                 _fncSchemas[type] = {
                     delimeter: delimeter,
                     schemaFields: schema, // replace with actual values
@@ -890,11 +890,11 @@ var getLODGlobalParameters = async function(moduleName, formType){
 
         let TradeChecker = await getParameter('TradeChecker');
         if(TradeChecker.toLowerCase() === 'yes')
-            _isTradeChecker = true; 
-        
+            _isTradeChecker = true;
+
         let OriginatorChecker = await getParameter('OriginatorChecker');
         if(OriginatorChecker.toLowerCase() === 'yes')
-            _isOriginatorChecker = true;   
+            _isOriginatorChecker = true;
 
         if(_exact_Filename_Match === 'yes'){
             let wfItems = await _web.lists.getByTitle("WorkflowSteps").items.select("ApprovedStatus").filter(`Title eq 'Client'`).get();
@@ -907,7 +907,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
             }
             else _closingStatus = 'Reviewed';
         }
-        
+
         _web.lists.getByTitle(_MIDP).get().then(list => {
             _isMidpExist = true;
         })
@@ -922,7 +922,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
     }
 
     await ensureFunction('isMultiContractor');
-    fixButtonHover(); 
+    fixButtonHover();
 }
 
 var validateBeforeLoad = async function(){
@@ -933,19 +933,19 @@ var validateBeforeLoad = async function(){
     //       fd.close();
     //     }
     // }
-  
+
     if(_isDesign){
-       
+
          let Reference = (fd.field('Reference') !== null && fd.field('Reference') !== undefined) ? fd.field('Reference').value : '';
          let Trade = (fd.field('Trade') !== null && fd.field('Trade') !== undefined) ? fd.field('Trade').value : '';
          let CDSTitle = (fd.field('CDSTitle') !== null && fd.field('CDSTitle') !== undefined) ? fd.field('CDSTitle').value : '';
 
          var mesg = '';
-         if(Reference === '') 
+         if(Reference === '')
            mesg = "Reference cant be empty Can't be Empty";
-         else if(Trade === '') 
+         else if(Trade === '')
            mesg = "Trade cant be empty Can't be Empty";
-         else if(CDSTitle === '') 
+         else if(CDSTitle === '')
            mesg = "CDSTitle cant be empty Can't be Empty";
 
            if(mesg !== ''){
@@ -959,7 +959,7 @@ var validateBeforeLoad = async function(){
            if(items.length > 0){
                 let item = items[0];
                 let workflowStatus = (item['WorkflowStatus'] !== null && item['WorkflowStatus'] !== undefined) ? item['WorkflowStatus'].toLowerCase() : '';
-                    
+
                 if (workflowStatus !== "pending")
                 {
                     const mesg = `${Reference} for ${Trade} is already ${workflowStatus}. PM Rejection is required so you can proceed`
@@ -967,7 +967,7 @@ var validateBeforeLoad = async function(){
 
                     $('span').filter(function(){ return $(this).text() == 'Submit'; }).parent().attr("disabled", "disabled");
                     disableTable = true
-                   
+
                     //alert(mesg);
                     //fd.close();
                 }
@@ -1000,27 +1000,27 @@ var checkMIDPIfExist = async function(deliverableType, filename, subject){
 var checkTradeChecker = async function(deliverableType, filename, subject){
     let mesg = '';
     let tradeValue = '';
-    let typeMetaInfo = _fncSchemas[deliverableType];    
-    let delimeter = typeMetaInfo.delimeter; 
-    let filenameText = typeMetaInfo.filenameText;     
+    let typeMetaInfo = _fncSchemas[deliverableType];
+    let delimeter = typeMetaInfo.delimeter;
+    let filenameText = typeMetaInfo.filenameText;
 
     let partsArray = filenameText.split(delimeter);
     let FilenameArray = filename.split(delimeter);
 
     let tradeIndex = partsArray.map((part, index) => {
         return part === "Trade" ? index : -1;
-    }).find(index => index !== -1);    
-    
+    }).find(index => index !== -1);
+
     if (tradeIndex !== -1 && tradeIndex !== undefined) {
         let TradeList = typeMetaInfo.schemaFields[tradeIndex+1]?.isList?.split('|')[0] || '';
         if(TradeList !== '') {
-            tradeValue = FilenameArray[tradeIndex];          
+            tradeValue = FilenameArray[tradeIndex];
             let isExist = await isTradeMatched(TradeList, tradeValue, 'darTrade');
-            
+
             if(!isExist)
                 mesg =`The specified Trade '${tradeValue}' does not match the folder's trade '${_darTrade}'`;
         }
-    } 
+    }
 
     return mesg;
 }
@@ -1028,44 +1028,44 @@ var checkTradeChecker = async function(deliverableType, filename, subject){
 var checkOriginatorChecker = async function(deliverableType, filename, subject){
     let mesg = '';
     let tradeValue = '';
-    let typeMetaInfo = _fncSchemas[deliverableType];    
-    let delimeter = typeMetaInfo.delimeter; 
-    let filenameText = typeMetaInfo.filenameText;     
+    let typeMetaInfo = _fncSchemas[deliverableType];
+    let delimeter = typeMetaInfo.delimeter;
+    let filenameText = typeMetaInfo.filenameText;
 
     let partsArray = filenameText.split(delimeter);
     let FilenameArray = filename.split(delimeter);
 
     let OriginatorIndex = partsArray.map((part, index) => {
         return part === "Originator" ? index : -1;
-    }).find(index => index !== -1); 
-    
+    }).find(index => index !== -1);
+
     let DrawingTypeIndex = partsArray.map((part, index) => {
         return (part === "DrawingType" || part === "DocumentType") ? index : -1;
-    }).find(index => index !== -1);     
-    
+    }).find(index => index !== -1);
+
     if (OriginatorIndex !== -1 && OriginatorIndex !== undefined) {
         let TradeList = typeMetaInfo.schemaFields[OriginatorIndex+1]?.isList?.split('|')[0] || '';
         if(TradeList !== '') {
 
             tradeValue = FilenameArray[OriginatorIndex];
-            
-            if (DrawingTypeIndex !== -1 && DrawingTypeIndex !== undefined) {     
-                DrawingTypeValue = FilenameArray[DrawingTypeIndex]; 
+
+            if (DrawingTypeIndex !== -1 && DrawingTypeIndex !== undefined) {
+                DrawingTypeValue = FilenameArray[DrawingTypeIndex];
                 if(DrawingTypeValue.toLowerCase() !== 'm3d')
                     if(tradeValue.toLowerCase() !== 'dar')
-                        mesg =`The specified DrawingType '${DrawingTypeValue}' does not match the Originator '${tradeValue}'`; 
+                        mesg =`The specified DrawingType '${DrawingTypeValue}' does not match the Originator '${tradeValue}'`;
                 else
-                    return mesg;         
+                    return mesg;
             }
-            
+
             if(mesg === ''){
                 let isExist = await isTradeMatched(TradeList, tradeValue, 'darOriginator');
-                
+
                 if(!isExist)
                     mesg =`The specified Originator '${tradeValue}' does not match the folder's Originator '${_darTrade}'`;
             }
         }
-    } 
+    }
 
     return mesg;
 }
@@ -1100,7 +1100,7 @@ var  runPreloader = async function(){
 		var targetControl = $('#ms-notdlgautosize').addClass('remove-position-preloadr');
 		//var mainDimmerElement = 'pageLayout_5a558a10,pageLayoutDesktop_5a558a10'; //'div.ControlZone-control'//'div.fd-toolbar-primary-commands';
 	    var webUrl = window.location.protocol + "//" + window.location.host + _spPageContextInfo.siteServerRelativeUrl;
-		
+
         var _layout = '/_layouts/15/PCW/General/EForms';
 		var ImageUrl = webUrl + _layout + '/Images/Loading.gif';
 		targetControl.dimBackground({
@@ -1183,7 +1183,7 @@ var setRowsReadOnly = async(rowIndex, setReadOnly) => {
             metaObject['readOnly'] = false;
             metaObject['className'] = defaultClassName;
         }
-        
+
         _hot.getSettings().columns.forEach((column, columnIndex) => {
             _hot.setCellMetaObject(rowIndex, columnIndex, metaObject);
         });
@@ -1235,10 +1235,10 @@ function setToolTipMessages(){
     //setButtonToolTip('Save', saveMesg);
     setButtonCustomToolTip('Submit', submitMesg);
     setButtonCustomToolTip('Cancel', cancelMesg);
-  
+
     //else addLegend();
     //adjustlblText('Comment', ' (Optional)', false);
-        
+
       if($('p').find('small').length > 0)
       $('p').find('small').remove();
 }
@@ -1279,11 +1279,11 @@ var setFilenameText = async function(schema, delimeter){
     //     schemaFields += fieldName + delimeter;
     //     return;
     //   }
-        
+
       if(fieldName !== 'properties'){
         schemaFields += fieldName + delimeter;
         filenameText += fieldName + delimeter;
-  
+
          try {
           fd.field(fieldName).value;
           fd.field(fieldName).disabled = true;
@@ -1301,7 +1301,7 @@ function addError(key, message) {
     //if (!_masterErrors.hasOwnProperty(key))
       _masterErrors[key] = message;
   }
-  
+
 function removeError(key) {
     if (_masterErrors.hasOwnProperty(key))
      delete _masterErrors[key];
@@ -1321,7 +1321,7 @@ var setErrorMesg = async function(rowIndex, mesg, removedIndexes){
         if(mesg !== '')
             iconUrl = "<img src='" + _errorImg + "' alt='na'></img>";
     }
-    
+
 
     let isRemove = false;
     let rowData;
@@ -1334,7 +1334,7 @@ var setErrorMesg = async function(rowIndex, mesg, removedIndexes){
                 break;
             }
         }
-        if(!containsInfo) 
+        if(!containsInfo)
           isRemove = true;
         //console.log('rowData = ' + rowData);
     //}
@@ -1352,14 +1352,14 @@ var setErrorMesg = async function(rowIndex, mesg, removedIndexes){
     else{
          var index = parseInt(rowIndex);
         _hot.setDataAtCell(index, mesgColumnIndex, mesg);
-        _hot.setDataAtCell(index, statusColumnIndex, iconUrl);   
+        _hot.setDataAtCell(index, statusColumnIndex, iconUrl);
     }
 }
 
 function validateFields(rowIndex, prop, value){
     var colIndex = 0;
     var mesg = '';
-    
+
     _colArray.map(item =>{
         const columnIndex = _hot.propToCol(item.data);
         var value = _hot.getDataAtCell(rowIndex, colIndex);
@@ -1432,7 +1432,7 @@ var createFields = async function(_web, _listname, _field, _type){
         await _web.lists.getByTitle(_listname).fields.addMultilineText(_field);
      else if(_type === 'calendar')
         await _web.lists.getByTitle(_listname).fields.addDateTime(_field);
-        
+
         await _web.lists.getByTitle(_listname).defaultView.fields.add(_field);
     }
     catch (e) {
@@ -1448,7 +1448,7 @@ var validateListFields = async function(colsInternal, colsType){
         for(var i = 0; i < colsInternal.length; i++){
             var isFldExist = false;
             var _fld = colsInternal[i];
-    
+
             for(var j = 0; j < _listFields.length; j++){
                 var _lstFld = _listFields[j];
                 if(_fld === _lstFld){
@@ -1512,24 +1512,24 @@ var isItemFound = async function(selectedRow, operation, item){
     });
 }
 
-var isTradeMatched = async function(TradeList, tradeValue, columnName){   
+var isTradeMatched = async function(TradeList, tradeValue, columnName){
 
-    let isExist = false;      
-    const camlFilter = `<View>                            
+    let isExist = false;
+    const camlFilter = `<View>
                             <Query>
-                                <Where>	
-                                    <And>								
-                                        <Eq><FieldRef Name='Title'/><Value Type='Text'>${tradeValue}</Value></Eq>	
-                                        <Eq><FieldRef Name='${columnName}'/><Value Type='MultiChoice'>${_darTrade}</Value></Eq>	
-                                    </And>					
+                                <Where>
+                                    <And>
+                                        <Eq><FieldRef Name='Title'/><Value Type='Text'>${tradeValue}</Value></Eq>
+                                        <Eq><FieldRef Name='${columnName}'/><Value Type='MultiChoice'>${_darTrade}</Value></Eq>
+                                    </And>
                                 </Where>
                             </Query>
                         </View>`;
 
     const existingItems = await pnp.sp.web.lists.getByTitle(TradeList).getItemsByCAMLQuery({ ViewXml: camlFilter });
-    if(existingItems.length > 0) 
+    if(existingItems.length > 0)
         isExist = true;
-    
+
     return isExist;
 }
 //#endregion
@@ -1539,7 +1539,7 @@ var isTradeMatched = async function(TradeList, tradeValue, columnName){
 var insertLODItems= async function(){
 
   var mentaInfo = _hot.getSettings().columns;
- 
+
   var rows = _hot.getData();
   var rowCount = rows.length;
   var acceptedRow = 0;
@@ -1563,7 +1563,7 @@ var insertLODItems= async function(){
         if( internalName === _defaultStatusImgCol || internalName === 'Mesg') continue;
 
          if(_value !== null && _value !== ''){
-        
+
           _columns += internalName + ',';
           _colType += mentaInfo[j].type + ',';
 
@@ -1571,7 +1571,7 @@ var insertLODItems= async function(){
           _value = _value.toUpperCase();
 
           _objValue[internalName] = _value;
-          
+
          }
       }
       doInsert = true;
@@ -1580,7 +1580,7 @@ var insertLODItems= async function(){
 
     if(emptyRows > 10)
       break;
-    
+
     if(doInsert){
        var isExist = await isFileExistinArray(row, itemsToInsert, _objValue);
        if(!isExist){
@@ -1601,7 +1601,7 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
     //Insert to RLOD
     const list = _web.lists.getByTitle(_RLOD);
     var batch = pnp.sp.createBatch(); // eg: 10 min
-    
+
     let FolderName = '';//, listUri = '/projects/PILOT-S/Lists/RLOD', folderUri  = '/SBG';
     const listUri = `${fd.webUrl}/Lists/${_RLOD}`;
     let folderUri;
@@ -1624,22 +1624,22 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
                     FolderName = searchParams.get('RootFolder');
                 }
         }
-        
+
         if(FolderName !== null && FolderName.includes('/')){
           FolderName = FolderName.split("/")[5];
           folderUri = `/${FolderName}`;
         }
     }
-    
-    var row = 0, rowBatchSize = 1;  
+
+    var row = 0, rowBatchSize = 1;
     var _columns, _colType;
     for (const item of itemsToInsert){
-     
+
       _columns = objColumns[row];
       var deliverableType = item.DeliverableType;
       var schemDelivType, delimeter, schema, category;
       var _query, filename = item.FullFileName;
-      
+
       if(!_ignoreChecking){
 
        schemDelivType = _fncSchemas[deliverableType];
@@ -1652,27 +1652,27 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
         _query = "FileName eq '" + filename + "'";
       }
       else _query = "FileName eq '" + filename + "'";
-  
+
       const existingItems = await list.items
       .select("Id," + _columns)
       .filter(_query)
       .top(1)
       .get();
-  
+
       if (existingItems.length > 0) {
         var _item = existingItems[0]; // _item is the oldItem values while objValue is the new one
         var _cols = _columns.split(',');
         //var _type = _colType.split(',');
         var doUpdate = false;
-  
+
         for(var i = 0; i < _cols.length; i++){
           var columnName = _cols[i];
           var oldValue = '';
           var currentValue = '';
-  
+
           oldValue = _item[columnName];
           currentValue = item[columnName];
-  
+
           if( oldValue != currentValue ){
              doUpdate = true;
              break;
@@ -1681,7 +1681,7 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
 
         if(_CheckRevision.toLocaleLowerCase() === 'no')
           update_MetaInfo_For_CheckRevision(_item, filename, delimeter, schemDelivType.containsRev);
-        
+
         if(doUpdate){
 
             if(_isDesign && _exact_Filename_Match === 'yes'){
@@ -1700,12 +1700,12 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
 
             list.items.getById(_item.Id).inBatch(batch).update(item);
         }
-      } 
+      }
       else {
         item['Category'] = category;
         item['FileName'] = filename;
         item[_filterField] = _lodRef;
-        
+
         if(_isDesign){
 			item['DarTrade'] = _darTrade;
 			item['CDSTitle'] = _cdsTitle;
@@ -1723,7 +1723,7 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
             }
         });
       }
-      
+
 
       if(rowBatchSize === updateBatchSize){
         row++;
@@ -1741,7 +1741,7 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
         let Id = item.id;
         let metaInfo = item.metaInfo
         list.items.getById(Id).inBatch(batch).update(metaInfo);
-         
+
         if(rowBatchSize === updateBatchSize){
             row++;
             detailedLoader(itemsToInsert.length, row);
@@ -1754,8 +1754,8 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
         rowBatchSize++;
         row++;
     }
-    
-    if( batch._index > -1){  
+
+    if( batch._index > -1){
       let overallTotal = (itemsToInsert.length + _updateItems.length)
       detailedLoader(overallTotal, row);
       await batch.execute();
@@ -1853,32 +1853,32 @@ var validateExactFileNameMatch = async function(deliverableType, title,  filenam
     let containsRev = (typeMetaInfo.containsRev !== null && typeMetaInfo.containsRev !== undefined) ? typeMetaInfo.containsRev : false;
     let revStartWith = (typeMetaInfo.revStartWith !== null && typeMetaInfo.revStartWith !== undefined) ? typeMetaInfo.revStartWith : '';
     let delimeter = typeMetaInfo.delimeter;
-    
-    let rlodLODRef = (roldItem.SubmittalRef !== null && roldItem.SubmittalRef !== undefined) ? roldItem.SubmittalRef : ''; 
+
+    let rlodLODRef = (roldItem.SubmittalRef !== null && roldItem.SubmittalRef !== undefined) ? roldItem.SubmittalRef : '';
     let rlodFullFilename = (roldItem.FullFileName !== null && roldItem.FullFileName !== undefined) ? roldItem.FullFileName : '';
-   
+
     let filenameOriginalRev = '', fncRev, rlodRev;
     if(containsRev){
       fncRev = filename.substring(filename.lastIndexOf(delimeter)+1);
       filenameOriginalRev = fncRev;
       rlodRev = (roldItem.Revision !== null && roldItem.Revision !== undefined) ? roldItem.Revision : null;
-   
+
       if(revStartWith !== ''){
        fncRev = fncRev.replace(revStartWith, '');
        rlodRev = rlodRev.replace(revStartWith, '');
       }
     }
-   
+
     //if(_exact_Filename_Match === 'yes'){
       let checkLogic = false;
       if(fncRev != _revNumStart && fncRev != "A" && fncRev != "AA" && fncRev != 0)
         checkLogic = true;
       else if (fncRev != rlodRev)
         checkLogic = true;
-     
+
     if (_lodRef !== rlodLODRef && rlodFullFilename === filename && containsRev)
       return `Filename was previously submitted under ${rlodLODRef}`;
-    
+
      if(checkLogic && containsRev){
         let rlodStatus = (roldItem.Status !== null && roldItem.Status !== undefined) ? roldItem.Status : '';
         if(_closingStatus === rlodStatus){
@@ -1888,7 +1888,7 @@ var validateExactFileNameMatch = async function(deliverableType, title,  filenam
                 if (isAllDigits(rlodRev) && isAllDigits(fncRev)) {
                   let targetRev = parseInt(rlodRev) + 1;
                   targetRev = targetRev.toString().padStart(rlodRev.length, '0');
-                  if(targetRev !== fncRev) 
+                  if(targetRev !== fncRev)
                     return `Filename should be submitted as Revision ${targetRev} instead of ${fncRev} as RLOD latest submitted revision is ${rlodRev}`;
                 }
                 else if(!isAllDigits(rlodRev) && !isAllDigits(fncRev)){
@@ -1913,7 +1913,7 @@ var validateExactFileNameMatch = async function(deliverableType, title,  filenam
       _objValue['Status'] = 'Open';
       _objValue['Title'] = title;
       _updateItems.push({
-              id: roldItem.Id, 
+              id: roldItem.Id,
               metaInfo: _objValue
       });
         // isItemFound(filename, '', {
@@ -1923,7 +1923,7 @@ var validateExactFileNameMatch = async function(deliverableType, title,  filenam
         //     Status: 'Open'
         // });
     //}
-} 
+}
 
 var addLegends = async function(){
     let legend = document.createElement('legend');
@@ -1931,18 +1931,18 @@ var addLegends = async function(){
                         "<div style='width: 17px;height: 15px;background-color:#efa2137a; border:1px solid; font-size: 10px; text-align: center;margin-top: 2px;'></div>" +
                         "<div style='font-size:14px;padding-left: 5px;'>Indicates that the record is allowed for cancellation</div>" +
                        "</div>";
-                       
+
     let targetDiv = document.getElementById('dt');
     targetDiv.parentNode.insertBefore(legend, targetDiv);
 }
 
 var  detailedLoader = async function(total, index, isDim){
 		var targetControl = $('#ms-notdlgautosize').addClass('remove-position-preloadr');
-        
+
         if(isDim === true){
             targetControl.dimBackground({
                 darkness: 0.4
-            }, function () {}); 
+            }, function () {});
         }
         else{
             let mesg = `Processing ${index} out of ${total}. Please dont close this page.`;
@@ -1965,6 +1965,6 @@ var  detailedLoader = async function(total, index, isDim){
                     "font-size": "20px",
                     "width": "auto"
                 }).insertAfter(targetControl);
-            }         
-        }          
+            }
+        }
 }

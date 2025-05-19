@@ -56,8 +56,8 @@ let renderTable = async function(result){
         let tradeItemUrl = `${_webUrl}/SitePages/PlumsailForms/${listnameFromUrl}/Item/EditForm.aspx?item=${Id}`;
 
         let customText = GLMainId.length === 0 ? 'GL Main is not assigned' : '';
-        let bgcolor = Status === 'Approve' ? `background: ${approvedBgColor}`: ''
-        tbl += `<tr style="${bgcolor}">`
+        let rowClass = Status === 'Approve' ? 'approved-row' : ''; // Assign class if approved
+        tbl += `<tr class="${rowClass}">`;
         tbl += await renderItemControls(i+1, Id, Title, Status, RejRemarks, tradeItemUrl, ISLead, customText);
         tbl += '</tr>'
       }
@@ -81,11 +81,11 @@ let renderItemControls = async function(index, Id, Trade, Status, RejRemarks, tr
     let textColor = '';
     
     if(Status === 'Approve')
-      textColor = 'color:green;font-weight:bold;'
+      textColor = 'color:#49c4b1;font-weight:bold;'
     else if(Status === 'Reject')
       textColor = 'color:red;font-weight:bold;'
-     else if(Status === 'Submitted')
-      textColor = 'color:#936106cf;font-weight:bold;'
+     else if(Status === 'In Progress')
+      textColor = 'color:#8677b1;font-weight:bold;'
 
     let isDiabled = '', isReadOnly = '';
     if(Status !== 'Submitted' || (!_isPM && !_isPD)){

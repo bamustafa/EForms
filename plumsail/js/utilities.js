@@ -7,7 +7,7 @@ const currentUser = async function(){
 	 });
 	 return LoginName;
 }
-  
+
 const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMandatory, isSubmit, isOneFile, isPart, moduleName){
 	  fd.toolbar.buttons.push({
 	        icon: icon,
@@ -17,9 +17,9 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 			 debugger;
 			 if(text == "Close" || text == "Cancel")
 			 {
-				 
+
 				 //debugger;
-				 //preloader(true);			
+				 //preloader(true);
 				 fd.validators.length = 0;
 				 fd.close();
 			 }
@@ -31,7 +31,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 					 }
 				};
 				xhttp.open("GET", "http://db-sp.darbeirut.com:8080/api/v1/hw", true);
-			
+
 				//xhttp.open("GET", "https://jsonplaceholder.typicode.com/todos/1", true);
 				//xhttp.open("GET", "http://db-sp16.darbeirut.com/api/v1/hw", true);
 				xhttp.setRequestHeader("Content-type", "application/json");
@@ -45,7 +45,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 				 const payload = {
 					method: 'GET',
 					headers: { "Accept": "application/json; odata=verbose" },
-					credentials: 'same-origin'    // or credentials: 'include'  
+					credentials: 'same-origin'    // or credentials: 'include'
 				};
 
 				 const userAction = async() => {
@@ -64,12 +64,12 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 			 {
 				 fd.validators.length = 0;
 				 const params = {
-					             ID: fd.itemId, 
+					             ID: fd.itemId,
 								 ListId: fd.spFormCtx.ListAttributes.Id
 							  };
 				 const webUrl = `${window.location.protocol  }//${  window.location.host  }${_spPageContextInfo.siteServerRelativeUrl}`;
 				 const Pageurl = `${webUrl + _layout  }/CompileForm.aspx?${  $.param(params)}`;
-                 window.open(Pageurl,"_blank"); 
+                 window.open(Pageurl,"_blank");
 				 return;
 			 }
 			 else if(text == "Preview Form")
@@ -83,7 +83,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 				 //const webUrl = `${window.location.protocol}/${window.location.host}${_spPageContextInfo.siteServerRelativeUrl}`;
 				 const webUrl = _spPageContextInfo.siteAbsoluteUrl;
 				 const Pageurl = `${webUrl + _layout}/PrintView.aspx?${$.param(params)}`;
-                 window.open(Pageurl,"_blank"); 
+                 window.open(Pageurl,"_blank");
 				 return;
 			 }
 			 else if(text == "Print")
@@ -97,7 +97,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 				 $(fd.field('SentToPMC').$parent.$el).show();
 				 fd.field('SentToPMC').value = true;
 				 $(fd.field('SentToPMC').$parent.$el).hide();
-				 
+
 				 $(fd.field('BIC').$parent.$el).show();
 				 fd.field('BIC').value = "Office";
 				 $(fd.field('BIC').$parent.$el).hide();
@@ -111,8 +111,8 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 				 $(fd.field('PartTrades').$parent.$el).show();
 				 fd.field('PartTrades').value = partTrades;
 				 $(fd.field('PartTrades').$parent.$el).hide();
-				 
-				 if(_isPMC || !_isAutoAssign) //!_isAutoAssign || 
+
+				 if(_isPMC || !_isAutoAssign) //!_isAutoAssign ||
 				 {
 					if(fd.field('Lead').value == null || fd.field('Lead').value == ""){
 					  setErrorMessage(leadTradeRequiredFieldMesg, "Assign", false);
@@ -132,17 +132,17 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 					}
 					setErrorMessage(partTradeRequiredFieldMesg, "Assign", true);
 				 }
-				 
+
 				 try{
 						$(fd.field('Assigned').$parent.$el).show();
 						fd.field('Assigned').value = true;
 						$(fd.field('Assigned').$parent.$el).hide();
-						
+
 						$(fd.field('AssignedDate').$parent.$el).show();
 						fd.field('AssignedDate').value = new Date();
 						$(fd.field('AssignedDate').$parent.$el).hide();
 				 }
-				 catch(err){}				
+				 catch(err){}
 		         fd.save();
 				 return;
 			 }
@@ -163,7 +163,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 						alert(reject_SLF_TeamLeader_ValidationMesg + ' for ' + tradeValue);
 						return;
 					}
-                    
+
 					else if(linkValue){
 					  isSelected = true;
 					  rejectedTrades += `${tradeValue}|${remarkValue};`
@@ -174,11 +174,11 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 					alert(rejectButton_SLF_TeamLeader_ValidationMesg);
 					return;
 				}
-				
+
 				$(fd.field('isRejected').$parent.$el).show();
 				fd.field('isRejected').value = true;
 				$(fd.field('isRejected').$parent.$el).hide();
-				
+
 				$(fd.field('RejectionTrades').$parent.$el).show();
 				fd.field('RejectionTrades').value = rejectedTrades;
 				$(fd.field('RejectionTrades').$parent.$el).hide();
@@ -201,10 +201,10 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 						var obj = fieldsArray[i];
 						var fieldsLength = Object.keys(obj).length;
 
-						multiLineString += '{\n';	
-						var colIndex = 1;				
+						multiLineString += '{\n';
+						var colIndex = 1;
 						for (var key in obj) {
-							
+
 							var _fiedlValue = obj[key];
 							var valType = typeof _fiedlValue;
 
@@ -216,7 +216,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 							}
 							else multiLineString += '\"' + key + '\": ' + _fiedlValue + '';
 
-							
+
 							if( colIndex === fieldsLength)
 							 multiLineString += '\n';
 							else multiLineString += ',\n';
@@ -226,10 +226,10 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 					}
 
 					multiLineString = multiLineString.trim();
-					if (multiLineString.endsWith(",")) 
+					if (multiLineString.endsWith(","))
 					  multiLineString = multiLineString.slice(0, -1);
 					multiLineString += '\n]';
-					
+
 					fd.field('Schema').value = multiLineString.replace(/&nbsp;/g, '');
 			    }
 				//#endregion
@@ -249,7 +249,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 					return;
 				}
 
-				
+
 				fd.field("Title").value = _acronym;
 				fd.save();
 			 }
@@ -258,12 +258,12 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 				var colsInternal = ['Title', 'No','Hrs'];
 				var gridControls = ['OnSiteStaffLabour', 'OnSitePlant'];
 				var gridCategories = ['Staff', 'Equipment'];
-				
+
 				for(var i = 0; i < gridControls.length; i++){
 				  var _gridsItems = [];
 				  var gridControl = gridControls[i];
 				  var gridCategory = gridCategories[i];
-			
+
 				  var data = fd.control(gridControl).widget.dataSource.data();
 				   data.map(item =>{
 					  var _gridItems = {};
@@ -289,7 +289,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 					fd.validators;
 					fd.validators.push({
 						error: "Please upload the softcopy",
-						validate: function(value) {	
+						validate: function(value) {
 							debugger;
 							if(isSubmit && _isPart && moduleName != 'SLF'){
 								if (fd.field('Code').value === null || fd.field('Code').value === ""){
@@ -303,45 +303,45 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 							{
 								if(fd.field('Attachments').value.length == 0)
 								   return false;
-								   
+
 								if(fd.field('Attachments').value.length < 1)
 								{
 									this.error = "PDF File is Required to be attached on Submit";
-									return false; 
+									return false;
 								}
-										 
+
 								if(fd.field('Attachments').value.length > 1)
 								{
 									this.error = 'Only one pdf file is required, please compile as neccessary.';
-									return false; 
+									return false;
 								}
 
 								 if(fd.field('Attachments').value.length > 0)
 								 {
 									   const valext = fd.field('Attachments').value[0];
 									   const ext = fd.field('Attachments').value[0].name.split(".")[1];
-									   //alert(ext);		  
+									   //alert(ext);
 									   if(ext.toString().toLowerCase() != 'pdf')
 									   {
 										  this.error = "PDF File is Required and dots are not allowed in the filename";
 										  return false;
 									   }
-								 }	
+								 }
 							}
-							
+
 						return true;
 						}
 					});
 				 }
 				 else fd.validators.length = 0;
-				
+
 				 if(!fd.isValid)
 				   $(fd.field('AttachFiles').$parent.$el).hide();
 				 else
-				 {			   
+				 {
 				    let NCountofATT = 0;
 					let OCountofATT = 0;
-					for(i = 0; i < fd.field('Attachments').value.length; i++) 
+					for(i = 0; i < fd.field('Attachments').value.length; i++)
 					{
 						const Val = fd.field('Attachments').value[i].extension.toString();
 						if(Val === "")
@@ -349,14 +349,14 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 						else
 						{
 								IsNewAttachment = true;
-								NCountofATT++;			
+								NCountofATT++;
 						}
 					}
 
 					if(moduleName !== "SLFI"){
 						$(fd.field('AttachFiles').$parent.$el).show();
 						fd.field('AttachFiles').value = `${Trans  },${  NCountofATT  },${  OCountofATT}`;
-						$(fd.field('AttachFiles').$parent.$el).hide();	
+						$(fd.field('AttachFiles').$parent.$el).hide();
 					}
 
 					if(isSubmit)
@@ -374,7 +374,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 							 fd.field('Submit').value = true;
 						}
 					}
-					
+
 					 if(_module == 'SLF'){
 
 						if(_isLead == false && _isPart == false){
@@ -447,7 +447,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 										fd.field('Status').value = "Completed";
 										$(fd.field('Status').$parent.$el).hide();
 								 }
-								 
+
 								}
 							}
 						}
@@ -492,7 +492,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 				  $(fd.field('CARSummaryPlainText').$parent.$el).show();
 				  fd.field('CARSummaryPlainText').value = fd.field('CARSummary').value;
 				  $(fd.field('CARSummaryPlainText').$parent.$el).hide();
-				  
+
 				  if(activeTabName === auditReportTab){
                     if(_isSentForReview)
 					 fd.field('Code').value = '';
@@ -503,7 +503,7 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 				  }
 				}
 				fd.save();
-			 } 
+			 }
 	     }
       });
 }
@@ -515,14 +515,14 @@ const isUserAllowed = async function(userName){
 			if(user.Title == userName){
 				_isAllowed = true;
 			}
-		});	
-		
+		});
+
 		if(!_isAllowed)
 		{
 			const {userId} = _spPageContextInfo;
             const userGroups = [];
-			await pnp.sp.web.siteUsers.getById(userId).groups.get()                               
-			.then(async (groupsData) =>{                        
+			await pnp.sp.web.siteUsers.getById(userId).groups.get()
+			.then(async (groupsData) =>{
 				for (let i = 0; i < groupsData.length; i++) {
 					userGroups.push(groupsData[i].Title);
 				}
@@ -531,9 +531,9 @@ const isUserAllowed = async function(userName){
 			});
 		}
 
-		return _isAllowed;	
+		return _isAllowed;
 }
- 
+
 function setErrorMessage(err, textButton, isRemove){
 	if(!isRemove)
 	{
@@ -549,7 +549,7 @@ function setErrorMessage(err, textButton, isRemove){
 			const masterErrorPosition = $('div.container-fluid').first();
 			masterErrorPosition.prepend(appendCtrl);
 		}
-		
+
 		var elem = $('#errId').find(`p:contains('${  err  }')`);
 		if(elem.length == 0){
 			$('#errId').append(`<p style='font-size: 14px; font-family: Arial; padding-top:10px'>${  err  }</p>`);
@@ -587,20 +587,20 @@ function set_FNC_ErrorMessage(err, isRemove){
 		$('div.alert').remove();
 
 		const appendCtrl = "<div role='alert' class='alert alert-danger'>" +
-								"<div class='alert-body'>" + 
+								"<div class='alert-body'>" +
 									"<button onclick='closePanel(this)' type='button' data-dismiss='alert' aria-label='Close' class='btn close'>" +
 									"<i aria-hidden='true' class='ms-Icon ms-Icon--Cancel'></i>" +
 									"</button>" +
 								"<h4 id='errId' class='alert-heading'>Please correct the errors below:</h4>" +
 								"</div>" +
 								// "<div class='alert-expander'>" +
-								// "<i aria-hidden='true' class='ms-Icon ms-Icon--DoubleChevronDown'></i>" + 
+								// "<i aria-hidden='true' class='ms-Icon ms-Icon--DoubleChevronDown'></i>" +
 								// "</div>" +
 							"</div>";
 
 		const masterErrorPosition = $('div.container-fluid').first();
 		masterErrorPosition.prepend(appendCtrl);
-		
+
 		var elem = $('#errId').find(`p:contains('${  err  }')`);
 		if(elem.length == 0){
 			$('#errId').after(`<p style='font-size: 14px; font-family: Arial; padding-top:10px'>${  err  }</p>`);
@@ -616,17 +616,17 @@ function closePanel(element){
 
 const ApplyFieldChanges = async function(fields, disableControls, disableCustomButtons, defaultButtons, _status){
 	 let isAllowed = false; //await IsUserInGroup("Owners");
-	
+
      if(_isSiteAdmin)
 	     isAllowed = true;
-	 
+
 	 for(let i = 0; i < fields.length; i++){
 		 if(fields[i] == "Attachments")
-		 {	
+		 {
 			if(_isLead && !isAllowed)
 			 $(fd.field('Attachments').$parent.$el).hide();
 		   else if(!isAllowed)
-		   {		
+		   {
 			 $("div.k-upload-sync").removeClass("k-state-disabled");
 			  if(taskStatus !== 'Open'){
 			    $('div.k-upload-button').remove();
@@ -635,16 +635,16 @@ const ApplyFieldChanges = async function(fields, disableControls, disableCustomB
 			 }
 		   }
 		   else {
-			   fd.field('Attachments').disabled = false;			   
+			   fd.field('Attachments').disabled = false;
 			   //if(_status == "Completed" || _status == "Closed" || _status == "Issued to Contractor")
 			   await customButtons("Save", "Save Attachment", true, "U");
 		   }
 		 }
-		 
-		else try { 
-		
+
+		else try {
+
 		if(fields[i] == "Status")
-		{	   
+		{
 		   if(isAllowed)
 		   {
 			   var GetStatus = fd.field("Status").value;
@@ -654,16 +654,16 @@ const ApplyFieldChanges = async function(fields, disableControls, disableCustomB
 				   fd.field('Status').disabled = false;
 			   }
 			   else
-				   $(fd.field('Status').$parent.$el).hide();				   
-			  
+				   $(fd.field('Status').$parent.$el).hide();
+
 		   }
 		   else
-		    $(fd.field('Status').$parent.$el).hide();	   
-		}		
+		    $(fd.field('Status').$parent.$el).hide();
+		}
 		else
-			fd.field(fields[i]).disabled = disableControls;	
-			
-		} 
+			fd.field(fields[i]).disabled = disableControls;
+
+		}
 		catch(e){alert(`fields[i] = ${  fields[i]  }<br/>${  e}`);}
 	 }
 
@@ -671,7 +671,7 @@ const ApplyFieldChanges = async function(fields, disableControls, disableCustomB
 	 {
 	   	if(defaultButtons != null && defaultButtons != 'undefined')
 			fd.toolbar.buttons[0].disabled = true;
-		
+
 		$('span').filter(function(){ return $(this).text() == 'Save'; }).parent().attr("disabled", "disabled");
 		$('span').filter(function(){ return $(this).text() == 'Submit'; }).parent().attr("disabled", "disabled");
 	 }
@@ -679,35 +679,35 @@ const ApplyFieldChanges = async function(fields, disableControls, disableCustomB
 
 const showHideTabs = async function(key, BIC, isPart, isLead){
 	let _isAllowed = false;
-	
+
     try
     {
         // get all groups the current user belongs to
         const {userId} = _spPageContextInfo;
         const userGroups = [];
-        await pnp.sp.web.siteUsers.getById(userId).groups.get()                               
-        .then(async (groupsData) =>{                        
+        await pnp.sp.web.siteUsers.getById(userId).groups.get()
+        .then(async (groupsData) =>{
 			for (let i = 0; i < groupsData.length; i++) {
 				userGroups.push(groupsData[i].Title);
 			}
-								
+
 			let isAdmin = false;
-			const Status = fd.field('Status').value;			
-			
+			const Status = fd.field('Status').value;
+
 			if(userGroups.indexOf('Owners') >= 0 || _spPageContextInfo.isSiteAdmin) isAdmin = true;
-											
+
 			let isClosed = false;
 			if(Status == 'Issued to Contractor' || Status == 'Completed') isClosed = true;
-												
-			let isDar = false;                                                     
-			if(userGroups.indexOf('PMC') >= 0) isDar = true;  
-			if(userGroups.indexOf('RE') >= 0) isDar = true; 
-					
+
+			let isDar = false;
+			if(userGroups.indexOf('PMC') >= 0) isDar = true;
+			if(userGroups.indexOf('RE') >= 0) isDar = true;
+
 			if(isAdmin && isClosed)
 				fd.field('Status').disabled = false;
 			else if(isClosed)
 				fd.field('Status').disabled = true;
-			
+
 			if(isPart || isLead){
 				let listName, codes;
 				const mType = await getMajorType(key);
@@ -717,37 +717,37 @@ const showHideTabs = async function(key, BIC, isPart, isLead){
 					_isAutoAssign = mType[0].isAutoAssign;
 				}
 			else listName = await getParameter("Inspection-Matrix");
-  
+
 
 			if(isLead){
 				if(_AllowManualAssignment){
 					if( isClosed || !isDar )
 					  fd.container('Tab1').tabs[1].disabled = true;
 				}
-			    else 
+			    else
 				{
 					if(_isAutoAssign)
-					  $("ul.nav,nav-tabs").remove();	
+					  $("ul.nav,nav-tabs").remove();
 				}
 				_isAllowed = true;
 			}
-			  
+
 			else if(isPart)
 			{
 				if(_AllowManualAssignment)
-				{           
-					if(Status !== "Completed"){       
+				{
+					if(Status !== "Completed"){
 						if( (BIC == "Site" && userGroups.indexOf('RE') >= 0) || (BIC == "Office" && Status == "Send to PMC" && userGroups.indexOf('PMC') >= 0))
 						{
-						  fd.container('Tab1').tabs[1].disabled = false; 
+						  fd.container('Tab1').tabs[1].disabled = false;
 						  _isAllowed = true;
 						}
 						else if(isPart && fd.field('Trade').value == "PMC" && userGroups.indexOf('PMC') >= 0){
-							 fd.container('Tab1').tabs[1].disabled = false; 
+							 fd.container('Tab1').tabs[1].disabled = false;
 							_isAllowed = true;
-						} 
+						}
 						else{
-							fd.container('Tab1').tabs[1].disabled = true; 
+							fd.container('Tab1').tabs[1].disabled = true;
 							_isAllowed = false;
 						}
 					}
@@ -759,15 +759,15 @@ const showHideTabs = async function(key, BIC, isPart, isLead){
 				}
 			}
 			$('span').filter(async function(){ return $(this).text() == 'Assign'; }).parent().prop("disabled", false);
-			
+
 				var orderColumn = 'Title';
 				if(isPart && _isPMC)
 					orderColumn = 'PMCTrades';
-				
+
 				const query = pnp.sp.web.lists.getByTitle(listName).items.select("Title,PMCTrades");
 					await query.orderBy(orderColumn, true)
 						.get()
-						.then(async (items) => { 
+						.then(async (items) => {
 								const TradeArray = [];
 								const leadArray = [];
 								for(let i = 0; i < items.length; i++)
@@ -785,11 +785,11 @@ const showHideTabs = async function(key, BIC, isPart, isLead){
 											trade = items[i].Title;
 										if(isPart && _isPMC){}
 										else TradeArray.push(trade);
-										
+
 										// if((key == "MAT" || key == "SCR") && trade != "PMC"){
 											leadArray.push(trade);
 										// }
-										
+
 										if(listName == "Trades")
 										{
 											const {Permission} = items[i];
@@ -812,8 +812,8 @@ const showHideTabs = async function(key, BIC, isPart, isLead){
 									}
 								}
 								await setTrades(TradeArray, leadArray, key, isLead);
-						}); 	
-			}   			
+						});
+			}
         });
 		return _isAllowed;
     }
@@ -831,8 +831,8 @@ var DisableFields = async function (filterColumn, filterValue, operator, fields,
 		 _status = "Pending";
 		else _status = "Initiated";
 	   }
-	  
-		   
+
+
 	   if(operator == "eq")
 	   {
 			if(_status == filterValue || taskStatus === 'Completed')
@@ -852,8 +852,8 @@ var _DisableFormFields = async function (fields, isDisable) {
         for(let i = 0; i < fields.length; i++)
         {
           let field = fields[i];
-          
-          if(field.internalName == "Attachments" && isDisable){	
+
+          if(field.internalName == "Attachments" && isDisable){
             $('div.k-upload-button').remove();
             $('button.k-upload-action').remove();
             $('.k-dropzone').remove();
@@ -870,7 +870,7 @@ function HideFields(fields, hideButtons, isHide){
 	  fd.toolbar.buttons[0].style = "display: none;";
       fd.toolbar.buttons[1].style = "display: none;";
 	}
-	
+
 	var field;
 	for(let i = 0; i < fields.length; i++)
 	{
@@ -889,7 +889,7 @@ function _HideFormFields(fields, isHide){
 		else $(fields[i].$parent.$el).show();
 	}
 }
-  
+
 function PrintCustom(){
 	var contentData;
 	if(_module === 'AUR'){
@@ -901,10 +901,10 @@ function PrintCustom(){
 			var h2 = $(elements).filter('#header2');
 			if(h1.length > 0 && h2.length > 0){
 			_header = '<table id="header1" style="border-collapse: collapse; color:black; margin:auto;" border="0" cellspacing="0" cellpadding="2" width="100%" align="center">' +
-							h1[0].innerHTML + 
+							h1[0].innerHTML +
 						'</table>' +
 						'<table id="header2" style="border-collapse: collapse; color:black; margin:auto;" border="0" cellspacing="0" cellpadding="5" width="100%" align="center">' +
-						h2[0].innerHTML + 
+						h2[0].innerHTML +
 						'</table>';
 			}
 
@@ -918,13 +918,13 @@ function PrintCustom(){
 						combinedInnerHTML += '<p>' + $(this).html() + '</p>';
 					});
 					_main += combinedInnerHTML;
-			}		    
+			}
 			}
 
 			var f1 = $(elements).filter('#footer1');
 			if(f1.length > 0){
 				_footer = '<table id="footer1" style="border-collapse: collapse; color: black; margin: auto; text-align: center;" border="0" cellspacing="0" cellpadding="5" width="100%">' +
-							f1[0].innerHTML + 
+							f1[0].innerHTML +
 						'</table>';
 			}
 			contentData = _header + _main + _footer;
@@ -946,7 +946,7 @@ function PrintCustom(){
 
 var setTrades = async function (array, leadArray, moduleName, isLead){
 	fd.field('Part').widget.dataSource.data(array);
-	 
+
 	const partArray = [];
 	let Trade = ""; let PartTrades = "";
 	PartTrades = fd.field('PartTrades').value;
@@ -959,7 +959,7 @@ var setTrades = async function (array, leadArray, moduleName, isLead){
 			else PartTrades = Trade;
 		}
 	}
-	
+
    if(PartTrades != null)
    {
 	  if(PartTrades.includes(","))
@@ -973,7 +973,7 @@ var setTrades = async function (array, leadArray, moduleName, isLead){
 	  else partArray.push(PartTrades);
       fd.field('Part').value = partArray;
    }
-   
+
    if(_module != 'SLF' && !_isAutoAssign || _isPMC){
 	   fd.field('Lead').widget.dataSource.data(leadArray);
 	   const _leadTrade = fd.field('LeadTrade').value;
@@ -985,11 +985,11 @@ var setTrades = async function (array, leadArray, moduleName, isLead){
 	   }
    }
    else if(moduleName == "SLF" && _formType == "New"){
-	//fd.field('LeadTrade').value = _spPageContextInfo.userDisplayName; 
-    //fd.field('LeadTrade').disabled = true 
+	//fd.field('LeadTrade').value = _spPageContextInfo.userDisplayName;
+    //fd.field('LeadTrade').disabled = true
 	debugger;
 	var LoginName = await currentUser();
-	fd.field('LeadInspector').value = LoginName; //.replace('i:0#.w|','');	 
+	fd.field('LeadInspector').value = LoginName; //.replace('i:0#.w|','');
 	fd.field('LeadInspector').disabled = true;
    }
 }
@@ -1005,7 +1005,7 @@ function setDefaultTrades(items){
 }
 
 function checkTradeAssignment(columnName){
-	fd.field(columnName).$on('change', (value) => {   
+	fd.field(columnName).$on('change', (value) => {
 		if(value == "")
 		{
 			if( (fd.field('Lead').value == null || fd.field('Lead').value.length == 0) && (fd.field('Part').value == null || fd.field('Part').value.length == 0)) {
@@ -1013,8 +1013,8 @@ function checkTradeAssignment(columnName){
 				$('span').filter(function(){ return $(this).text() == 'Send to PMC'; }).parent().removeAttr('disabled');
 			  }
 			return;
-		} 
- 
+		}
+
 		const isLeadNull = isFieldNULL("Lead");
 		const isPartNull = isFieldNULL("Part");
 
@@ -1045,13 +1045,13 @@ function checkTradeAssignment(columnName){
 							break;
 						}
 					}
-					
+
 					if(isError)
 						setErrorMessage(partError, "Assign", false);
 					else setErrorMessage(partError, "Assign", true);
 				}
 			}
-	 }); 
+	 });
 }
 
 function isFieldNULL(columnName){
@@ -1071,16 +1071,16 @@ fd.spBeforeSave(() =>
 
 
 var setButtonToolTip = async function(_btnText, toolTipMessage){
-  
+
     var btnElement = $('span').filter(function(){ return $(this).text() == _btnText; }).prev();
 	if(btnElement.length === 0)
 	  btnElement = $(`button:contains('${_btnText}')`);
-	
+
     if(btnElement.length > 0){
 	  if(btnElement.length > 1)
 		btnElement = btnElement[1].parentElement;
       else btnElement = btnElement[0].parentElement;
-	  
+
       $(btnElement).attr('title', toolTipMessage);
 
       $(btnElement).tooltipster({
@@ -1107,7 +1107,7 @@ var adjustlblText = async function(text, appendedText, isRequired){
 		  'text-decoration': 'underline'
 		}
 	});
-	
+
 	targetLabel.append(additionalText);
 }
 

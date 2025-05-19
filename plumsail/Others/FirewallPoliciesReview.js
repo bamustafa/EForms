@@ -56,7 +56,9 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 var onFPRRender = async function (formType){	
 
     if(formType === "Edit")
-        await FPR_editForm();  
+        await FPR_editForm();
+    else if(formType === "Display")
+        await FPR_displayForm();  
 }
 
 var FPR_editForm = async function(){ 
@@ -64,10 +66,13 @@ var FPR_editForm = async function(){
     try 
     {
         fd.toolbar.buttons[0].style = "display: none;";
-        fd.toolbar.buttons[1].style = "display: none;";        
+        fd.toolbar.buttons[1].style = "display: none;"; 
+        
+        const svguserinfo = `<svg fill="#000000" width="24" height="24" viewBox="0 0 24 24" id="create-note-alt" data-name="Line Color" xmlns="http://www.w3.org/2000/svg" class="icon line-color"><path id="secondary" d="M19.44,8.22C17.53,10.41,14,10,14,10s-.39-4,1.53-6.18a3.49,3.49,0,0,1,.56-.53L18,4l.47-1.82A8.19,8.19,0,0,1,21,2S21.36,6,19.44,8.22ZM14,10l-2,2" style="fill: none; stroke: rgb(44, 169, 188); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path><path id="primary" d="M12,3H4A1,1,0,0,0,3,4V20a1,1,0,0,0,1,1H20a1,1,0,0,0,1-1V12" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path></svg>`;            
+        setIconSource("overview-icon", svguserinfo);
 
         await loadScripts();
-        preloader();        
+        showPreloader();        
         formatingButtonsBar('Firewall Policies Review');
         
         _CurrentUser = await GetCurrentUser();
@@ -98,13 +103,50 @@ var FPR_editForm = async function(){
             fd.field('ResponseDate').value = new Date(); 
             ['Status'].forEach(enableField);                         
         }
-
-        preloader("remove");
+        else {
+            ['WorkflowStatus', 'AssignTo', 'AssignedBy', 'AssignedDate', 'ResponseDate'].forEach(hideField);
+            var submitButton = buttons.find(button => button.text === 'Submit');
+            submitButton.style = "display: none;";
+        }        
     }    
     catch(err){
         console.log(err.message, err.stack)
         await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, '', '', err.message, err.stack);        
-    }      
+    }
+    finally{      
+        hidePreloader();
+    }     
+}
+
+var FPR_displayForm = async function(){ 
+    
+    try 
+    {
+        const svguserinfo = `<svg fill="#000000" width="24" height="24" viewBox="0 0 24 24" id="create-note-alt" data-name="Line Color" xmlns="http://www.w3.org/2000/svg" class="icon line-color"><path id="secondary" d="M19.44,8.22C17.53,10.41,14,10,14,10s-.39-4,1.53-6.18a3.49,3.49,0,0,1,.56-.53L18,4l.47-1.82A8.19,8.19,0,0,1,21,2S21.36,6,19.44,8.22ZM14,10l-2,2" style="fill: none; stroke: rgb(44, 169, 188); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path><path id="primary" d="M12,3H4A1,1,0,0,0,3,4V20a1,1,0,0,0,1,1H20a1,1,0,0,0,1-1V12" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path></svg>`;            
+        setIconSource("overview-icon", svguserinfo);
+
+        await loadScripts();
+        showPreloader();        
+        formatingButtonsBar('Firewall Policies Review'); 
+        
+        fd.toolbar.buttons[1].text = "Cancel";
+        fd.toolbar.buttons[1].icon = "Cancel";
+        fd.toolbar.buttons[1].style = `background-color:${redColor}; color:white; width:195px !important;`;
+
+        fd.toolbar.buttons[0].icon = "Edit";
+        fd.toolbar.buttons[0].text = "Edit Form";
+        fd.toolbar.buttons[0].class = 'btn-outline-primary';
+        fd.toolbar.buttons[0].style = `background-color:${greenColor}; color:white; width:195px !important;`;
+
+        ['WorkflowStatus', 'AssignTo', 'AssignedBy', 'AssignedDate', 'ResponseDate'].forEach(hideField);
+    }    
+    catch(err){
+        console.log(err.message, err.stack)
+        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, '', '', err.message, err.stack);        
+    }
+    finally{      
+        hidePreloader();
+    }     
 }
 
 fd.spSaved(async function(result) {	
@@ -526,7 +568,7 @@ async function loadingButtons(){
 
             if(fd.isValid){
 
-                await PreloaderScripts(); 
+                showPreloader(); 
 
                 _proceed = true;           
 
@@ -550,7 +592,7 @@ async function loadingButtons(){
         text: 'Cancel',	
         style: `background-color:${redColor}; color:white`,
         click: async function() {
-            await PreloaderScripts();
+            showPreloader();
             fd.close();
         }			
 	});          
@@ -614,3 +656,12 @@ var PreloaderScripts = async function(){
 			preloader();
 		});	    
 }
+
+function setIconSource(elementId, iconFileName) {
+
+    const iconElement = document.getElementById(elementId);
+  
+    if (iconElement) {
+        iconElement.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconFileName)}`;
+    }
+  }

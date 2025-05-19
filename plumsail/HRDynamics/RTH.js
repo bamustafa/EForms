@@ -85,8 +85,9 @@ var RTH_newForm = async function(){
     catch(err){
         await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, '', '', err.message, err.stack);        
     }      
-    
-	preloader("remove");
+    finally{      
+        hidePreloader();
+    }
 }
 
 var RTH_editForm = async function(){
@@ -1226,7 +1227,7 @@ var PreloaderScripts = async function(){
 			return _spComponentLoader.loadScript(_layout + '/plumsail/js/preloader.js');
 		})
 		.then(() => {
-			preloader();
+			showPreloader();
 		});	    
 }
 

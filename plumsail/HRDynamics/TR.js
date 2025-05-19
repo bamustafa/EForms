@@ -23,9 +23,8 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
         else if(moduleName == 'TEST'){
             _colArray = await getSchema()
             _spComponentLoader.loadScript(_htLibraryUrl).then(_setData);
-        }
-			
-        preloader("remove");
+        }		
+        
         const endTime = performance.now();
         const elapsedTime = endTime - startTime;
         console.log(`Execution time HRDynamics: ${elapsedTime} milliseconds`);
@@ -34,6 +33,9 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 		//alert(e);
 		console.log(e);	
 	}
+    finally{      
+        hidePreloader();
+    }
 }
 
 var onTRRender = async function (){	
@@ -324,7 +326,7 @@ var getGlobalParameters = async function(relativeLayoutPath, moduleName, formTyp
     _htLibraryUrl = _layout + '/controls/handsonTable/libs/handsontable.full.min.js';
 
     await loadScripts();
-    preloader();
+    showPreloader();
 
    if(_formType === 'New'){
     clearStoragedFields(fd.spForm.fields);

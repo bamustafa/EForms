@@ -39,33 +39,50 @@ var onRender = async function (moduleName, formType){
 	}
 }
 
-var onLADTaskRender = async function (formType){	
+var onLADTaskRender = async function (formType) {
+    
+    try {
+        
+        await loadScripts().then(async () => {
+            
+            showPreloader();
 
-    await PreloaderScripts(); 			
-	await loadScripts();
- 
-    clearLocalStorageItemsByField(itemsToRemove);
+            clearLocalStorageItemsByField(itemsToRemove);
 
-    CurrentUser = await GetCurrentUser(); 
+            formatingButtonsBar('LAD Intranet: Tasks');
 
-	if(formType == 'New'){        
-		await LADTask_newForm();        
-    } 
-    else if(formType == 'Edit'){        
-		await LADTask_editForm();        
-    } 
-    else if(formType == 'Display'){        
-		await LADTask_displayForm();        
-    }     
+            CurrentUser = await GetCurrentUser();
+
+            if (formType == 'New') {
+                await LADTask_newForm();
+            }
+            else if (formType == 'Edit') {
+                await LADTask_editForm();
+            }
+            else if (formType == 'Display') {
+                await LADTask_displayForm();
+            }                    
+        }); 
+    }
+    catch (e){
+      showPreloader();
+      fd.toolbar.buttons[0].style = "display: none;";
+      fd.toolbar.buttons[1].style = "display: none;";
+      console.log(e)
+    }
+    finally{
+        hidePreloader();
+    }    
 }
 
-var LADTask_newForm = async function(){    
+var LADTask_newForm = async function () {  
+    
+    debugger;
     
     fd.toolbar.buttons[0].style = "display: none;";   
 	fd.toolbar.buttons[1].style = "display: none;";   
 	
-    await loadingButtons()
-    formatingButtonsBar();  
+    await loadingButtons();  
     
     const disableField = (field) => fd.field(field).disabled = true;
     const enableField = (field) => fd.field(field).disabled = false;
@@ -184,9 +201,7 @@ var LADTask_newForm = async function(){
             
             ['Country', 'Client', 'PM'].forEach(clearField);
         }
-	});	    
-
-    preloader("remove");    
+	});	     
 }
 
 var LADTask_editForm = async function(){    
@@ -194,10 +209,7 @@ var LADTask_editForm = async function(){
     fd.toolbar.buttons[0].style = "display: none;";   
 	fd.toolbar.buttons[1].style = "display: none;";   
 	
-    await loadingButtons()
-    formatingButtonsBar();        
-
-    preloader("remove");    
+    await loadingButtons();        
 }
 
 var LADTask_displayForm = async function(){    
@@ -209,11 +221,7 @@ var LADTask_displayForm = async function(){
     fd.toolbar.buttons[0].icon = "Edit";
     fd.toolbar.buttons[0].text = "Edit";
     fd.toolbar.buttons[0].class = 'btn-outline-primary';
-    fd.toolbar.buttons[0].style = `background-color:${greenColor}; color:white;`; 
-    
-    formatingButtonsBar();
-
-    preloader("remove");    
+    fd.toolbar.buttons[0].style = `background-color:${greenColor}; color:white;`;        
 }
 
 fd.spBeforeSave(function(spForm){					
@@ -295,22 +303,27 @@ function GetProjectList(ProjectYear, ProjectName)
     } 
 }
 
-var loadScripts = async function(){
-	const libraryUrls = [		
-		_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
-		_layout + '/plumsail/js/commonUtils.js'
-	];
+var loadScripts = async function () {
+    
+	const libraryUrls = [
+      _layout + '/controls/preloader/jquery.dim-background.min.js',
+      _layout + "/plumsail/js/buttons.js",
+      _layout + '/plumsail/js/customMessages.js',
+      _layout + '/controls/tooltipster/jquery.tooltipster.min.js',
+      _layout + '/plumsail/js/preloader.js',
+      _layout + '/plumsail/js/commonUtils.js',
+      _layout + '/plumsail/js/utilities.js'
+    ];
   
 	const cacheBusting = '?t=' + new Date().getTime();
 	  libraryUrls.map(url => { 
 		  $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
 		});
 		
-	const stylesheetUrls = [
-		_layout + '/controls/tooltipster/tooltipster.css',
-        //_layout + '/plumsail/css/CssStyleCV.css',
-		_layout + '/plumsail/css/CssStyleCVMain.css'		
-	];
+	 const stylesheetUrls = [
+      _layout + '/controls/tooltipster/tooltipster.css',
+      _layout + '/plumsail/css/DarTemplate.css' + `?t=${Date.now()}`
+    ];
   
 	stylesheetUrls.map((item) => {
 	  var stylesheet = item;
@@ -329,29 +342,6 @@ var PreloaderScripts = async function(){
 		});	    
 }
 
-function formatingButtonsBar(){   
-
-    $('i.ms-Icon--PDF').remove();
-          
-    // let toolbarElements = document.querySelectorAll('.fd-toolbar-primary-commands');
-    // toolbarElements.forEach(function(toolbar) {
-    //     toolbar.style.display = "flex";
-    //     toolbar.style.justifyContent = "flex-end";
-    //     //toolbar.style.marginRight = "25px";            
-    // }); 
-
-    var fieldTitleElements = document.querySelectorAll('.fd-form .row > .fd-field-title');
-   
-    fieldTitleElements.forEach(function(element) {
-        element.style.fontWeight = 'bold'; 
-        element.style.fontSize = '14px';      
-        element.style.borderTopLeftRadius = '6px';
-        element.style.borderBottomLeftRadius = '6px';
-        element.style.width = '200px';
-        element.style.display = 'inline-block';
-    });
-}
-
 async function loadingButtons(){	
 	
 	fd.toolbar.buttons.push({
@@ -362,7 +352,7 @@ async function loadingButtons(){
 	        click: async function() {	                             
 
 	        if(fd.isValid){
-                await PreloaderScripts();                
+                showPreloader();               
                 fd.save();                
             }
 	    }	     
@@ -374,7 +364,7 @@ async function loadingButtons(){
         text: 'Cancel',	
         style: `background-color:${redColor}; color:white`,
         click: async function() {
-            await PreloaderScripts();
+            showPreloader(); 
             fd.close();
         }			
 	});
@@ -720,6 +710,38 @@ const GetCurrentUser = async function(){
         console.error("Error fetching current user:", error);
         throw error; // Re-throw the error if needed
     }	
+}
+
+function formatingButtonsBar(titelValue){
+
+  $('div.ms-compositeHeader').remove();
+  $('i.ms-Icon--PDF').remove();
+
+  let toolbarElements = document.querySelectorAll('.fd-toolbar-primary-commands');
+  toolbarElements.forEach(function(toolbar) {
+      toolbar.style.display = "flex";
+      toolbar.style.justifyContent = "flex-end";
+  });
+
+  let commandBarElement = document.querySelectorAll('[aria-label="Command Bar."]');
+      commandBarElement.forEach(function(element) {
+      element.style.paddingTop = "16px";
+  }) ;
+
+  document.querySelector('.col-sm-12').style.setProperty('padding-top', '0px', 'important');
+
+  const iconPath = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/Images/animdarlogo1.png';
+  const linkElement = `<a href="${_spPageContextInfo.webAbsoluteUrl}" style="text-decoration: none; color: inherit; display: flex; align-items: center; font-size: 18px;">
+                          <img src="${iconPath}" alt="Icon" style="width: 50px; height: 26px; margin-right: 14px;">${titelValue}</a>`;
+  $('span.o365cs-nav-brandingText').html(linkElement);
+
+  $('.o365cs-base.o365cs-topnavBGColor-2').css('background', 'linear-gradient(to bottom, #808080, #4d4d4d, #1a1a1a, #000000, #1a1a1a, #4d4d4d, #808080)');
+
+  $('.fd-form p').css({
+      'margin-top': '0',
+      'margin-bottom': '1rem',
+      'display': 'none'
+  });
 }
 
 //#endregion

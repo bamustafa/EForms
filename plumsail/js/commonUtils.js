@@ -13,18 +13,18 @@ const GetCurrentUser = async function(){
     } catch (error) {
         console.error("Error fetching current user:", error);
         throw error; // Re-throw the error if needed
-    }	
+    }
 }
 
 var getDesign_GridSchema = async function(_web, webURL, key){
     var _colArray = [];
     var targetList;
     var targetFilter;
-  
+
     await _web.lists
           .getByTitle("SchemaConfig")
           .items
-          .select("ListName,HandsonTblSchema,DataQuery")
+          .select("ListName,hansonTblSchema,DataQuery")
           .filter("Title eq '" + key + "'")
           .get()
           .then(async function (items) {
@@ -34,12 +34,12 @@ var getDesign_GridSchema = async function(_web, webURL, key){
                   var HandsonTblSchema = item.HandsonTblSchema;
                   targetList = item.ListName;
                   targetFilter = item.DataQuery;
-  
+
                     var fetchUrl = webURL + HandsonTblSchema;
                     await fetch(fetchUrl)
                         .then(response => response.text())
                         .then(async data => {
-                          _colArray = JSON.parse(data); 
+                          _colArray = JSON.parse(data);
                     });
               });
     return {
@@ -66,7 +66,7 @@ var addLegend = async function (lblId, _text, parentElement, step, ignoreCss){
 		  .html(_text)
 		  .addClass('FormTitle');
 		}
-	  
+
 		else{
 		  jQueryId = '#' + lblId;
 		  if ($(jQueryId).length === 0) {
@@ -82,24 +82,24 @@ var addLegend = async function (lblId, _text, parentElement, step, ignoreCss){
 				label.css('width', '1350px');
 			}
 			//label.css('text-decoration', 'underline');
-			//label.css('text-align', 'center'); 
-	  
+			//label.css('text-align', 'center');
+
 			if(step === 'after')
 			  $(parentElement).after(label);
 			else $(parentElement).before(label);
 		  }
 		}
 	  }
-	  
+
 	else if( (_isMain &&  _formType === 'New') || (_isPart && _formType === 'Edit') ){
 		var id = '#legendlbl';
 		if ($(id).length === 0) {
-	
+
 		var textNote = `Click 'Save' to keep your work as a draft, or 'Submit' to officially submit your answer.`;
-	
+
 		if(_module === 'SLF' && _isTeamLeader)
 			textNote = `Click 'Submit' to officially submit your answer.`;
-	
+
 		var titleElement = $('div.col-sm-12')[0]; //$("button:contains('Cancel')");
 		var label = $('<label>', {
 			id: 'legendlbl',
@@ -109,11 +109,11 @@ var addLegend = async function (lblId, _text, parentElement, step, ignoreCss){
 		label.css('font-weight', 'bold');
 		label.css('font-size', '16px');
 		label.css('width', '1250px');
-		//label.css('text-align', 'center'); 
+		//label.css('text-align', 'center');
 		$(titleElement).before(label);
 		}
 	}
-	
+
 	if($('p').find('small').length > 0)
 		$('p').find('small').remove();
 }
@@ -169,17 +169,17 @@ function clearStoragedFields(fields, execludeField){
 
 	for (const field in fields) {
 
-		if(execludeField !== undefined && field === execludeField) 
+		if(execludeField !== undefined && field === execludeField)
 			continue;
 
 		var fieldproperties = fd.field(field);
 		if(fieldproperties._fieldCtx.schema !== undefined){
 			var fieldDefaultVal = fieldproperties._fieldCtx.schema.DefaultValue;
 			//var fieldType = fieldproperties._fieldCtx.schema.FieldType;
-		
-			if (fieldDefaultVal !== undefined && fieldDefaultVal !== null) {}	
-			else			  
-				fd.field(field).clear(); 
+
+			if (fieldDefaultVal !== undefined && fieldDefaultVal !== null) {}
+			else
+				fd.field(field).clear();
 		}
 	}
 }
@@ -211,8 +211,8 @@ var getCounter = async function(web, type, doUpdate){
 				await web.lists.getByTitle(listname).items.add({
 					Title: type,
 					Counter: counterValue.toString()
-				});       
-			}          
+				});
+			}
 		}
 		else{
 			let item = items[0];
@@ -220,7 +220,7 @@ var getCounter = async function(web, type, doUpdate){
 			if(doUpdate){
 				await pnp.sp.web.lists.getByTitle(listname).items.getById(item.Id).update({
 					Counter: counterValue.toString()
-				}); 
+				});
 			}
 		}
 		return counterValue;
@@ -228,7 +228,7 @@ var getCounter = async function(web, type, doUpdate){
 }
 
 var isMultiContractor = async function(){
-	
+
 	_isMultiContracotr = await getParameter("isMultiContracotr");
 	if(_isMultiContracotr.toLowerCase() === 'yes'){
 		_isMultiContracotr = true;
@@ -263,7 +263,6 @@ var isMultiContractor = async function(){
 						console.log('allowedUsers = ' + result);
 						result = result[0].Title;
 				});
-				
 	   }
 	   return result;
 	}
@@ -297,7 +296,7 @@ var getMajorType = async function(key, byId){
 	  let result = '';
 	  //let listname = 'SchemaConfig';
       var query = `Title eq '${  key  }'`;
-	  
+
      if(byId !== undefined && byId === true)
 	    query = `ID eq ${  key  }`;
 
@@ -330,7 +329,7 @@ var getGridMType = async function(_web, webURL, key, isDesign){
 	//    listname = 'SchemaConfig';
 	//    columns = 'HandsonTblSchema,ListName,LODFilterColumn,RevNumStart,UpdateTitle';
 	// }
-	
+
     var result = "";
     await _web.lists
           .getByTitle(listname)
@@ -342,25 +341,25 @@ var getGridMType = async function(_web, webURL, key, isDesign){
               if(items.length > 0)
                 //for (var i = 0; i < items.length; i++) {
                   var item = items[0];
-                  var HandsonTblSchema = item.HandsonTblSchema;
+                  var hansonTblSchema = item.HandsonTblSchema;
 
 				  if(_module === 'AUS'){
 					targetList = item.ListName;
 					targetFilter = item.FilterColumns;
 				  }
-				  else{					
+				  else{
 					targetList = item.LODListName;
 					targetFilter = item.LODFilterColumn;
 					revNumStart = item.RevNumStart;
 					updateTitle = item.UpdateTitle;
-  
+
 				  }
-				
-                    var fetchUrl = webURL + HandsonTblSchema;
+
+                    var fetchUrl = webURL + hansonTblSchema;
                     await fetch(fetchUrl)
                         .then(response => response.text())
                         .then(async data => {
-                          _colArray = JSON.parse(data); 
+                          _colArray = JSON.parse(data);
 
                            for (const obj of _colArray) {
                             if (obj.renderer === "customDropdownRenderer"){
@@ -373,7 +372,6 @@ var getGridMType = async function(_web, webURL, key, isDesign){
 							obj.source = await getQMDropDownListValues(obj.listname, obj.listColumn);
 						  }
 
-							
                         //     else if (obj.validator === "validateDateRequired"){
                         //       obj.validator = validateDateRequired;
                         //     }
@@ -451,22 +449,22 @@ function setIframeHeight(iframe){
 }
 
 var getSoapRequest = async function(method, serviceUrl, isAsync, soapContent){
-	var xhr = new XMLHttpRequest(); 
+	var xhr = new XMLHttpRequest();
 
-    xhr.open(method, serviceUrl, isAsync); 
+    xhr.open(method, serviceUrl, isAsync);
 
-    xhr.onreadystatechange = async function() 
+    xhr.onreadystatechange = async function()
     {
-        if (xhr.readyState == 4) 
-        {   
-            try 
+        if (xhr.readyState == 4)
+        {
+            try
             {
                 if (xhr.status == 200)
-                {                
+                {
 					const obj = this.responseText;
 					var xmlDoc = $.parseXML(this.responseText),
 					xml = $(xmlDoc);
-					
+
                     if(getParams){
 					  var value= xml.find("GLOBAL_PARAMResult");
 					  if(value.length > 0){
@@ -476,7 +474,7 @@ var getSoapRequest = async function(method, serviceUrl, isAsync, soapContent){
 					}
 
                     else{
-						if(_module === 'AUR' && activeTabName === auditReportTab){ 
+						if(_module === 'AUR' && activeTabName === auditReportTab){
 							var value= xml.find("GET_AUR_SUMMARYResult");
 							var text;
 
@@ -497,11 +495,11 @@ var getSoapRequest = async function(method, serviceUrl, isAsync, soapContent){
 						}
 						fixEnhancedRichText();
 					}
-                }            
+                }
             }
-            catch(err) 
+            catch(err)
             {
-                console.log(err + "\n" + text);             
+                console.log(err + "\n" + text);
             }
         }
     }
@@ -528,12 +526,12 @@ var setButtonCustomToolTip = async function(_btnText, toolTipMessage, animationT
     var btnElement = $('span').filter(function(){ return $(this).text() == _btnText; }).prev();
 	if(btnElement.length === 0)
 	  btnElement = $(`button:contains('${_btnText}')`);
-	
+
     if(btnElement.length > 0){
 	  if(btnElement.length > 1)
 		btnElement = btnElement[1].parentElement;
       else btnElement = btnElement[0].parentElement;
-	  
+
       $(btnElement).attr('title', toolTipMessage,);
 
 	  await _spComponentLoader.loadScript( _layout + '/controls/tooltipster/jquery.tooltipster.min.js').then(async () =>{
@@ -551,7 +549,7 @@ var setButtonCustomToolTip = async function(_btnText, toolTipMessage, animationT
 
 //#region FNC VALIDATION
 var checkFileName = async function(acronym, delimeter, schema, filenameText, filename, isSingle, checkRev){
-   
+
     var selectedSchema = '', selectedDelimeter = '', _mesg = '';
 	var selectedType = [];
 
@@ -599,7 +597,7 @@ var checkFileName = async function(acronym, delimeter, schema, filenameText, fil
         if(!checkRev && (fieldname === 'Rev' || fieldname === 'Revision'))
 		   schemaPartsLength -= 1;
      });
-	   
+
 
 	  if(isOptionalField !== undefined)
 	  {
@@ -609,7 +607,7 @@ var checkFileName = async function(acronym, delimeter, schema, filenameText, fil
 
       if(schemaPartsLength !== fielnameLength){
 
-        if(isOptionalField !== undefined && fielnameLength === (schemaPartsLength -1)){} 
+        if(isOptionalField !== undefined && fielnameLength === (schemaPartsLength -1)){}
         else{
 			_mesg += fncLengthMesg;
 
@@ -652,7 +650,7 @@ var isAllowedCharacters = async function(value, allowedCharacters){
 		return !allowedCharacters.includes(char)
 	});
 	return filteredValue.length === 0;
-}  
+}
 
 var validateFileName = async function(schema, delimeter, filenameParts, ignoreOptionalField, checkRev){
 	var position = 0;
@@ -667,7 +665,7 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 			  continue;
 
 			if(item.RevStartWith !== undefined){
-				if (!filenamePartValue.startsWith(item.RevStartWith)) 
+				if (!filenamePartValue.startsWith(item.RevStartWith))
 				  errorMesg += `revision must start with ${item.RevStartWith}<br>`; //for ${fieldname} field
 			}
 
@@ -731,7 +729,7 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 		  if(listname === 'SubDiscipline')
 		    descField = 'Acronym';
 		  var viewFields = listField + ',' + descField;
-		  
+
 		  var isFound = false;
 		  var itemId;
 		  var listValuesMesg = '';
@@ -817,7 +815,7 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 							FolderName = searchParams.get('RootFolder');
 						}
 					}
-					 
+
 					if(!ignoreCheck){
 						if(FolderName !== null){
 							FolderName = FolderName.split("/")[5];
@@ -842,13 +840,13 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 										};
 
 							   if(_module !== 'LOD'){
-								
+
 									if(fieldname === 'Discipline_x003a_Acronym')
 									  fieldname = 'Discipline';
 									else if(fieldname === 'SubDiscipline_x003a_Title')
 									  fieldname = 'SubDiscipline';
 
-									fd.field(fieldname).value = obj;	
+									fd.field(fieldname).value = obj;
 									fd.field(fieldname).disabled = true;
 							   }
 							}
@@ -856,7 +854,7 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 						catch{}
 					}
 				}
-			}	
+			}
 		}
 
 		else if(item.isText !== undefined){
@@ -886,7 +884,7 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 
 			var textLength = item.textLength;
 			var lengthArray = [];
-			
+
 			if(textLength.includes(','))
 			  lengthArray = textLength.split(',');
 			else lengthArray.push(textLength);
@@ -910,7 +908,7 @@ var validateFileName = async function(schema, delimeter, filenameParts, ignoreOp
 				}
 			}
 		}
-	
+
 		else if(item.AllowedCharacters !== undefined){
 			var AllowedCharacters = item.AllowedCharacters;
 			var isAllowed = await isAllowedCharacters(filenamePartValue, AllowedCharacters);
@@ -933,12 +931,12 @@ const _sendEmail = async function(ModuleName, emailName, query, ApprovalTradeCC,
 	let webUrl = _spPageContextInfo.siteAbsoluteUrl;
 	let siteUrl = new URL(webUrl).origin;
     let CurrentUser;
-	
+
 	debugger;
-	if(currUser !== undefined && currUser !== null && currUser !== '')
+	if(!isNullOrEmpty(currUser))
 		CurrentUser = currUser
-	else CurrentUser = await GetCurrentUser(); 
-	
+	else CurrentUser = await pnp.sp.web.currentUser.get(); //await GetCurrentUser();
+
 
     let serviceUrl = `${siteUrl}/AjaxService/DarPSUtils.asmx?op=SEND_EMAIL_TEMPLATE`;
     let soapContent = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -1030,7 +1028,7 @@ const _generateErrorEmail = async function (webUrl, username, displayName, error
     await _sendErrorEmail(errroBody);
 }
 
-const _sendErrorEmail = async function(Body){    
+const _sendErrorEmail = async function(Body){
 
 	let webUrl = _spPageContextInfo.siteAbsoluteUrl;
 	let siteUrl = new URL(webUrl).origin;
@@ -1040,7 +1038,7 @@ const _sendErrorEmail = async function(Body){
                         <soap:Body>
                             <SEND_ERROR_EMAIL_CVGUIDELINE xmlns="http://tempuri.org/">
                                 <WebURL>${webUrl}</WebURL>
-                                <Body>${Body}</Body>                                
+                                <Body>${Body}</Body>
                             </SEND_ERROR_EMAIL_CVGUIDELINE>
                         </soap:Body>
                     </soap:Envelope>`
@@ -1048,20 +1046,20 @@ const _sendErrorEmail = async function(Body){
 }
 
 var getSoapResponse = async function(method, serviceUrl, isAsync, soapContent, getResultTag){
-	var xhr = new XMLHttpRequest(); 
-    xhr.open(method, serviceUrl, isAsync); 
-    xhr.onreadystatechange = async function() 
+	var xhr = new XMLHttpRequest();
+    xhr.open(method, serviceUrl, isAsync);
+    xhr.onreadystatechange = async function()
     {
-        if (xhr.readyState == 4) 
-        {   
-            try 
+        if (xhr.readyState == 4)
+        {
+            try
             {
                 if (xhr.status == 200 && getResultTag !== '')
-                {                
+                {
                     const obj = this.responseText;
                     var xmlDoc = $.parseXML(this.responseText),
                     xml = $(xmlDoc);
-					
+
                     var value= xml.find(getResultTag);
                     if(value.length > 0){
                         text = value.text();
@@ -1069,11 +1067,11 @@ var getSoapResponse = async function(method, serviceUrl, isAsync, soapContent, g
                         //_rootSite = value[0].children[1].textContent;
                     }
                 }
-                else console.log(`status ${xhr.status} - ${xhr.statusText} `);          
+                else console.log(`status ${xhr.status} - ${xhr.statusText} `);
             }
-            catch(err) 
+            catch(err)
             {
-                console.log(err + "\n" + text);             
+                console.log(err + "\n" + text);
             }
         }
     }
@@ -1104,7 +1102,7 @@ var getSoapResponse1 = async function(method, serviceUrl, isAsync, soapContent, 
             }
         };
         xhr.setRequestHeader('Content-Type', 'text/xml');
-        if (soapContent !== '') 
+        if (soapContent !== '')
 		  xhr.send(soapContent);
         else xhr.send();
     });
@@ -1112,13 +1110,15 @@ var getSoapResponse1 = async function(method, serviceUrl, isAsync, soapContent, 
 
 function setPSErrorMesg(errMesg, removeAlertHeadingText){
 
+
 	function checkForErrors() {
+
 	  var errorElement = $('.errors[data-v-386d995a]');
 	  if (errorElement.length > 0) {
 		  clearInterval(intervalId);
 		  handleErrors(errorElement, errMesg);
 	  }
-  
+
 	  $('button').hover(
 		  function () {
 			  // Mouseenter event handler
@@ -1130,21 +1130,24 @@ function setPSErrorMesg(errMesg, removeAlertHeadingText){
 		  }
 	  );
 	}
-  
+
 	function handleErrors(element, errorMessage) {
-	  if (errorMessage !== '') {
+	  if (errorMessage) {
 		  element.css({
 			  'height': 'auto',
 			  'opacity': '1'
 		  });
 		  if(removeAlertHeadingText === true){
-			$('p.alert-heading').text('')
+			$('p.alert-heading').text('').css({'display': 'none'});
 			errorMessage = errorMessage;
 		  }
 		  else errorMessage = '<br/>' + errorMessage;
 		  var mesgElement = $('#customErrorId');
-		   if(mesgElement.length === 0)
-			$('p.alert-heading').append(`<p id='customErrorId'>${errorMessage}</p>`);
+		   if(mesgElement.length === 0){
+			// if(module === 'PMG')
+			// 	$('p.alert-heading').text('Current Status')
+			$('p.alert-heading').css({'display': 'inline'}).append(`<p id='customErrorId'>${errorMessage}</p>`);
+		   }
 		   else mesgElement.html(errorMessage);
 		  //$('span').filter(function () { return $(this).text() == buttonText; }).parent().css('color', '#737373').attr("disabled", "disabled");
 	  } else {
@@ -1157,14 +1160,16 @@ function setPSErrorMesg(errMesg, removeAlertHeadingText){
 		  //$('span').filter(function () { return $(this).text() == buttonText; }).parent().css('color', '#444').removeAttr('disabled');
 	  }
 	}
-  
+
 	$('button.close').on('click', () => {
-	  $('div.alert').css({
-		'height': '0',
-		'opacity': '0'
-	  });
-	});
-  
+		$('div.alert').css({
+			'height': '0',
+			'opacity': '0'
+		});
+
+		$('.fd-grid, .container-fluid').css({'margin-top': '0px'});
+	 });
+
 	var intervalId = setInterval(checkForErrors, 100);
 }
 
@@ -1175,8 +1180,8 @@ const chckRequiredFields = async function(){
         let isRequired = field.required;
         let val = field.value;
         if(isRequired && (val === undefined || val === null || val === ''))
-            mesg += `${fieldname} is required <br/>` 
-       
+            mesg += `${fieldname} is required <br/>`
+
     }
 
     if(mesg !== ''){
@@ -1214,7 +1219,7 @@ function clearLocalStorageItemsByField(fields) {
 	fields.forEach(field => {
 		let cachedFields = localStorage;
         for (let i = 0; i < cachedFields.length; i++) {
-	        const key = localStorage.key(i);        
+	        const key = localStorage.key(i);
 	        if (key.includes(field)){
 	        	localStorage.removeItem(key);
 	        }
@@ -1226,14 +1231,14 @@ function clearFormFields(fields){
 	for(let i = 0; i < fields.length; i++){
         const field = fields[i];
 		if(field !== 'InkSign'){
-		
+
 			var fieldproperties = fd.field(field);
 
 			if(fieldproperties._fieldCtx !== undefined){
 				var fieldDefaultVal = fieldproperties._fieldCtx.schema.DefaultValue;
-				
-				if (fieldDefaultVal !== undefined && fieldDefaultVal !== null) {}  
-				else              
+
+				if (fieldDefaultVal !== undefined && fieldDefaultVal !== null) {}
+				else
 					fd.field(field).clear();
 			}
 			else fd.field(field).clear();
@@ -1245,38 +1250,38 @@ function disableRichTextField(fieldname){
 
 	let elem = $(fd.field(fieldname).$el).find('.k-editor tr');
 
-	elem.each(function(index, element){	
+	elem.each(function(index, element){
 
 	 if(index === 0)
 		$(element).remove()
 
-	 else if(index === 1){	
+	 else if(index === 1){
 
 		let iframe = $(element).find('iframe');
-		
+
 		if(iframe.length > 0){
 
-			let content = iframe.contents();			
+			let content = iframe.contents();
 			let divElement = content.find('div');
 
-			var lblElement = $('<label>', { 
-			  for: 'inputField', 
-			}).html(divElement.html());	
-			
-			if(divElement.length === 0){				
-				lblElement = $('<label>', { 
-					for: 'inputField', 
+			var lblElement = $('<label>', {
+			  for: 'inputField',
+			}).html(divElement.html());
+
+			if(divElement.length === 0){
+				lblElement = $('<label>', {
+					for: 'inputField',
 				  }).html(content[0].activeElement.innerHTML);
 			}
 
-			lblElement.css({ 
+			lblElement.css({
 				'padding-top': '6px',
 				'padding-bottom': '6px',
 				'padding-left': '12px',
 				'background-color': '#e9ecef',
 				'width': '100%',
-				'border-radius': '4px'				
-			});		
+				'border-radius': '4px'
+			});
 
 			let tblElement = iframe.parent().parent().parent().parent();
 			tblElement.parent().append(lblElement);
@@ -1284,4 +1289,17 @@ function disableRichTextField(fieldname){
 		}
 	   }
 	})
+}
+
+
+function setPSHeaderMessage(newText) {
+
+	document.querySelectorAll('.alert-heading').forEach(el => {
+		el.style.display = 'block'; // Remove display: none
+		if (newText && el.textContent.includes("Oops! There seem to be some errors below:")) {
+            el.textContent = newText;
+        }
+    });
+
+	document.querySelector('.fd-grid.container-fluid').style.setProperty('margin-top', '5px', 'important');
 }

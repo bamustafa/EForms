@@ -1,0 +1,88 @@
+.fd-grid.container-fluid.divGrid {
+  position: relative;
+  border: 1px solid #ced4da; /* Set your desired border color and width */
+  padding-top: 26px; /* Add padding to create space inside the border */
+  margin: 10px -6px; /* Add margin to space out the container */
+  border-radius: 6px; /* Optional: rounded corners */
+  box-shadow: rgba(0, 0, 0, 0.1) 2px 4px 4px;
+  background-color: #f8f9fa2b !important;
+}
+
+.border-title {
+  position: absolute;
+  top: -12px; /* Adjust the position to sit on the border */
+  left: 20px; /* Align with the content */
+  background-color: #fcfcfc; /* Match the background color to your page */
+  padding: 0 10px; /* Add padding to the title */
+  font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  font-weight: bold;
+  color: #FF9800; /* Modern green accent */  
+  letter-spacing: 0.5px; /* Improves readability */
+  transition: all 0.3s ease; /* Smooth transitions for hover effects */
+}
+
+.fd-form .btn-primary {
+color: #444;
+background-color: #fdfdfd;
+border: 1px solid #ababab;
+padding: 5px 30px;
+display: inline-block;
+margin: 2px 2px;
+border-radius: 6px;
+font-family: Arial, Helvetica, sans-serif;
+font-size: 0.95em;
+font-weight: bold;
+width: max-content;
+}
+
+.fd-form .btn-outline-primary {
+color: #444;
+background-color: #fdfdfd;
+border: 1px solid #ababab;
+padding: 5px 30px;
+display: inline-block;
+margin: 2px 2px;
+border-radius: 6px;
+font-family: Arial, Helvetica, sans-serif;
+font-size: 0.95em;
+font-weight: bold;
+width: max-content;
+}
+
+.fd-form .row > .fd-field-title {
+  width: 180px;   
+  font-size: 13px;
+}
+
+.fd-form .fd-title-wrap {
+  font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.fd-form-container.container-fluid {
+  padding-left: 18px !important;  
+}
+
+.fd-grid.container-fluid {
+	backdrop-filter: blur(10px);
+  width: 100%;
+  margin-top: -10px;
+}
+
+.fd-form {
+  background-color: transparent !important;
+}
+
+.icon{
+padding-right: 3px;
+}
+
+.k-upload .k-dropzone .k-dropzone-hint {
+    color: #212529;
+    text-align: left;
+    margin-left: 15px;
+}

@@ -4,7 +4,7 @@ let single = [], multi = [], classMetArray = [];
 let metricsformFields = [];
 
 var onMetricsRender = async function () {
-  
+  debugger
   const startTime = performance.now();
     metricsformFields = {
       Description: fd.field("Description"),
@@ -22,7 +22,6 @@ var onMetricsRender = async function () {
   
     if(isConfidential)
       setConfidentialImage('Set Project Confidential');
-    
     
     category.$on("change", async function (value){
           let catId  = null;
@@ -46,7 +45,8 @@ var onMetricsRender = async function () {
     });       
   
     subCategory.$on("change", async function (values){
-              await setRenderLogic(values);
+        debugger;
+        await setRenderLogic(values);
     });
   
     showAll.$on("change", async function (value){
@@ -82,6 +82,7 @@ var onMetricsRender = async function () {
     let tableId = 'metricId';
       if(subCategoryArray !== null && subCategoryArray.length > 0){
 
+        debugger;
         await isDRD(subCategoryArray);
 
         $(`#${tableId}`).css('display', '');

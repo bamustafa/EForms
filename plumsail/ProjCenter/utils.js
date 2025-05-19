@@ -1,5 +1,6 @@
 
 var approvedBgColor = 'linear-gradient(to left, rgb(235, 245, 230), rgb(210, 240, 230), rgb(190, 230, 235), rgb(180, 200, 245), rgb(200, 190, 245), rgb(200, 190, 245), rgb(190, 185, 245))'
+
 //let dtVisited = {}
 //#region AUTOFIT DATATABLE COLUMNS WIDTH
 const handelTables = async function(singleCtl){
@@ -7,7 +8,7 @@ const handelTables = async function(singleCtl){
   let dts = [], isSingleTable = false;
   let tblName;
   let targetCtls = "div[role='tabpanel'] div.fd-sp-datatable-wrapper"; //w-100";
-                    
+
   if(singleCtl !== undefined && singleCtl !== null && singleCtl !== ''){
     targetCtls = singleCtl
     isSingleTable = true;
@@ -22,61 +23,61 @@ const handelTables = async function(singleCtl){
 
   if(dts.length > 0){
     dts.map(tblName => {
-      fd.control(tblName).ready().then(function(dt) {           
-          dt.$on('change', () => handleEvent(tblName, dt)); 
-          dt.$on('delete', () => handleEvent(tblName, dt));                  
+      fd.control(tblName).ready().then(function(dt) {
+          dt.$on('change', () => handleEvent(tblName, dt));
+          dt.$on('delete', () => handleEvent(tblName, dt));
         }
       )
     });
-  }  
+  }
 
-  if(isSingleTable){           
-    let dt = fd.control(tblName);              
+  if(isSingleTable){
+    let dt = fd.control(tblName);
     handleEvent(tblName, dt);
   }
   else{
     // $('ul.nav-tabs li a').on('click', function(){
     //   handleSingleTable()
-    // });    
+    // });
 
-    $(document).ready(function() {     
+    $(document).ready(function() {
 
       let tabIndices = new Map([
         [1, "FirstTab"],
         [3, "ThirdTab"]
-      ]);      
+      ]);
 
       tabIndices.forEach((value, key) => {
-        let uls = $("ul[role='tablist']").eq(key); 
-        let lis = uls.find('li'); 
-    
+        let uls = $("ul[role='tablist']").eq(key);
+        let lis = uls.find('li');
+
         lis.each(function(index) {
-            $(this).find('a').on('click', function(event) {                
-                handleSingleTable(); 
+            $(this).find('a').on('click', function(event) {
+                handleSingleTable();
             });
         });
-      });     
-    }); 
+      });
+    });
   }
 }
 
 const handleEvent = async function(tblName, dt) {
-  setTimeout(async () => { 
+  setTimeout(async () => {
     await FixWidget(dt, tblName)
     let tblElement = $(`div[internal-name='${tblName}'] table`)
-    FixListTabelRows(tblElement); 
+    FixListTabelRows(tblElement);
   }, 100);
 }
-  
+
 function FixWidget(dt, tblName){
- 
-    const clientWidth = dt.$el.clientWidth;   
+
+    const clientWidth = dt.$el.clientWidth;
     if(clientWidth > 0){
       const Rwidget = dt.widget;
       const columns = Rwidget.columns;
       const columnsLength = columns.length;
       const baseWidth = clientWidth / columnsLength;
-    
+
       const fixedWidths = {
           '': 30, // General
           '#commands': 60, // General
@@ -92,7 +93,7 @@ function FixWidget(dt, tblName){
           'Level': 400, //Sustainability
 
           'Firm': 500, // Other Parties & Firms
-          
+
           'ProjRole': 450, //Project Roles
           'EmpName': 450, //Project Roles
           'Created': 350, //Project Roles
@@ -111,21 +112,21 @@ function FixWidget(dt, tblName){
           'IsLead': 200, // Other Parties & Firms
           'Phases': 100 // Other Parties & Firms
       };
-    
+
       let remainingWidth = 0;
       columns.forEach((column, index) => {
-    
+
           const field = column.field !== undefined ? column.field : '';
           let colWidth = 0;
-    
+
           if (fixedWidths.hasOwnProperty(field)){
               colWidth = fixedWidths[field];
               remainingWidth = remainingWidth + (baseWidth - colWidth);
           }
-          else if(index == (columnsLength - 1))    
-            colWidth = baseWidth + remainingWidth;         
+          else if(index == (columnsLength - 1))
+            colWidth = baseWidth + remainingWidth;
           else colWidth = baseWidth;
-    
+
           dt._columnWidthViewStorage.set(field, colWidth);
           dt._columnWidthEditStorage.set(field, colWidth);
           Rwidget.resizeColumn(column, colWidth);
@@ -135,14 +136,14 @@ function FixWidget(dt, tblName){
       if (gridContent) {
           gridContent.style.overflowX = 'hidden';
       }
-    
+
       let rows = Rwidget._data;
       rows.forEach(row => {
           if (row.Status === 'Approved') {
               const rowElement = $(dt.$el).find('tr[data-uid="' + row.uid + '"]')[0];
               if (rowElement) {
                   //rowElement.style.backgroundColor = 'var(--lightgreen)';
-                  rowElement.style.background = approvedBgColor;        
+                  rowElement.style.background = approvedBgColor;
               }
           }
       });
@@ -150,15 +151,15 @@ function FixWidget(dt, tblName){
 
     //dtVisited[tblName] = true;
 }
-  
-function FixListTabelRows(tblElement){ 
-      
+
+function FixListTabelRows(tblElement){
+
     const columnsToCenter = ['', 'Used for BoQ', 'IsMTD', 'Status'];
     let cols = {};
-  
+
     tblElement.each(function(tblIndex, tbl){
         $(tbl).find('tr').each(function(trIndex, tr) {
-          if (trIndex === 0 ){    	
+          if (trIndex === 0 ){
            let childs = tr.children;
              if(childs.length > 0){
               $(childs).each(function(index, ctlr) {
@@ -170,11 +171,11 @@ function FixListTabelRows(tblElement){
               });
             }
           }
-        
+
           $(tr).find('td').each(function(tdIndex, td){
                 let $td = $(td);
                 let  colIndex = cols[tdIndex];
-  
+
                 if (colIndex !== undefined)
                     td.style.textAlign = 'center';
                 else{
@@ -183,21 +184,21 @@ function FixListTabelRows(tblElement){
                       $td.css('whiteSpace', 'nowrap');
                     }
                 }
-          });                			
+          });
         });
-    });    
+    });
 }
 
 function handleSingleTable(){
   let tabElements = $("div[role='tabpanel'].active div.fd-sp-datatable-wrapper");
   tabElements.each(function() {
       let tabElement = $(this);
-      if (tabElement.length > 0) {              
-          let tblName = tabElement.attr('internal-name');   
-           //let isTblExist = dtVisited[tblName] 
+      if (tabElement.length > 0) {
+          let tblName = tabElement.attr('internal-name');
+           //let isTblExist = dtVisited[tblName]
            //if(isTblExist === undefined){
-            let dt = fd.control(tblName);              
-            handleEvent(tblName, dt);        
+            let dt = fd.control(tblName);
+            handleEvent(tblName, dt);
            //}
       }
   });
@@ -218,10 +219,10 @@ let getTabFields = async function(tabName){
       let tab = fd.container(tabName).tabs[i];
       let isTabExist = tabArray.filter(item=>{ item.tabIndex === i });
         if(isTabExist.length > 0) continue;
-      
+
         let TabTitle = tab.title;
         if(TabTitle === 'Classification & Metrics' || TabTitle === 'Contract Review'){
-          
+
           let mesg = '';
           if(TabTitle === 'Contract Review'){
             let obj;
@@ -254,8 +255,8 @@ let getTabFields = async function(tabName){
             let isValueNull = isNullOrEmpty(fd.field(field.internalName).value);
             let htmlElement =  $(`div.tabset ul li.nav-item a:contains(${TabTitle})`);
 
-            if(field.required && isValidField && isValueNull){ 
-              errorMesg = 'Error';  
+            if(field.required && isValidField && isValueNull){
+              errorMesg = 'Error';
                   tabArray.push({
                     tabIndex: i,
                     tabTitle: TabTitle,
@@ -270,7 +271,7 @@ let getTabFields = async function(tabName){
           }
         }
     }
-  
+
     for(const tab of tabArray){
       let tabIndex = tab.tabIndex;
       let aTag = tab.htmlElement;
@@ -306,7 +307,7 @@ let setTabErrorIcon = async function(tabIndex, element){
   let errorIconId = `errorIcon${tabIndex}`;
 
   if($(`#${errorIconId}`).length === 0){
-  
+
     let imgUrl = `${_webUrl}${_layout}/Images/errorIcon.png`;
     let img = $('<img id="' + errorIconId + '" src="' + imgUrl + '" />').css({
                   "position": "absolute",
@@ -319,7 +320,7 @@ let setTabErrorIcon = async function(tabIndex, element){
 
      $(element).parent().css("position", "relative").append(img);
    }
-  
+
 }
 //#endregion
 
@@ -332,7 +333,7 @@ dt.$on('change', async function(item){
 
      removeEdit(dtName);
      let itemId = item.itemId
-    
+
      const listUrl = dt.listRootFolder;
      const tempList = await _web.getList(listUrl).get();
      const listname  = tempList.Title;
@@ -343,7 +344,7 @@ dt.$on('change', async function(item){
      if(val === undefined || val === null){
         let list = _web.lists.getByTitle(listname);
         await list.items.getById(itemId).delete()
-           .then(()=>{ 
+           .then(()=>{
            dt.refresh();
            FixWidget(dt);
           })
@@ -368,7 +369,7 @@ dt.$on('change', async function(item){
       _sendEmail(_module, `${emailTemplate}|${projectNo}`, '', '', 'Sus_Del', '');
     }
    }
-   setTimeout(() => { 
+   setTimeout(() => {
     fixTableCols(dtName)
    }, 200);
 })
@@ -383,7 +384,7 @@ dt.$on('edit', function(editData){
     firmOptions.map((option, index)=>{
       let value = option[fieldOnList] !== "" ? option[fieldOnList][0].lookupValue : "";
       if(value !== ""){
-        if(index === 0) 
+        if(index === 0)
         filterQuery += ` ${fieldQuery} ne '${value}' `
         else filterQuery += filterQuery === '' ? `${fieldQuery} ne '${value}' ` : `and ${fieldQuery} ne '${value}' `
       }
@@ -396,15 +397,15 @@ dt.$on('edit', function(editData){
 
   if(secondFieldonTable !== undefined && secondFieldonTable !== null){
     if (editData.formType === 'New' || editData.formType === 'Edit'){
-      setTimeout(() => { 
+      setTimeout(() => {
         if(editData.formType === 'Edit')
           editData.field(fieldOnList).disabled = true;
         editData.field(secondFieldonTable).disabled = true;
         }, 200);
     }
-      
+
     editData.field(fieldOnList).$on('change', async function(value){
-    
+
       if(value !== undefined && value !== null && value !== ''){
         let query = `${fieldOnList}/Id eq '${value.LookupId}'`;
         let options;
@@ -412,7 +413,7 @@ dt.$on('edit', function(editData){
         let headerFieldText = secondFieldonTable
         if(secondList === null){
           debugger;
-          options = result.filter((item) =>{ 
+          options = result.filter((item) =>{
              if(item.title === value.LookupValue)
               return item.title
           })
@@ -460,7 +461,7 @@ if(textHeaders.length > 0){
   });
 }
 
-setTimeout(() => { 
+setTimeout(() => {
   let elem = $(htmlDT).find("tr[data-role='editable'] td").eq(colIndex); //3
   let input = elem.length > 0 ? $(elem).find('input'): undefined;
   let listId = '';
@@ -476,7 +477,7 @@ setTimeout(() => {
       let liElement = list.find('li');
       liElement.each(function(index, element){
       let option = element.innerText.trim()
-      let isFound = options.filter(item => { 
+      let isFound = options.filter(item => {
         return option === item.Title
       });
 
@@ -506,7 +507,7 @@ const removeEdit = async function(dtName){
 let btns = $('.k-grid-update, .k-grid-cancel')
 btns.each(function(index, ahref){
   $(this).on('click', function(){
-  setTimeout(() => { 
+  setTimeout(() => {
     fixTableCols(dtName)
     }, 200);
   });
@@ -518,27 +519,27 @@ function fixTableCols(dtName){
   let tables = $(`div [internal-name='${dtName}'] table`)
   tables.each(function(tblIndex, tbl){
       let editLinks = $(this).find('a.k-grid-edit')
-      if(editLinks.length > 0) 
+      if(editLinks.length > 0)
           editLinks.remove();
 
       $(tbl).find('tr').each(function(trIndex, tr) {
-        
-          if (trIndex === 0){        
+
+          if (trIndex === 0){
              let childs = tr.children;
              if(childs.length > 0){
                childs[0].style.textAlign = 'center';
                childs[4].style.textAlign = 'center';
 
                //tr.removeChild(childs[1]);
-              }                          
+              }
           }
-          
+
          $(tr).find('td').each(function(tdIndex, td) {
               if (tdIndex === 4){
                   td.style.textAlign = 'center'
               }
               //else if( tdIndex === 1) tr.removeChild(td);
-          });                         
+          });
       });
   });
 }
@@ -554,7 +555,7 @@ const enable_Disable_Tabs = async function(TabNames, isDisabled){
 	  tab.disabled = isDisabled;
 	})
 }
-  
+
 function getTabIndex(tabTitle, tabTooltip, isDisabled){
 	let index;
   //$('div.tab-content ul li a')
@@ -583,7 +584,7 @@ function getTabIndex(tabTitle, tabTooltip, isDisabled){
 
 		 return false;
 	   }
-	}) 
+	})
 	return index
 }
 //#endregion
@@ -591,7 +592,7 @@ function getTabIndex(tabTitle, tabTooltip, isDisabled){
 const getCurrentUserRole = async function () {
   let currentUser = await GetCurrentUser();
   let isRoleFound = false;
-  
+
   if (_isMain ||  _module === 'CR'){
     const roleChecks = [
       { key: '_isPM', role: 'Manager', checkFunction: isUserFound },
@@ -602,7 +603,7 @@ const getCurrentUserRole = async function () {
     ];
 
     const rolePromises = roleChecks.map(async ({ key, role, checkFunction, isGroup }) => {
-     
+
       if(isRoleFound)
         return {key, undefined};
       const result = isGroup ? await checkFunction(role) : await checkFunction(role, currentUser);
@@ -659,7 +660,7 @@ const getCurrentUserRole = async function () {
     _isUserAllowed = true;
     return;
   }
-    
+
   const dpirRoleChecks = [
     { key: '_isGLMain', field: 'GLMain' },
     { key: '_isGL', field: 'GL' },
@@ -682,11 +683,11 @@ const getCurrentUserRole = async function () {
     }
     else {
       camlQuery = getQuery(field, currentUser.Title);
-    
+
       const items = await _web.lists.getByTitle(RevDepartments).getItemsByCAMLQuery(camlQuery);
       isFound = items.length > 0;
 
-      if (_isPM || _isPD || _isQM) 
+      if (_isPM || _isPD || _isQM)
         isFound = false;
 
       window[key] = isFound;
@@ -711,12 +712,12 @@ const getCurrentUserRole = async function () {
       localStorage.setItem('_isReader', _isReader);
     }
 
-    
+
     if(isFound)
       console.log(`Role is ${key}`);
   });
 
-  
+
   if (!_isUserAllowed && !_isConfidential) {
     _isReader = true;
     _isUserAllowed = true;
@@ -726,7 +727,7 @@ const getCurrentUserRole = async function () {
 }
 
 const getTradeRole = async function (masterId, trade){
-  
+
   let currentUser = await GetCurrentUser();
   trade = TextQueryEncode(trade);
 
@@ -765,7 +766,7 @@ const getTradeRole = async function (masterId, trade){
 
 function getQuery(field, currentName, isRole){
   let query = '<View>';
-  
+
   if(isRole){ //ROLES LIST
     query += `<ViewFields>
                  <FieldRef Name='Group' />
@@ -774,7 +775,7 @@ function getQuery(field, currentName, isRole){
               <Query><Where>
                 <Eq><FieldRef Name='${field}' /><Value Type='UserMulti'>${currentName}</Value></Eq>`
   }
-  
+
   else{
     query += '<Query><Where>'
     let masterId = _itemId === undefined ? fd.field("MasterID").value.LookupValue : _itemId
@@ -785,11 +786,11 @@ function getQuery(field, currentName, isRole){
                   <Eq><FieldRef Name='ID' /><Value Type='Lookup'>${masterId}</Value></Eq>
                 </And>`
     }
-       
+
     else{
       if(_isPM || _isPD || _isQM)
         query += `<Eq><FieldRef Name='MasterID' /><Value Type='Lookup'>${masterId}</Value></Eq>`
-      else 
+      else
         query += `<And>
                     <Eq><FieldRef Name='${field}' /><Value Type='UserMulti'>${currentName}</Value></Eq>
                     <Eq><FieldRef Name='MasterID' /><Value Type='Lookup'>${masterId}</Value></Eq>
@@ -805,10 +806,10 @@ function getQuery(field, currentName, isRole){
 }
 
 let getLLChecker = async function(trade, isCurrentUser){
-  
+
   let currentUser = await GetCurrentUser();
   let fieldname = 'Users'
-  
+
   if(isCurrentUser){
     let query =  { ViewXml: `<View><Query><Where>
                               <Eq><FieldRef Name='${fieldname}' /><Value Type='UserMulti'>${currentUser.Title}</Value></Eq>
@@ -874,7 +875,7 @@ let getLLChecker = async function(trade, isCurrentUser){
 }
 
 const isUserFound = async function(fieldname, currentUser){
-  
+
   let users = [];
   if(_isMain)
     users = fd.field(fieldname).value;
@@ -925,20 +926,20 @@ var _HideFields = async function(fields, isHide, isText){
 		if(isHide || isHide == undefined)
 		  $(field.$parent.$el).hide();
       //fd.field(field).hidden = true;
-		else $(field.$parent.$el).show(); //fd.field(field).hidden = false; 
+		else $(field.$parent.$el).show(); //fd.field(field).hidden = false;
 	}
 }
 
 fd.spSaved(function(result){
     try{
       debugger;
-        let query = _isNew || _module === 'CR' ? 
+        let query = _isNew || _module === 'CR' ?
                    `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${result.Id}</Value></Eq></Where>` :
                    '';
-        
+
         if(_isNew && _module === 'MTD' && !formFields.IsMTD )
-            _sendEmail(_module, 'MTD_New_Email' + '|' + projectNo, query, '', 'MTD_New', '', CurrentUser);                
-        
+            _sendEmail(_module, 'MTD_New_Email' + '|' + projectNo, query, '', 'MTD_New', '', CurrentUser);
+
         else if(_module === 'GIS'){
             if(_isNew)
              _sendEmail(_module, 'GIS_Email' + '|' + projectNo, query, '', 'GIS_New', '', CurrentUser)
@@ -949,12 +950,12 @@ fd.spSaved(function(result){
         else if(_module === 'CR'){
           let email_name = '';
           email_name =  getCREmailName(query);
-          
+
           if(email_name !== '')
             _sendEmail(_module, email_name, query, '', ``, '', CurrentUser)
         }
     }
-    catch(e){console.log(e);}                             
+    catch(e){console.log(e);}
 })
 
 let getCREmailName = function(query){
@@ -998,9 +999,9 @@ let getCREmailName = function(query){
       else if(isPMTask) // PhCR PMTask
          email_name = `PM_PhCR_Email|${projectNo}`
 
-  
+
     }
-  
+
   return email_name;
 }
 
@@ -1011,7 +1012,7 @@ const getListOptions = async function(listname, fieldName, expandField, query){
 
   query = query !== undefined && query !== '' ? query : '';
   let col;
-  
+
   if(typeof fieldName === 'string' || fieldName === undefined)
     col = fieldName === undefined ? 'Title' : `${fieldName}/Title,${fieldName}/Id`
   else  col = fieldName
@@ -1048,7 +1049,7 @@ const getListOptions = async function(listname, fieldName, expandField, query){
             }
             else {
               Id = expandField && item[expandFieldName] !== null && item[expandFieldName] !== undefined ? item[expandFieldName].Id : item.Id;
-              if(typeof col === 'string') 
+              if(typeof col === 'string')
                 lblText = expandField && item[expandFieldName] !== null && item[expandFieldName] !== undefined ? item[expandFieldName].Title : item[col];
               else lblText = item[fieldName[1]]
             }
@@ -1075,7 +1076,7 @@ const isDRD = async function(subCategory){
       if(value.IsDRD)
         isDRD = true
   });
-  if(isDRD) 
+  if(isDRD)
     fd.container('DRDAccordion').hidden = false;
   else fd.container('DRDAccordion').hidden = true;
 }
@@ -1085,20 +1086,20 @@ const appBar = async function(){
   let masterNavBar = $('#SuiteNavPlaceHolder');
   let childMenu = `<div class="sp-appBar" id="sp-appBar" role="navigation" aria-label="App bar" tabindex="-1">
                       <ul class="sp-appBar-linkContainer">`;
-                      
+
   appBarItems.map(item=>{
         let editors = item.editors;
         let readers = item.readers;
         let className = getClassName(item.iconTitle)
-        
+
         childMenu += `<li class="sp-appBar-linkLi" data-automation-id="sp-appBar-linkLi-globalnav">
                               <div class="sp-appBar-linkLiDiv">
                                 <a class="sp-appBar-link ${className}" role="button" href="${item.redirectUrl}" onclick="openInCustomWindow(event)" style="display: flex; flex-direction: column; align-items: center; text-decoration: none;">
                                   <svg class= ${className} xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="23" height="23" viewBox="${item.viewBox}">
-                                    ${item.svgPath}                                  
+                                    ${item.svgPath}
                                   </svg>
-                                <span style="font-size: 10px; color: black; margin-top: 3px;">${item.iconTitle}</span>                                                             
-                                </a>                              
+                                <span style="font-size: 10px; color: black; margin-top: 3px;">${item.iconTitle}</span>
+                                </a>
                                 <div class="sp-appBar-tooltipDiv" style="position: absolute; left: 100%; top: 50%; transform: translateX(10px) translateY(-50%);">
                                   <span class="sp-appBar-tooltip" role="tooltip" id="sp-appbar-tooltiplabel-globalnav">${item.tooltip}</span>
                                 </div>
@@ -1112,14 +1113,14 @@ const appBar = async function(){
 function getClassName(module){
     let className = '';
     switch(module){
-      case 'GIS': 
+      case 'GIS':
         className = !_isPD && !_isPM && !_isGIS && !_isQM ? 'dimmed-svg' : '';
       break;
 
       case 'Roles':
           className = !_isPD && !_isPM && !_isQMOwner && !_isSusOwner && !_isQM && !_isSus ? 'dimmed-svg' : '';
       break;
-      
+
       case 'D365':
         className = !_isPD && !_isPM && !_isGLMain && !_isGL && !_isQM ? 'dimmed-svg' : '';
         break;
@@ -1142,7 +1143,7 @@ function openInCustomWindow(event) {
   const newWindowHeight = Math.floor(windowHeight * 0.9) + 50; // 85% of the current window's height
 
   const newWindowTop = Math.floor((windowHeight - newWindowHeight) / 2) + 200;
-  const newWindowLeft = Math.floor((windowWidth - newWindowWidth) / 2);    
+  const newWindowLeft = Math.floor((windowWidth - newWindowWidth) / 2);
 
   const windowFeatures = `toolbar=no,scrollbars=yes,resizable=yes,width=${newWindowWidth},height=${newWindowHeight},top=${newWindowTop},left=${newWindowLeft},toolbar=no`;
  let fullProjTitle = localStorage.getItem('FullProjTitle');
@@ -1200,9 +1201,9 @@ function setPageStyle(ProjTitle){
   toolbarElements.forEach(function(toolbar) {
       toolbar.style.display = "flex";
       toolbar.style.justifyContent = "flex-end";
-      toolbar.style.marginRight = "25px";            
-  });   
-  
+      toolbar.style.marginRight = "25px";
+  });
+
   document.querySelectorAll('.CanvasZoneContainer.CanvasZoneContainer--read').forEach(element => {
       element.style.marginTop = '7px';
   });
@@ -1225,7 +1226,7 @@ function setTabStyles(tabIndex){
 
   //let colors = ['red', 'green', 'blue', 'yellow', 'gray', 'purple', 'navy'];
   //let colors = ['rgb(235, 245, 230)', 'rgb(210, 240, 230)', 'rgb(190, 230, 235)', 'rgb(180, 200, 245)', 'rgb(200, 190, 245)', 'rgb(200, 190, 245)', 'rgb(190, 185, 245)'];
-  
+
   let color = 'rgb(39 22 217)'
 
   // [
@@ -1235,25 +1236,25 @@ function setTabStyles(tabIndex){
   //   'rgb(180, 200, 245)', // Light Blue
   //   'rgb(190, 230, 235)', // Light Aqua
   //   'rgb(210, 240, 230)', // Soft Mint
-  //   'rgb(235, 245, 230)', // Light Green   
+  //   'rgb(235, 245, 230)', // Light Green
   // ];
-  
+
   let bgcolors = ['#e18b8b', '#aad5aa', '#0000ffa6', '#ffff0042', '#80808066', '#80008070', '#0000802e'];
   let lis = uls.find('li');
 
   let activeIndex = lis.find('a.active').parent().index();
-  lis.find('a.active').parent().css({ 
-   'border-bottom': `3px solid ${color}`, 
+  lis.find('a.active').parent().css({
+   'border-bottom': `3px solid ${color}`,
     'transition': '0.3s box-shadow ease',
-    //'background-color': bgcolors[activeIndex] 
+    //'background-color': bgcolors[activeIndex]
     }); //set Default Active
 
   lis.each(function(index) {
     let bgcolor = bgcolors[index];
     let clickFlag = false;
-    
+
     $(this).find('a').click(function(){
-      
+
       clickFlag = true;
       let selectedLis = $("ul[role = 'tablist'").eq(tabIndex).children()
       selectedLis.css({
@@ -1264,23 +1265,23 @@ function setTabStyles(tabIndex){
       let activeLink = $(this);
       if(activeLink.length > 0){
        let activeIndex = activeLink.parent().index();
-       activeLink.parent().css({ 
+       activeLink.parent().css({
          'border-bottom': `3px solid ${color}`
-         //'background-color': bgcolors[activeIndex] 
+         //'background-color': bgcolors[activeIndex]
         }); // On mouse over
       }
     })
 
-    $(this).hover(     
-      function() {      
+    $(this).hover(
+      function() {
         if(clickFlag){
            if( $(this).find('a.active').length === 0 )
             clickFlag = false;
           else return
-        }          
+        }
         let activeText = '';
         let activeLink = $(this).find('a.active');
-        
+
         if (activeLink.length > 0) {
           activeText = activeLink.text()
           let hoverText = $(this).find('a').text()
@@ -1288,7 +1289,7 @@ function setTabStyles(tabIndex){
             let activeIndex = activeLink.parent().index();
             $(this).css({
               'border-bottom': `3px solid ${colors}`
-              //'background-color': bgcolors[activeIndex]            
+              //'background-color': bgcolors[activeIndex]
             }); // On mouse over
           }
         }
@@ -1307,37 +1308,37 @@ function setTabStyles(tabIndex){
           activeText = activeLink.text()
           let hoverText = $(this).find('a').text()
           if(activeText === hoverText){
-        
+
             $(this).css({
               'border-bottom': `3px solid ${color}`
-              //'background-color': bgcolors[activeIndex]            
+              //'background-color': bgcolors[activeIndex]
             }); // On mouse over
           }
           else{
             $(this).css({
               //'background-color': '#f8f9fa',
               'border-bottom': '0px none transparent'
-            }); 
+            });
           }
         }
         else $(this).css({
           //'background-color': '#f8f9fa',
           'border-bottom': '0px none transparent'
-        }); 
+        });
 
-         
+
       }
     );
 
   })
 
   let activeTab = $('a.active').first().parent()
-  activeTab.css('background-color','#5dc7b2b0'); 
+  activeTab.css('background-color','#5dc7b2b0');
 
   let TabLvlOne = $('ul.nav-tabs').first()
-  TabLvlOne.find('a').on('click', function(){    
+  TabLvlOne.find('a').on('click', function(){
     $('a.active').first().parent().parent().children().css('background-color','');
-    $(this).parent().css('background-color','#5dc7b2b0'); 
+    $(this).parent().css('background-color','#5dc7b2b0');
   })
 }
 
@@ -1353,11 +1354,11 @@ const getEditableTabFields = async function(){
     let TabTitle = tab.title;
     let isTabExist = tabArray[TabTitle]
       if(isTabExist !== undefined) continue;
-    
+
       let internalFields = []
       for(var j = 0; j < fields.length; j++){
         let field = fields[j];
-        
+
         //let fieldTitle = field.title;
         let isReadOnly = field._readonly !== undefined ? JSON.parse(field._readonly.toLowerCase()) : false;
 
@@ -1372,7 +1373,7 @@ const getEditableTabFields = async function(){
 
 let getReviewTrades = async function(masterId){
   var itemArray = [];
-  
+
   const list = _web.lists.getByTitle(RevDepartments);
   let items = await list.items
                  .select("Id,MasterID/Id,Title,Status,RejRemarks,ISLead,GLMain/Title,IsNotified")
@@ -1380,7 +1381,7 @@ let getReviewTrades = async function(masterId){
                  .filter(`MasterID/Id eq ${masterId}`)
                  .orderBy("Title", true)
                  .get();
-  
+
   if(items.length > 0){
     for(var i = 0; i < items.length; i++){
       var item = items[i];
@@ -1413,5 +1414,5 @@ function getConsoleLogRoles(){
   console.log(`_isTeamMember = ${localStorage.getItem('_isTeamMember')}`);
   console.log(`_isLLChecker = ${localStorage.getItem('_isLLChecker')}`);
 
-  console.log(`_isReader = ${localStorage.getItem('_isReader')}`); 
+  console.log(`_isReader = ${localStorage.getItem('_isReader')}`);
 }

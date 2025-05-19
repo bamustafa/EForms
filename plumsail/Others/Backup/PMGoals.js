@@ -1,14 +1,13 @@
 var _web, _webUrl, _siteUrl, _layout, _module = '', _formType = '', _list, _itemId;
 
-var _isSiteAdmin = false, _isNew = false, _isEdit = false, _isDisplay = false, _isPM = false, _isChildForm = false;
+var _isSiteAdmin = false, _isNew = false, _isEdit = false, _isDisplay = false, _isPM = false;
 
 var _manager = '', _employeeId = '', _currentUser, _formFields = {};
 const greenColor = '#5FC9B3', redColor = '#F28B82', yellowColor = '#6c757d';
 
 var onRender = async function (relativeLayoutPath, moduleName, formType){
-    try {
+    try{
 
-    _isChildForm = moduleName === 'CPG' ? true : false;
       _layout = relativeLayoutPath;
 
       _formFields = {
@@ -29,33 +28,20 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
 
         Submit: fd.field('Submit'),
         Manager: fd.field('Manager'),
-        EmployeeId: fd.field('EmployeeId'),
-        goalsDT: fd.control('SPDataTable1')
+        EmployeeId: fd.field('EmployeeId')
     }
 
       await loadScripts().then(async ()=>{
         showPreloader();
+        await extractValues(moduleName, formType);
+        await setCustomButtons();
 
-          await extractValues(moduleName, formType);
-          await setCustomButtons();
-
-          if (_isEdit) {
-              //await handleEditForm();
-              if (_isChildForm) {
-                  initializeEvents();
-                  validateGoals();
-                  setTableStyle();
-              }
-              else _HideFormFields([_formFields.Submit], true);
-          }
-          else if (_isNew) {
-              if (_isChildForm) {
-                  // applyDataTable();
-                  initializeEvents();
-                  validateGoals();
-              }
-              else _HideFormFields([_formFields.Submit, _formFields.Manager, _formFields.EmployeeId], true);
-          }
+        if(_isEdit){
+           await handleEditForm();
+           _HideFormFields([_formFields.Submit], true);
+        }
+        else if(_isNew)
+           _HideFormFields([_formFields.Submit, _formFields.Manager, _formFields.EmployeeId], true);
 
         if(_isDisplay){
             await handleDisplayForm();
@@ -83,18 +69,12 @@ var Goal_newForm = async function(){
 
       setIconSource("overview-icon", svguserinfo);
       setIconSource("attachment-icon", svgattachment);
+
       formatingButtonsBar('Human Resources: Performance Management Goals');
   }
   catch(err){
       console.log(err.message, err.stack);
   }
-}
-
-function hideButtons() {
-$('.fd-sp-datatable-toolbar-primary-commands').attr("style", "display: none !important;");
-$('.col-sm-12.Manager-Buttons').attr("style", "display: flex !important;justify-content:end;");
-$('.fd-grid.container-fluid').attr("style", "justify-content:space-between; gap:20px;");
-
 }
 
 var handleEditForm = async function(){
@@ -107,13 +87,6 @@ var handleEditForm = async function(){
     setIconSource("attachment-icon", svgattachment);
 
     formatingButtonsBar('Human Resources: Performance Management Goals');
-    if(_isEdit && _isPM){
-      hideButtons();
-    }
-
-
-    if (_isChildForm)
-        return;
 
     let arrayFields = [_formFields.Title, _formFields.StartDate, _formFields.EndDate, _formFields.Level, _formFields.GoalCategory, _formFields.DateFinished, _formFields.PercentComplete, _formFields.Status, _formFields.Attachments];
 
@@ -121,7 +94,7 @@ var handleEditForm = async function(){
     $(_formFields.ReviewedDate.$parent.$el).hide();
 
     _HideFormFields([_formFields.Submit, _formFields.EmployeeId], true);
-
+    
     if(_formFields.ApprovalStatus.value === 'Approved'){
         $('span').filter(function(){ return $(this).text() === submitDefault; }).parent().attr("disabled", "disabled");
         setPSErrorMesg('PM has Approved this Goal');
@@ -167,7 +140,6 @@ var handleEditForm = async function(){
         if (_isPM) {
             _DisableFormFields(arrayFields, true);
             disableRichTextField(_formFields.Overview.title);
-
         }
     }
 }
@@ -232,9 +204,7 @@ var extractValues = async function(moduleName, formType){
 
     else if(_formType === 'Edit'){
         _isEdit = true;
-          _itemId = fd.itemId;
-          localStorage.setItem('_isEdit', _isEdit);
-          handleEditForm();
+        _itemId = fd.itemId;
     }
     else if(_formType === 'Display')
       _isDisplay = true;
@@ -244,65 +214,49 @@ var extractValues = async function(moduleName, formType){
     _list = list.Title;
 
     _currentUser = await pnp.sp.web.currentUser.get();
-
     let serviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetEmployeeManager&Email=${_currentUser.Email}`;
     let response = await getRestfulResult(serviceUrl)
 
-    if (response && response.length > 0){
-        _manager = response[0].Email;
-        _manager = 'ali.hsleiman@dar.com';
+    if(response && response.length > 0){
+         _manager = response[0].Email;
+         _manager = 'ali.hsleiman@dar.com';
 
-        if (_currentUser.Email.toLowerCase() === _manager.toLowerCase())
+         if(_currentUser.Email.toLowerCase() === _manager.toLowerCase())
             _isPM = true;
 
-        serviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetEmployeeIdFromUPN&Email=${_currentUser.Email}`;
-        let response1 = await getRestfulResult(serviceUrl)
-        if (response1)
-            _employeeId = response1.employeeId;
+         serviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetEmployeeIdFromUPN&Email=${_currentUser.Email}`;
+         let response1 = await getRestfulResult(serviceUrl)
+         if(response1)
+          _employeeId = response1.employeeId;
 
-        if (formType === 'New'){
-            if (_isChildForm) {
-                fd.field('Manager').value = _manager;
-                _HideFormFields([_formFields.Manager], true);
-            }
-            else {
-                fd.field('EmployeeId').value = _employeeId;
-                fd.field('Manager').value = _manager;
-                fd.field('Submit').value = true;
-            }
-        }
+         if(formType === 'New'){
+          fd.field('EmployeeId').value = _employeeId;
+          fd.field('Manager').value = _manager;
+          fd.field('Submit').value = true;
+         }
     }
 
-    _isPM = true; // DISABLE FOR LIVE
     console.log(_isPM)
-
-    if (_isChildForm) {
-      _formFields.goalsDT.dialogOptions = {
-          width: '65%',
-          height: '82%'
-        }
-    }
 
     //  const endTime = performance.now();
     //  const elapsedTime = endTime - startTime;
     //  console.log(`extractValues: ${elapsedTime} milliseconds`);
 }
 
-//THIS setCustomButtons FOR SINGLE ITEM FORM
 var setCustomButtons = async function () {
 
-     fd.toolbar.buttons[0].style = "display: none;";
-     fd.toolbar.buttons[1].style = "display: none;";
+    fd.toolbar.buttons[0].style = "display: none;";
+    fd.toolbar.buttons[1].style = "display: none;";
+
     if(_isNew)
       await setButtonActions("Accept", submitDefault, `${greenColor}`);
 
-    else if (!_isChildForm && _isEdit && _isPM && _formFields.ApprovalStatus.value === ''){
+    else if (_isEdit && _isPM && _formFields.ApprovalStatus.value === ''){
       fd.toolbar.buttons.push({
         icon: 'Accept',
         class: 'btn-outline-primary',
         text: 'Approve',
         style: `background-color:${greenColor}; color:white;`,
-
           click: async function () {
               if (fd.isValid) {
                   showPreloader();
@@ -312,6 +266,7 @@ var setCustomButtons = async function () {
                   fd.field('ReviewedDate').value = new Date();
                   $(_formFields.ApprovalStatus.$parent.$el).hide();
                   $(_formFields.ReviewedDate.$parent.$el).hide();
+                  await fetchResultToDynamics().then(() => { fd.save(); })
               }
             }
       });
@@ -335,12 +290,8 @@ var setCustomButtons = async function () {
             }
       });
     }
-     else if(_isEdit && !_isPM /*&& _formFields.ApprovalStatus.value === 'Rejected'*/){
-       await setButtonActions("Accept", submitDefault, `${greenColor}`);
-     }
-    else if(_isEdit && _isPM){
-      await setButtonActions("Accept","Approve",`${greenColor}`);
-      await setButtonActions("ChromeClose","Reject","red");
+    else if(_isEdit && !_isPM && _formFields.ApprovalStatus.value === 'Rejected'){
+      await setButtonActions("Accept", submitDefault, `${greenColor}`);
     }
 
     await setButtonActions("ChromeClose", "Cancel", `${yellowColor}`);
@@ -357,84 +308,30 @@ const setButtonActions = async function(icon, text, bgColor){
           class: 'btn-outline-primary',
           text: text,
           style: `background-color: ${bgColor}; color: white;`, //color of font button//
-        click: async function () {
+          click: async function() {
 
-            debugger;
-            if (text == "Close" || text == "Cancel"){
-                showPreloader();
-                fd.close();
+            if(text == "Close" || text == "Cancel"){
+              showPreloader();
+              fd.close();
             }
-            if(text =="Approve" || text== "Reject"){
-              let selectedItems = _formFields.goalsDT.selectedItems;
-              let goals = _formFields.goalsDT.widget.dataItems();
-
-              if (!selectedItems || selectedItems.length === 0) {
-                  alert("Please select at least one goal before proceeding.");
-                  return;
-              }
-
-                try {
-                    if (text === 'Approve')
-                        localStorage.setItem('ApprovalStatus', 'Approved')
-                    else localStorage.setItem('ApprovalStatus', 'Rejected')
-
-                  let isApproved = text === "Approve" ? true : false;
-                  const fetchPromises = selectedItems
-                        //.filter(goal => goal.ApprovalStatus === 'Approved')
-                        .map(goal => fetchResultToDynamics(goal, isApproved));
-                  await Promise.all(fetchPromises);
-
-                  // ✅ Refresh the DataTable to reflect changes
-                    _formFields.goalsDT.widget.dataSource.read();
-                    _formFields.goalsDT.refresh().then(() => {
-                        setTimeout(() => { setTableStyle(); }, 100);
-                    });
-
-                  // ✅ Check if all goals are reviewed
-                  let allReviewed = goals.every(goal => goal.ApprovalStatus === "Approved" || goal.ApprovalStatus === "Rejected");
-
-                  if (allReviewed) {
-                    alert("All Goals are Now Reviewed")
-                  } else alert("Goals Updated Successfully.");
-                  fd.save();
-              } catch (error) {
-                  console.error("Error updating Approval Status:", error);
-              }
-
-            }
-
-            else if (text == submitDefault) {
+            else if(text == submitDefault){
                 //if (confirm('Are you sure you want to Submit?')){
                 if (fd.isValid) {
-                    if (_isChildForm && _isNew) {
-                        //await handleSubmit();
-                        debugger;
-                        console.log('new child form')
-                         fd.save();
-                    }
-
+                    if (_isEdit && _formFields.ApprovalStatus.value === 'Approve')
+                        await fetchResultToDynamics().then(() => { fd.save(); })
                     else {
-                        if (_isChildForm)
-                            fd.save();
-                        else {
-                            if (_isEdit && _formFields.ApprovalStatus.value === 'Approve')
-                                await fetchResultToDynamics(null, true).then(() => { fd.save(); })
-                            else {
-                                showPreloader();
-                                if (_isEdit && !_isPM && _formFields.ApprovalStatus.value === 'Rejected') {
-                                    fd.field('ApprovalStatus').value = '';
-                                    fd.field('ReviewedDate').value = '';
-                                }
-                                fd.save();
-                            }
+                        showPreloader();
+                        if (_isEdit && !_isPM && _formFields.ApprovalStatus.value === 'Rejected') {
+                            fd.field('ApprovalStatus').value = '';
+                            fd.field('ReviewedDate').value = '';
                         }
+                        fd.save();
                     }
+                    //}
                 }
             }
-}
-
+        }
     });
-
 }
 
 function setToolTipMessages(){
@@ -489,33 +386,25 @@ function setIconSource(elementId, iconFileName) {
   }
 }
 
-fd.spSaved(async function(result){
+fd.spSaved(async function(result) {
 
   try {
-        debugger;
         _itemId = result.Id;
         let query = `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${_itemId}</Value></Eq></Where>`;
 
-       if(_isEdit){
-          let status = _isChildForm ? localStorage.getItem('ApprovalStatus') : _formFields.ApprovalStatus.value;
+        if(_isNew)
+           await updateItem(_itemId, query, 'New', '');
+
+        else if(_isEdit){
+          let status = _formFields.ApprovalStatus.value;
 
           if(status === 'Approved')
             await updateItem(_itemId, query, 'Edit', status)
           else if(status === 'Rejected')
             await updateItem(_itemId, query, 'Edit', status)
-          else await updateItem(_itemId, query, 'New', '');
-      }
-       else { // New
-           let newGoals = localStorage.getItem('newGoals');
-           let submitGoals = newGoals ? JSON.parse(newGoals) : null;
-
-           if (_isNew && _isChildForm) {
-            _isChildForm = true;
-              localStorage.removeItem('newGoals');
+          else
             await updateItem(_itemId, query, 'New', '');
-
         }
-      }
   } catch(e) {
       console.log(e);
   }
@@ -543,100 +432,72 @@ var getRestfulResult = async function(serviceUrl){
 
 const updateItem = async function(formItemId, query, operation, status){
 
-    localStorage.removeItem('ApprovalStatus')
-  if (operation === 'New') {
-      if (_isChildForm)
-        await _sendEmail('CPG', 'CPG_New_Email', query, '', 'CPG_New', '', _currentUser)
-      else if(_manager) await _sendEmail(_module, 'PMG_New_Email', query, '', 'PMG_New', '', _currentUser);
+  if(operation === 'New'){
+    if(_manager){
+      await _sendEmail(_module, 'PMG_New_Email', query, '', 'PMG_New', '', _currentUser);
+    }
   }
 
   else if(operation === 'Edit' && status === 'Rejected'){
 
-      if (_isChildForm)
-          await _sendEmail(_module, 'CPG_Reject_Email', query, '', 'CPG_Reject', '', _currentUser);
-      else {
-          if (!_isPM)
-              await _sendEmail(_module, 'PMG_New_Email', query, '', 'PMG_New', '', _currentUser);
-          else await _sendEmail(_module, 'PMG_Reject_Email', query, '', 'PMG_Reject', '', _currentUser);
-      }
+    if(!_isPM){
+      await _sendEmail(_module, 'PMG_New_Email', query, '', 'PMG_New', '', _currentUser);
+    }
+    else{
+      await _sendEmail(_module, 'PMG_Reject_Email', query, '', 'PMG_Reject', '', _currentUser);
+    }
   }
 
-  else if (operation === 'Edit' && status === 'Approved'){
-      if (_isChildForm)
-          await _sendEmail(_module, 'CPG_Approve_Email', query, '', 'CPG_Approve', '', _currentUser);
-      else await _sendEmail(_module, 'PMG_Approve_Email', query, '', 'PMG_Approve', '', _currentUser);
+  else if(operation === 'Edit' && status === 'Approved'){
+    await _sendEmail(_module, 'PMG_Approve_Email', query, '', 'PMG_Approve', '', _currentUser);
   }
 }
 
-const fetchResultToDynamics = async function(goal, isApproved){
+const fetchResultToDynamics = async function(){
   let apiUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=PostEmployeeGoals`
 
-    if (!isApproved)
-        return;
+  let overview = _formFields.Overview.value;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(overview, 'text/html');
+  overview = doc.body.textContent.trim();
 
-        let overview = _isChildForm ? goal.Overview : _formFields.Overview.value;
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(overview, 'text/html');
-        overview = doc.body.textContent.trim();
+   let dateFinished = ''
+   if(!isNullOrEmpty(_formFields.DateFinished.value)){
+     let date = new Date(_formFields.DateFinished.value);
+     dateFinished = date.toISOString().split('T')[0];
+   }
 
-        //    let dateFinished = _isChildForm ? goal.DateFinished.value : _formFields.DateFinished.value;
-        //    if(!isNullOrEmpty(dateFinished)){
-        //      let date = new Date(dateFinished);
-        //      dateFinished = date.toISOString().split('T')[0];
-        //    }
+   let date1 = new Date(_formFields.StartDate.value);
+   let dateStart = date1.toISOString().split('T')[0];
 
-        let dateStartTemp = _isChildForm ? goal.StartDate : _formFields.StartDate.value;
-        let date1 = new Date(dateStartTemp);
-        let dateStart = date1.toISOString().split('T')[0];
+   let date2 = new Date(_formFields.EndDate.value);
+   let dateEnd = date2.toISOString().split('T')[0];
 
-        let dateEndTemp = _isChildForm ? goal.EndDate : _formFields.EndDate.value;
-        let date2 = new Date(dateEndTemp);
-        let dateEnd = date2.toISOString().split('T')[0];
+  let updateData =  {
+    PersonnelNumber: !isNullOrEmpty(_employeeId) ? _employeeId : '',
+    GoalHeadingId: _formFields.GoalCategory.value,
+    Status: !isNullOrEmpty(_formFields.Status.value) ? _formFields.Status.value : '',
 
-        // let stat = _isChildForm ? goal.Status.value : _formFields.Status.value;
-        // stat = !isNullOrEmpty(stat) ? stat : ''
+     DateFinished: dateFinished,
+     StartDate: dateStart, //_formFields.StartDate.value,
+     EndDate: dateEnd, //_formFields.EndDate.value,
 
-        let updateData = {
-            PersonnelNumber: !isNullOrEmpty(_employeeId) ? _employeeId : '',
-            GoalHeadingId: _isChildForm ? goal.GoalCategory : _formFields.GoalCategory.value,
-            Status: '', //stat,
+    PercentComplete: !isNullOrEmpty(_formFields.PercentComplete.value) ? _formFields.PercentComplete.value : 0,
+    Description: _formFields.Title.value,
 
-            DateFinished: null, //dateFinished,
-            StartDate: dateStart, //_formFields.StartDate.value,
-            EndDate: dateEnd, //_formFields.EndDate.value,
+    GoalLevel: _formFields.Level.value,
+    Overview: overview
+  };
 
-            PercentComplete: 0, //!isNullOrEmpty(_formFields.PercentComplete.value) ? _formFields.PercentComplete.value : 0,
-            Description: _isChildForm ? goal.Title : _formFields.Title.value, //_formFields.Title.value,
-
-            GoalLevel: _isChildForm ? goal.Level : _formFields.Level.value, //_formFields.Level.value,
-            Overview: overview
-        };
-
-        const response = await fetch(apiUrl, {
-            method: "POST", // or "PATCH" depending on the API
-            headers: {
-                "Content-Type": "application/json",
-                //"Authorization": "Bearer YOUR_ACCESS_TOKEN", // Include if the API requires authentication
-            },
-            body: JSON.stringify(updateData),
-        })
-
-        if (response.ok && isApproved) {
-    try {
-        if (_isChildForm) {
-            const goalsList = await _web.lists.getByTitle('Performance Management - Goals');
-            await goalsList.items.getById(goal.ID).update({
-                ApprovalStatus: isApproved ? 'Approved' : goal.ApprovalStatus,
-                ReviewedDate: new Date(),
-                IsSynched: true
-            });
-            console.log(`Updated item with ID: ${goal.ID}`);
-        }
-    } catch (error){
-        console.error(`Failed to update item with ID: ${goal.ID}`, error);
-    }
-   } else
-       console.error(`Failed to fetch data. Status: ${response.status}`);
+  const response = await fetch(apiUrl, {
+    method: "POST", // or "PATCH" depending on the API
+    headers: {
+        "Content-Type": "application/json",
+        //"Authorization": "Bearer YOUR_ACCESS_TOKEN", // Include if the API requires authentication
+    },
+    body: JSON.stringify(updateData),
+  });
+  console.log(response)
 }
 
 function disableRichTextField(fieldname){
@@ -683,171 +544,3 @@ function disableRichTextField(fieldname){
 	   }
 	})
 }
-
-
-//#region CHILD FORM
-let applyDataTable = async function (){
-    customizeColumns();
-    _formFields.goalsDT.widget.bind('dataBound', customizeColumns);  // Apply customizations after data is bound
-    _formFields.goalsDT.widget.bind('change', customizeColumns);  // Apply customizations after data change
-}
-
-function customizeColumns()
-{
-    let goalsList = _formFields.goalsDT;
-        // Loop through data and append the custom status text, icon, and completion details
-    let data = goalsList.widget.dataSource.view(); // Get the data from the DataTable
-
-        data.forEach(function (dataItem) {
-           // ApprovalStatus Handling
-            let approvalStatus = dataItem.ApprovalStatus;
-            let approvalText = '';
-            let approvalIcon = '';
-
-            if (approvalStatus === "Approved") {
-                approvalIcon = '✔️';
-                approvalText = 'Approved';
-            } else if (approvalStatus === "Rejected") {
-                approvalIcon = '❌';
-                approvalText = 'Rejected';
-            } else {
-                approvalIcon = '⏳';
-                approvalText = 'Pending';
-            }
-            dataItem.ApprovalStatus = `<span class="approval-status">${approvalIcon} ${approvalText}</span>`;
-    });
-
-    // Re-render the DataTable after modifications
-    goalsList.widget.refresh(); // Refresh to reflect data changes
-}
-
-function validateGoals(addRow) {
-    let goals = _formFields.goalsDT.widget.dataItems(); // Get goal list data
-    let idpCount = 0;
-    let PersCount = 0;
-    let compCount = 0;
-    let isAllApproved = true;
-    let patternResult = [], allResult = [];
-
-    if (goals.length >= 5) {
-        goals.forEach(goal => {
-            if (goal.GoalCategory === 'IDP' && goal.ApprovalStatus !== 'Rejected' && idpCount < 1) {
-                patternResult.push({ Id: goal.ID, ApprovalStatus: goal.ApprovalStatus });
-                idpCount++;
-            }
-            else if (goal.GoalCategory === 'Personal' && goal.ApprovalStatus !== 'Rejected' && PersCount < 3) {
-                patternResult.push({ Id: goal.ID, ApprovalStatus: goal.ApprovalStatus });
-                PersCount++;
-            }
-            else if (goal.GoalCategory === 'Company values' && goal.ApprovalStatus !== 'Rejected' && compCount < 1) {
-                patternResult.push({ Id: goal.ID, ApprovalStatus: goal.ApprovalStatus });
-                compCount++;
-            }
-
-            if (goal.ApprovalStatus !== 'Approved')
-                isAllApproved = false;
-
-            allResult.push({ Id: goal.ID, ApprovalStatus: goal.ApprovalStatus });
-        });
-    }
-
-    if (_isEdit){
-
-        if (isAllApproved) {
-            setTimeout(() => { setPageReadOnly('Goals are approved'); }, 100);
-            $('span').filter(function () { return $(this).text() == 'Approve'; }).parent().css('color', '#737373').attr("disabled", "disabled");
-            $('span').filter(function () { return $(this).text() == 'Reject'; }).parent().css('color', '#737373').attr("disabled", "disabled");
-        }
-
-        else if (!_isPM){
-            setTableStyle(true);
-            let emptyItems = allResult.filter(item => item.ApprovalStatus === '');
-
-
-            if(!addRow && emptyItems.length > 0)
-              setTimeout(() => { setPageReadOnly('Waiting Manager Approval'); }, 100);
-        }
-    }
-
-    //if (goals.length >= 5 && idpCount >= 1 && PersCount>=3 &&compCount>=1){
-    let rejectedItems = patternResult.filter(item => item.ApprovalStatus === 'Rejected');
-    if (patternResult.length >= 5 && rejectedItems.length === 0) {
-        console.log("Eligible for submission");
-        console.log("goals length:", goals.length);
-        console.log("ip count:", idpCount);
-        console.log("personal count:", PersCount);
-        console.log("company values count:", compCount);
-        $('span').filter(function () { return $(this).text().trim() === submitDefault }).parent().removeAttr("disabled");
-        setPSErrorMesg('', true)
-
-        if (addRow)
-          localStorage.setItem('newGoals', true);
-    }
-         else{
-          console.log(" NOT Eligible for submission");
-          console.log("goals length:",goals.length);
-           console.log("ip count:",idpCount);
-           console.log("personal count:",PersCount);
-           console.log("company values count:",compCount);
-            $('span').filter(function () { return $(this).text() === submitDefault; }).parent().attr("disabled", "disabled");
-            if (_isEdit && !_isPM) {
-                setPSErrorMesg(`Kindly make sure to fill as below:<br/>
-                                      3 of Personal <br/>
-                                      1 of IDP <br/>
-                                      1 of Company Values <br/>`);
-               setPSHeaderMessage(' ');
-            }
-         }
-}
-
-function initializeEvents() {
-
-       let goalsList = _formFields.goalsDT;
-
-        if(_isNew)
-          goalsList.widget.bind('dataBound', validateGoals);
-        else if(_isEdit)
-          goalsList.widget.bind('dataBound', function () {
-            validateGoals(true);
-          });
-        // goalsList.widget.bind('change', validateGoals);
-        // goalsList.widget.bind('save', validateGoals);
-    // console.log("Events bound successfully.");
-
-    // goalsList.$on('edit', async function(item){
-    //     if (item.type === 'add') {
-    //         await validateGoals(true);
-    //     }
-    // });
-
-}
-
-function setTableStyle(disableForReviewer) {
-    var approvedBgColor = 'linear-gradient(to left, rgb(235, 245, 230), rgb(210, 240, 230), rgb(190, 230, 235), rgb(180, 200, 245), rgb(200, 190, 245), rgb(200, 190, 245), rgb(190, 185, 245))'
-
-    let dt = _formFields.goalsDT;
-    let rows = dt.widget._data;
-      rows.forEach(row => {
-          if (row.ApprovalStatus === 'Approved' || disableForReviewer){
-              const rowElement = $(dt.$el).find('tr[data-uid="' + row.uid + '"]')[0];
-              if (rowElement) {
-
-                  let checkBox = $(rowElement).children().find('input[type="checkbox"]')[0];
-                  if (checkBox)
-                      checkBox.disabled = true;
-
-                  if(!disableForReviewer)
-                    rowElement.style.background = approvedBgColor;
-              }
-          }
-      });
-}
-
-function setPageReadOnly(mesg) {
-    _formFields.goalsDT.readonly = true;
-    $('span').filter(function () { return $(this).text() == submitDefault; }).parent().css('color', '#737373').attr("disabled", "disabled");
-    setPSErrorMesg(mesg);
-    setPSHeaderMessage(' ');
-}
-//#endregion
-

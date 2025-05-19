@@ -7,6 +7,8 @@
         "Drawingref",
         "endregion",
         "fref",
+        "Handson",
+        "Handsontable",
         "Hardcopy",
         "insptype",
         "Latestdate",
@@ -22,5 +24,21 @@
         "Submittedby",
         "valext"
     ],
-    "CodeGPT.apiKey": "CodeGPT Plus Beta"
+
+    "eslint.autoFixOnSave": false,
+
+
+    "CodeGPT.apiKey": "CodeGPT Plus Beta",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "prettier.tabWidth": 4,
+    "prettier.useTabs": false,
+    "prettier.bracketSpacing": true,
+    "prettier.bracketSameLine": false
 }
+

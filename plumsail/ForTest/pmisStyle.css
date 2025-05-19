@@ -19,7 +19,11 @@
   --dar-main-color:#49c4b1;
   --accordion-color: #f4f4f4;
   --table-header-bgcolor:linear-gradient(to right, #ffe8e3, #feb47b8a, #e9c4bb);
+  --approved-row-bg:linear-gradient(to right, hsl(208, 25%, 82%),hsl(208, 25%, 88%) , hsl(208, 25%, 98%));
 }
+
+
+
 
 /* FOR MOBILE */
 
@@ -63,14 +67,20 @@
   box-shadow: 0 4px 14px var(--boxshadow);
 }
 body{
-  background-color: var(--white);
-  background-image:  url("https://th.bing.com/th/id/R.31800a18838fd1c469440426aced73ef?rik=mRbAS69Td7foCg&riu=http%3a%2f%2fupload.wikimedia.org%2fwikipedia%2fcommons%2f2%2f28%2fDarLogo2016.png&ehk=MNU1rta%2fb5IPsZtZk9%2b0jVO8CMYO833i32chsjvR4G4%3d&risl=&pid=ImgRaw&r=0");
-  background-repeat:no-repeat;
-  background-size:150px;
-  background-position-y:45px;
-  background-position-x: 70px;
-  
+  background-color: var(--white); 
+  overflow-y: hidden;
 }
+
+.o365cs-base .ms-bgc-tp{
+  background-color: var(--dar-main-color) !important;
+}
+
+/* style for hover of proj title and setting */
+.o365cs-base .o365cs-topnavText:hover{
+  color: var(--dar-main-color);
+  background-color: transparent !important;
+}
+
 .vsb-js-search-zone{
   position: relative !important;
   width: 100% !important;
@@ -195,18 +205,25 @@ body{
 
 .fd-form .nav-tabs .nav-item {
   /* margin-bottom: 5px; */
-  width: 215px;
+  width: 235px;
   text-align: center;
 }
-
+ul.nav{
+  padding-left: 5px !important;
+}
+ul.nav:not(.nav-item){
+  padding-top: 10px !important;
+}
 /* added on 25-7-2024 */
 .fd-form .nav-tabs{
-  border-bottom: 0px !important
+  border-bottom: 0px !important;
 }
 
 /*  start of customized by hana hassan  */
 
-
+#spPageChromeAppDiv div[class^=canvasWrapper_] {
+  position: static;
+}
 
 .fd-form .nav-tabs .nav-link.active, .fd-form .nav-tabs .nav-item.show .nav-link {
   background-color:transparent;
@@ -224,8 +241,7 @@ body{
   background-color: hsl(171, 51%, 83%) ;
 }
 .nav.nav-tabs .nav-item:hover{
-  color: var(--white) !important;
-  background-color: var(--dar-main-color) !important;
+  color:  var(--black)!important;
   border: var(--dar-main-color) !important;
   box-shadow: var(--dar-main-color) !important;
 }
@@ -251,8 +267,8 @@ body{
   color:var(--black) !important;
 }
 .fd-form .nav-link:hover{
-  color:var(--dar-main-color) !important;
-  font-weight: bolder !important;
+  color:var(--dar-main-color);
+  font-weight:bolder !important;
 }
 
 
@@ -315,8 +331,9 @@ border-bottom: none !important;
   
 }
 .fd-form .btn-primary {
-  color: var(--black) !important;
+  color: var(--dar-main-color) !important;
   background-color: var(--white) !important;
+
 
 }
 
@@ -382,6 +399,7 @@ input, .k-multiselect-wrap.k-floatwrap{
 
 .accordion-body{
   background-color: var(--white) !important;
+  -webkit-filter: blur(7px);
 }
 
 .k-grid-header{
@@ -396,7 +414,7 @@ input, .k-multiselect-wrap.k-floatwrap{
 
 
 
-
+l
 /* 
 .fd-form .nav-tabs .nav-link:hover {
    margin-bottom: none !important; 
@@ -498,7 +516,7 @@ input, .k-multiselect-wrap.k-floatwrap{
 
 
 /* START GENERAL */
-.fd-form { background-color: transparent !important;    }
+.fd-form { background-color: transparent !important ; }
 
 .fd-sp-field-text input{ box-shadow: 0 2px 4px var(--boxshadow); }
 
@@ -511,9 +529,8 @@ input, .k-multiselect-wrap.k-floatwrap{
 .fd-form a:not(.nav-link):not(.disabled) { color: var(--black) !important; font-weight: 500; } 
 /* customized by hana hassan  */
 
-
 /* START ROOT HEADER (LOGO WITH TITLE) */
-.ms-compositeHeader{ padding-bottom: 0px !important; }
+.ms-compositeHeader{ padding-bottom: 0px !important; display: none; }
 
 .ms-compositeHeader-topWrapper{ height: 5px !important; }
 
@@ -522,17 +539,14 @@ input, .k-multiselect-wrap.k-floatwrap{
 .title-75 { font-size: 22px; }
  /* End ROOT HEADER */
 
-.col, .d-md-block{ padding: 0px 10px 0 10px !important; }
+.col, .d-md-block{ padding: 0px 0px 0 0px !important; }
 
-.CanvasComponent{ padding: 0.7% 0 0 0.5% !important; }
-
-
-
+.CanvasComponent{ padding: 0.7% 0 0 0.4% !important; }
 
 .ControlZone {
   box-sizing: border-box;
-  background-image: url("9.png");
-  background-size: auto;
+  background-image: url("e.png");
+  background-size: cover;
 background-position:center;
 background-position-y:top;
 background-repeat:no-repeat;
@@ -731,7 +745,7 @@ b[data-v-386d995a]{ color:red !important; }
 }
 
 .sp-appBar-borderLeft {
-  height: 20px;
+  height: 100%;
   width: 1px;
   background-color: rgb(96, 94, 92);
   margin-left: 10px;
@@ -740,6 +754,8 @@ b[data-v-386d995a]{ color:red !important; }
 .sp-appBar {
   background-color: #ebeeec;
   position: absolute;
+  height: 100%;
+
   /* border-bottom-left-radius: 10px; */
 }
 
@@ -748,8 +764,11 @@ b[data-v-386d995a]{ color:red !important; }
   padding: 0;
   margin: 0;
   position: absolute;
-  background-color: #f3f2f1;
+  background:linear-gradient(to bottom, hsl(220, 23%, 96%), hsl(220, 23%, 100%));
   border-bottom-left-radius: 10px;
+  height: 100%;
+
+ 
 }
 
 .sp-appBar-linkLi {
@@ -817,3 +836,46 @@ b[data-v-386d995a]{ color:red !important; }
   display: inline-block; 
   font-size: 12px;
 } */
+
+.approved-status{
+  background: var(--approved-row-bg) !important;
+  color: #49c4b1;
+  font-weight: bold;
+}
+ .pending-status{
+  color:  #3d5265;
+  font-weight: bold;
+ }
+tr:hover{
+  background-color: transparent !important;
+}
+.fd-grid.container-fluid.divGrid {
+  position: relative;
+  border: 1px solid #ced4da !important; /* Set your desired border color and width */
+  padding-top: 26px; /* Add padding to create space inside the border */
+  margin: 10px -6px; /* Add margin to space out the container */
+  border-radius: 6px; /* Optional: rounded corners */
+  box-shadow: rgba(0, 0, 0, 0.1) 2px 4px 4px;
+  background-color: #ffffffd5 !important;
+  backdrop-filter: blur(0.7px);
+  
+}
+
+.border-title {
+  position: absolute;
+  top: -12px; /* Adjust the position to sit on the border */
+  left: 20px; /* Align with the content */
+  background-color: #fff; /* Match the background color to your page */
+  padding: 0 10px; /*Add padding to the title*/
+  font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  font-weight: bold;
+  color: #c14242; /* Modern green accent */  
+  letter-spacing: 0.5px; /* Improves readability */
+  transition: all 0.3s ease; /* Smooth transitions for hover effects */
+}
+
+.icon{
+  padding-right: 3px;
+  }

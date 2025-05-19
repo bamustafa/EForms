@@ -1,5 +1,4 @@
 
-var approvedBgColor = 'linear-gradient(to left, rgb(235, 245, 230), rgb(210, 240, 230), rgb(190, 230, 235), rgb(180, 200, 245), rgb(200, 190, 245), rgb(200, 190, 245), rgb(190, 185, 245))'
 //let dtVisited = {}
 //#region AUTOFIT DATATABLE COLUMNS WIDTH
 const handelTables = async function(singleCtl){
@@ -7,7 +6,7 @@ const handelTables = async function(singleCtl){
   let dts = [], isSingleTable = false;
   let tblName;
   let targetCtls = "div[role='tabpanel'] div.fd-sp-datatable-wrapper"; //w-100";
-                    
+                  
   if(singleCtl !== undefined && singleCtl !== null && singleCtl !== ''){
     targetCtls = singleCtl
     isSingleTable = true;
@@ -134,16 +133,34 @@ function FixWidget(dt, tblName){
       const gridContent = dt.$el.querySelector('.k-grid-content.k-auto-scrollable');
       if (gridContent) {
           gridContent.style.overflowX = 'hidden';
+          gridContent.style.overflowY = 'hidden';
+       
+      }
+       const gridContentTable = dt.$el.querySelector('.GridTable .k-grid-content.k-auto-scrollable table');
+       if (gridContentTable) {
+        gridContentTable.setAttribute("style", "width: max-content !important;");
+      }
+      const gridHeaderTable = dt.$el.querySelector('.GridTable .k-grid-header-wrap.k-auto-scrollable table');
+       if (gridHeaderTable) {
+        gridHeaderTable.setAttribute("style", "width: max-content !important;");
       }
     
+      debugger;
       let rows = Rwidget._data;
       rows.forEach(row => {
           if (row.Status === 'Approved') {
               const rowElement = $(dt.$el).find('tr[data-uid="' + row.uid + '"]')[0];
               if (rowElement) {
                   //rowElement.style.backgroundColor = 'var(--lightgreen)';
-                  rowElement.style.background = approvedBgColor;        
+                 rowElement.className="approved-status"; 
+            
               }
+          }else if(row.Status ==="Pending"){
+            const rowElement = $(dt.$el).find('tr[data-uid="' + row.uid + '"]')[0];
+            if (rowElement) {
+              rowElement.className="pending-status"; 
+          
+            }
           }
       });
   }
@@ -411,7 +428,7 @@ dt.$on('edit', function(editData){
 
         let headerFieldText = secondFieldonTable
         if(secondList === null){
-          debugger;
+         
           options = result.filter((item) =>{ 
              if(item.title === value.LookupValue)
               return item.title
@@ -548,39 +565,43 @@ function fixTableCols(dtName){
 const enable_Disable_Tabs = async function(TabNames, isDisabled){
  
 	TabNames.map(tabName=>{
-  
-	  let susIndex = getTabIndex(tabName.title, tabName.tooltip, isDisabled);
-	  let tab = fd.container(tabName.masterTab).tabs[susIndex];
-   
+
+    let masterTabIndex = fd.container(tabName.masterTab).currentTab; //getTabIndex(tabName.masterTab);
+	  let childIndex = getTabIndex(tabName.title, tabName.level, tabName.tooltip, isDisabled);
+	  let tab = fd.container(tabName.masterTab).tabs[childIndex];
+    
+    if(tabName.level === 2)
+       tab = fd.container(tabName.masterTab).tabs[masterTabIndex].$children[0].tabs[childIndex]
+
     if(isDisabled){
         $('ul.nav-tabs').find('.tooltipstered').css({
           'cursor': 'not-allowed',
           'opacity': 0.5
         })
 
-        debugger;
+ 
         $('li.tooltipstered').find('a').css({
           'cursor': 'not-allowed',
           'opacity': 0.5
         })
-        .removeAttr('href')
-        .attr('aria-disabled', 'true')
-        .on('click', function(event) {
-          event.preventDefault(); // Prevent the default action of the link
-          event.stopImmediatePropagation(); // Stop any further event propagation
-          return false;
-        });
-      }
+
 	    if(tab)
        tab.disabled = isDisabled;
-	})
+	   }
+    })
 }
   
-function getTabIndex(tabTitle, tabTooltip, isDisabled){
+function getTabIndex(tabTitle, level, tabTooltip, isDisabled){
 	let index;
   //$('div.tab-content ul li a')
-	$('div.tabset ul li a').each(function(i, element){
-	  var title = $(this).text();
+   
+  let tabset = ''; //$('div.tabset ul li')
+  if(level === 2)
+    tabset = $('div.tabset,tabs-top').first().find('ul.nav-tabs').first().next().find('div.tabset ul').eq(0).find('li a')
+  else tabset = $('div.tabset,tabs-top').first().find('ul.nav-tabs').first().find('li a')
+  
+  tabset.each(function(i, element){
+	  var title = element.text;
 	   if(title.toLowerCase() === tabTitle.toLowerCase()){
 
 		 index = i;
@@ -610,7 +631,7 @@ function getTabIndex(tabTitle, tabTooltip, isDisabled){
 //#endregion
 
 const getCurrentUserRole = async function () {
-  //debugger;
+
   let currentUser = await GetCurrentUser();
   let isRoleFound = false;
   
@@ -776,7 +797,7 @@ const getTradeRole = async function (masterId, trade){
       let isFound = items.length > 0 ? true : false;
       localStorage.setItem(key, isFound);
 
-      debugger
+   
       if(isFound)
       console.log(`Role is ${key}`);
 
@@ -897,15 +918,31 @@ let getLLChecker = async function(trade, isCurrentUser){
 
 const isUserFound = async function(fieldname, currentUser){
   
+  let idFields = ''
+  let filter = ''
+
+  let items;
   let users = [];
+
   if(_isMain)
-    users = fd.field(fieldname).value;
-  else{
-    let items = await _web.lists.getByTitle(ProjectInfo).items
+  {
+  
+    //let fds = fd.field;
+    //users = fd.field(fieldname).value;
+    //let id = fd.field('ID').value
+
+    items = await _web.lists.getByTitle(ProjectInfo).items
+                    .select(`${fieldname}/Id,${fieldname}/Title`)
+                    .expand(fieldname)
+                    .filter(`ID eq ${_itemId}`)
+                    .get();
+  }
+  else items = await _web.lists.getByTitle(ProjectInfo).items
                     .select(`${fieldname}/Id,${fieldname}/Title`)
                     .expand(fieldname)
                     .filter(`ID eq ${fd.field('MasterID').value.LookupValue}`)
                     .get();
+
     if(items.length > 0)
     {
       let item = items[0]
@@ -916,7 +953,7 @@ const isUserFound = async function(fieldname, currentUser){
         users.push({ 'email' :  userDetails.Email});
       }
     }
-  }
+  //}
 
 
   let isFound = false;
@@ -953,7 +990,7 @@ var _HideFields = async function(fields, isHide, isText){
 
 fd.spSaved(function(result){
     try{
-      debugger;
+     
         let query = _isNew || _module === 'CR' ? 
                    `<Where><Eq><FieldRef Name='ID' /><Value Type='Counter'>${result.Id}</Value></Eq></Where>` :
                    '';
@@ -1097,9 +1134,11 @@ const isDRD = async function(subCategory){
       if(value.IsDRD)
         isDRD = true
   });
-  if(isDRD) 
-    fd.container('DRDAccordion').hidden = false;
-  else fd.container('DRDAccordion').hidden = true;
+
+  let divElement = $('#DRD-icon').parent().parent().parent().parent().parent().parent();
+    if(isDRD)
+      divElement.css('display','block') //fd.container('DRDAccordion').hidden = false;
+    else divElement.css('display','none') //fd.container('DRDAccordion').hidden = true;
 }
 
 const appBar = async function(){
@@ -1210,19 +1249,29 @@ async function getSPtGroupMembers(groupName){
 }
 
 function setPageStyle(ProjTitle){
-  $('div.ms-compositeHeader').remove()
-  let fullProjTitle = ProjTitle;
-  if(fullProjTitle === undefined)
-    fullProjTitle = localStorage.getItem('FullProjTitle');
-  $('span.o365cs-nav-brandingText').text(fullProjTitle);
-  $('i.ms-Icon--PDF').remove();
+ $('div.ms-compositeHeader').remove()
+   let fullProjTitle = ProjTitle;
+ if(fullProjTitle === undefined)
+   fullProjTitle = localStorage.getItem('FullProjTitle');
+
+
+ if(fullProjTitle)
+     fullProjTitle = fullProjTitle.replace('$lt;', '<').replace('/&gt;', '>')
+   $('span.o365cs-nav-brandingText').html(fullProjTitle);
+   $('i.ms-Icon--PDF').remove();
 
 
   let toolbarElements = document.querySelectorAll('.fd-toolbar-primary-commands');
   toolbarElements.forEach(function(toolbar) {
       toolbar.style.display = "flex";
-      toolbar.style.justifyContent = "flex-end";
-      toolbar.style.marginRight = "25px";            
+      toolbar.style.justifyContent = "end";
+      toolbar.style.position="absolute";
+      toolbar.style.top="6%";
+      toolbar.style.left="71%";
+      toolbar.style.height="40px";
+
+      
+            
   });   
   
   document.querySelectorAll('.CanvasZoneContainer.CanvasZoneContainer--read').forEach(element => {
@@ -1364,7 +1413,7 @@ function setTabStyles(tabIndex){
 }
 
 const getEditableTabFields = async function(){
-  const fields = fd.fields();
+  const formFields = fd.fields();
   const controls = fd.control();
   const Tabs = fd.container('Tabs1').tabs;
 
@@ -1377,8 +1426,8 @@ const getEditableTabFields = async function(){
       if(isTabExist !== undefined) continue;
     
       let internalFields = []
-      for(var j = 0; j < fields.length; j++){
-        let field = fields[j];
+      for(var j = 0; j < formFields.length; j++){
+        let field = formFields[j];
         
         //let fieldTitle = field.title;
         let isReadOnly = field._readonly !== undefined ? JSON.parse(field._readonly.toLowerCase()) : false;
