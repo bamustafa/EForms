@@ -26,7 +26,8 @@ const showField = (field) => $(fd.field(field).$parent.$el).show();
 const disableField = (field) => fd.field(field).disabled = true;
 
 var onRender = async function (moduleName, formType, relativeLayoutPath){
-	// localStorage.clear();
+    // localStorage.clear();
+    const startTime = performance.now();
 	try {	
 
 		if(relativeLayoutPath !== undefined && relativeLayoutPath !== null && relativeLayoutPath !== '')
@@ -35,37 +36,38 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 		//await PreloaderScripts();		
 		//await loadScripts();
 
-		await loadScripts().then(async ()=>{
-			showPreloader();			
-		})
+        await loadScripts().then(async () => {
+            
+            showPreloader();
 
-		clearLocalStorageItemsByField(itemsToRemove);
-		
-		fixTextArea();
+            clearLocalStorageItemsByField(itemsToRemove);
+            
+            fixTextArea();
 
-		_modulename = moduleName;
-		_formType = formType;
-		if(_formType === 'New'){
-			clearStoragedFields(fd.spForm.fields);
-		}
-		if(moduleName == 'CL')
-			await onCLRender(formType);
-		else if(moduleName == 'RR')
-			await onRRender(formType);
-		else if(moduleName == 'DCR')
-			await onDCRender(formType);
-		else if(moduleName == 'TQ')
-			await onTQRender(formType);
-		else if(moduleName === "DDSInitiate")
-			await onDDSRender(formType);
-		else if(moduleName === "ICD")
-			await onICDRender(formType);
+            _modulename = moduleName;
+            _formType = formType;
+            if (_formType === 'New') {
+                clearStoragedFields(fd.spForm.fields);
+            }
+            if (moduleName == 'CL')
+                await onCLRender(formType);
+            else if (moduleName == 'RR')
+                await onRRender(formType);
+            else if (moduleName == 'DCR')
+                await onDCRender(formType);
+            else if (moduleName == 'TQ')
+                await onTQRender(formType);
+            else if (moduleName === "DDSInitiate")
+                await onDDSRender(formType);
+            else if (moduleName === "ICD")
+                await onICDRender(formType);
 
-		if(moduleName !== "ICD")
-			await setButtonToolTip('Save', saveMesg);
-		await setButtonToolTip('Submit', submitMesg);
-		await setButtonToolTip('Submit for Approval', submitMesg);
-		await setButtonToolTip('Cancel', cancelMesg);
+            if (moduleName !== "ICD")
+                await setButtonToolTip('Save', saveMesg);
+            await setButtonToolTip('Submit', submitMesg);
+            await setButtonToolTip('Submit for Approval', submitMesg);
+            await setButtonToolTip('Cancel', cancelMesg);
+        });
 
 		//preloader("remove");
 	}
@@ -77,6 +79,9 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 	finally{      
         hidePreloader();
     }
+    const endTime = performance.now();
+    const elapsedTime = endTime - startTime;
+    console.log(`Execution time onRender: ${elapsedTime} milliseconds`);
 }
 
 var onCLRender = async function (formType){
@@ -338,7 +343,7 @@ var onICDRender = async function (formType){
 		fd.spSaved(async function(result) {			
 			try
 			{	
-				debugger;
+				//debugger;
 				if(refICDNo !== '')	{					
 					var itemId = result.Id;						
 					var folderStructure = refICDNo;
@@ -1811,7 +1816,7 @@ var TQ_editForm = async function(){
 		var isSiteAdmin = _spPageContextInfo.isSiteAdmin; 		
 		const _firstVisitNumber = await GetColumnValueByID('WorkflowStatus');	
 
-		debugger;
+		//debugger;
 		var LeadTradeName = fd.field('LeadTrade').value;// TQUsers = fd.field('TQAction').value;
 		var itemTrade = await GetQappTradeTeamFromSharepoint(LeadTradeName);
 		let _isAllowed = false;		

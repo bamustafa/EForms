@@ -6,7 +6,8 @@ let updateBatchSize = 10;
 var _web, _webUrl, _siteUrl, _layout, _module = '', _formType = '', _phase = '', _htLibraryUrl;
 var _list, _itemId, _lodRef = '', _status = '', _colArray = [], _requiredFields = [], _targetList, _filterField, _dataArray;
 var _isSiteAdmin = false, _isMain = true, _isLead = false, _isPart = false, _isNew = false, _isEdit = false, _isMultiContracotr = false, _ignoreChange = false, _isAllowed = false,
-    _updateTitle = false, _isDesign = false, _isMidpExist = false, _isTradeChecker = false, _isMIDPSubjectExist = false, _ignoreChecking = false, _isOriginatorChecker = false;
+    _updateTitle = false, _isDesign = false, _isMidpExist = false, _isTradeChecker = false, _isMIDPSubjectExist = false, _ignoreChecking = false, _isOriginatorChecker = false,
+     _packageColumn = 'Package', _packageValue = '';
 var delayTime = 100, retryTime = 10, _timeout, _revStartWithNeeded;
 
 var _darTrade = '', _cdsTitle = '', _CheckRevision = 'yes';
@@ -39,7 +40,6 @@ let itemExistMesg = 'filename is already submitted'
 let disableTable = false;
 var onRender = async function (relativeLayoutPath, moduleName, formType){
 
-    debugger
     _layout = relativeLayoutPath;
     await loadScripts();
     await getLODGlobalParameters(moduleName, formType);
@@ -782,6 +782,10 @@ var getLODGlobalParameters = async function(moduleName, formType){
     _webUrl = _spPageContextInfo.siteAbsoluteUrl;
     _siteUrl = new URL(_webUrl).origin;
 
+    const listUrl = fd.webUrl + fd.listUrl;
+    const list = await _web.getList(listUrl).get();
+    _list = list.Title;
+
     _phase = await getParameter('Phase');
     if(_phase.toLowerCase() === 'design'){
        _isDesign = true;
@@ -793,7 +797,18 @@ var getLODGlobalParameters = async function(moduleName, formType){
 
         _CheckRevision = await getParameter('CheckRevision');
         if(_CheckRevision === '')
-           _CheckRevision = 'yes';
+            _CheckRevision = 'yes';
+
+        debugger;
+        isFieldExists(_list, _packageColumn).then(async isValid => {
+            if (isValid) {
+                if (isValid === true) {
+                    let item = await _web.lists.getByTitle(_list).items.getById(fd.itemId).select(_packageColumn)();
+                    if(item)
+                        _packageValue = item[_packageColumn];
+                }
+            }
+        });
     }
 
     if(_formType === 'New'){
@@ -817,11 +832,6 @@ var getLODGlobalParameters = async function(moduleName, formType){
         //     $(fd.field('CDSTitle').$parent.$el).hide();
          }
     }
-
-    const listUrl = fd.webUrl + fd.listUrl;
-    const list = await _web.getList(listUrl).get();
-    _list = list.Title;
-
     // var serviceUrl = _siteUrl + '/SoapServices/DarPSUtils.asmx?op=GLOBAL_PARAM';
     // var soapContent;
     // soapContent = '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
@@ -922,6 +932,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
     }
 
     await ensureFunction('isMultiContractor');
+
     fixButtonHover();
 }
 
@@ -1706,10 +1717,12 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
         item['FileName'] = filename;
         item[_filterField] = _lodRef;
 
-        if(_isDesign){
-			item['DarTrade'] = _darTrade;
-			item['CDSTitle'] = _cdsTitle;
-        }
+          if (_isDesign) {
+              item['DarTrade'] = _darTrade;
+              item['CDSTitle'] = _cdsTitle;
+              if (_packageValue)
+                  item[_packageColumn] = _packageValue;
+          }
 
         if(!_ignoreChecking)
          await splitFileName(schema, delimeter, item)

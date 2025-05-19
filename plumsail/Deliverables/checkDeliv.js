@@ -2,7 +2,7 @@ var  _layout, _module = '', _rootFolderUrl = '', _container, _hot, _transNo, _da
 var fileIcons, pdfTronAllowedPreviewExt, pdfTronPreviewUrl = '/_layouts/15/pdf/viewer.aspx?f=';
 
 let _web, _webUrl, _siteUrl, _formType = '', _errorImg = '', _submitImg = '';
-let _isSiteAdmin = false, _isNew = false, _isEdit = false, _isDesign = false, isTicked = true, _isMultiContractor = false, _isRename = false, isFirstFill = true, 
+let _isSiteAdmin = false, _isNew = false, _isEdit = false, _isDesign = false, isTicked = true, _isMultiContractor = false, _isRename = false, isFirstFill = true,
     _CheckRevision = true, _exact_Filename_Match = false;
 let _itemId, _itemListname, _htLibraryUrl, _submittalRef, _darTrade, enableTransmittal, isWorkHoursEnabled, bimRevFormat;
 
@@ -31,7 +31,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
     _layout = relativeLayoutPath;
     await loadScripts();
 
-    preloader();
+    showPreloader();
     await renderControls();
 
     if(_isRename){
@@ -39,6 +39,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
         $(fd.field('FolderName').$parent.$el).hide();
         $(fd.field('FilesNo').$parent.$el).hide();
         $('#search_field').remove();
+        hidePreloader();
         return;
     }
     else $(fd.field('FileLeafRef').$parent.$el).hide();
@@ -49,7 +50,17 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
       await handleFeatures(enableTransmittal);
 
     await getFileNames();
-    
+
+    document.addEventListener("DOMContentLoaded", function () {
+       document.querySelectorAll(".preview-link").forEach(link => {
+        link.addEventListener("click", function (event) {
+            event.preventDefault(); // Prevent default navigation
+            previewFile(this);
+        });
+       });
+    });
+
+    hidePreloader();
     const endTime = performance.now();
     const elapsedTime = endTime - startTime;
     console.log(`Execution onRender: ${elapsedTime} milliseconds`);
@@ -66,16 +77,16 @@ var loadScripts = async function(){
       ];
 
     const cacheBusting = `?v=${Date.now()}`;
-      libraryUrls.map(url => { 
-          $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
+      libraryUrls.map(url => {
+          $('head').append(`<script src="${url}${cacheBusting}" async></script>`);
         });
-        
+
     const stylesheetUrls = [
         _layout + '/controls/tooltipster/tooltipster.css',
         _layout + '/controls/handsonTable/libs/handsontable.full.min.css',
         _layout + '/plumsail/css/CssStyle.css'
         ];
-  
+
     stylesheetUrls.map((item) => {
       var stylesheet = item;
       $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
@@ -127,6 +138,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
     const listUrl = fd.webUrl + fd.listUrl;
     const list = await _web.getList(listUrl).get();
     _itemListname = list.Title;
+
     contentType = fd.spFormCtx.RowData.ContentTypeId;
 
     _errorImg = _layout + '/Images/Error.png';
@@ -175,10 +187,10 @@ var getLODGlobalParameters = async function(moduleName, formType){
       // Add more file extensions and corresponding icons here
     };
     pdfTronAllowedPreviewExt = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf', 'dwg','dwf', 'jpg', 'png' , 'gif', 'jp2' , 'jfif', 'tif', 'tiff']; // 'rvt'
-    
+
     var types = ['DWG','DOC','TRM','GEN', 'MOD'];
     types.forEach(async function(type) {
-        
+
         let query = `Title eq '${type}'`
         let extItems = await _web.lists.getByTitle(_AllowedExtensions).items.filter(query).get();
         if(extItems !== undefined && extItems !== null && extItems.length > 0){
@@ -193,11 +205,11 @@ var getLODGlobalParameters = async function(moduleName, formType){
         if(items.length > 0){
             let item = items[0];
             let delimeter = item.Delimeter;
-    
+
             let schema = item.Schema;
             schema = schema.replace(/&nbsp;/g, '');
             schema = JSON.parse(schema);
-     
+
             let containsRev = false;
             let revStartWith;
             schema.map(fld => {
@@ -208,7 +220,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
                   return true;
                 }
             });
-            
+
             let enableTrans = false, isTransRequired = false;
             if(!_isDesign){
                 let majorItems = await _web.lists.getByTitle("MajorTypes").items.select('EnableTransmittal,TransmittalRequired').filter(`Title eq '${type}'`).get();
@@ -245,7 +257,7 @@ var getLODGlobalParameters = async function(moduleName, formType){
     //     }, 1000);
 }
 
-var renderControls = async function(){
+var renderControls = async function () {
     await setFormHeaderTitle();
     await setButtons();
 
@@ -266,7 +278,7 @@ const setValueFields = async function(fileCount){
         'border': 0,
         'pointer-events': 'none'
     }
-    
+
     $("div[title='Folder Name']").find('input').prop('readonly', true).css(readOnlyClass);
 
     fd.field('FilesNo').value = fileCount;
@@ -277,10 +289,10 @@ function setToolTipMessages(){
     //setButtonToolTip('Save', saveMesg);
     setButtonCustomToolTip('Submit', submitMesg);
     setButtonCustomToolTip('Cancel', cancelMesg);
-  
+
     //else addLegend();
     //adjustlblText('Comment', ' (Optional)', false);
-        
+
     //   if($('p').find('small').length > 0)
     //   $('p').find('small').remove();
 }
@@ -308,9 +320,9 @@ const setButtonActions = async function(icon, text){
                     window.close();
                 }
                 else{
-                    
+
                     let formUrl = `${_webUrl}/SitePages/PlumsailForms/${_CDS}/Item/NewForm.aspx`;
-                    
+
                     if(!_isDesign){
                         let result = await handelConstructionSubmit();
 
@@ -334,12 +346,12 @@ const setButtonActions = async function(icon, text){
                         localStorage.setItem('data', _data);
                         localStorage.setItem('submittalRef', _submittalRef);
                         await handelDesignSubmit();
-                        window.close(); 
+                        window.close();
                     }
                 }
-                
+
            }
-          } 
+          }
     });
 }
 
@@ -351,9 +363,9 @@ const creatErrorlbl = async(errorText) =>{
         text: ''
       });
       label.css('color', 'red');
-      label.css('width', '950px'); 
-      label.css('font-size', '16px'); 
-      
+      label.css('width', '950px');
+      label.css('font-size', '16px');
+
       $('#dt').after(label);
     }
     $(id).html(errorText);
@@ -460,9 +472,9 @@ const getFileNames = async function(){
                                 let difference = rlodFilenames.filter(item => !distinctDelivFilename.includes(item));
                                 if(difference.length > 0){
                                     isErrorFound = true;
-                                    let tempMesg = `The below filename ${difference.length} are missing while they are listed in RLOD Under Reference ${_submittalRef}, 
+                                    let tempMesg = `The below filename ${difference.length} are missing while they are listed in RLOD Under Reference ${_submittalRef},
                                                     please upload through ${_itemListname}.<br /><br />`;
-            
+
                                     difference.map(item =>{tempMesg += `${item}<br/>`})
                                     setErrorMessage(tempMesg);
                                 }
@@ -495,18 +507,18 @@ async function getAllFilesInFolderAndSubfolders(folderUrl) {
     try {
         const folder = await _web.getFolderByServerRelativeUrl(folderUrl);
         const files = await folder.files.get();
-        
+
         let allFiles = [...files];
-        
+
         const subfolders = await folder.folders.get();
         const subfolderPromises = subfolders.map(subfolder => getAllFilesInFolderAndSubfolders(subfolder.ServerRelativeUrl));
-        
+
         const subfolderFiles = await Promise.all(subfolderPromises);
-        
+
         subfolderFiles.forEach(files => {
             allFiles = allFiles.concat(files);
         });
-        
+
         return allFiles;
     } catch (error) {
         console.error("Error getting files:", error);
@@ -517,7 +529,7 @@ async function getAllFilesInFolderAndSubfolders(folderUrl) {
 const setFolderRelativeUrl = async function(relativeUrl){
     folderUrl = relativeUrl.substring(relativeUrl.indexOf(`/${_itemListname}/`) + 1);
     folderUrl = folderUrl.replace(`${_itemListname}`, '');
-    
+
     if(folderUrl.includes('/')){
       let folderArray = folderUrl.split('/');
       if(_isDesign){
@@ -533,19 +545,50 @@ const setFolderRelativeUrl = async function(relativeUrl){
 const selectFilesInBatchV1 = async function(list, filenames, results, splitRev){
     let filterQuery = '';
     let dumpRevObj = {};
-    filenames.map((filename)=>{
-        if(_CheckRevision || splitRev){ // _CheckRevision for design
-          let rev = filename.substring(filename.lastIndexOf(splitter)+1);
-          filename = filename.substring(0, filename.lastIndexOf(splitter));
-          dumpRevObj[filename] = rev;
+
+    // filenames.map((filename) => {
+    //     let isTypeContainsRev = false;
+    //     if (_CheckRevision || splitRev) { // _CheckRevision for design
+
+    //        let rev = filename.substring(filename.lastIndexOf(splitter) + 1);
+    //        filename = filename.substring(0, filename.lastIndexOf(splitter));
+    //        dumpRevObj[filename] = rev;
+    //     }
+    //     filterQuery += `FileName eq '${filename}' or `;
+    // });
+
+
+    for (const filename of filenames) {
+
+        let isTypeContainsRev = false;
+        let updatedFilename = filename; // Keep original filename reference
+
+        if (_CheckRevision || splitRev) {
+            let item = await list.items.select('DeliverableType').filter(`FileName eq '${filename}'`).get();
+            if (item.length === 0) {
+                let tempFilename = filename.substring(0, filename.lastIndexOf(splitter));
+                item = await list.items.select('DeliverableType').filter(`FileName eq '${tempFilename}'`).get();
+            }
+
+            if (item?.length > 0) {
+                let docType = item[0].DeliverableType;
+                isTypeContainsRev = _fncSchemas[docType]?.containsRev ? true: false;
+            }
+
+            if (isTypeContainsRev) {
+                let rev = updatedFilename.substring(updatedFilename.lastIndexOf(splitter) + 1);
+                updatedFilename = updatedFilename.substring(0, updatedFilename.lastIndexOf(splitter));
+                dumpRevObj[updatedFilename] = rev;
+            }
         }
-        filterQuery += `FileName eq '${filename}' or `;
-    });
+
+        filterQuery += `FileName eq '${updatedFilename}' or `;
+    }
 
     if(filterQuery !== '')
         filterQuery = filterQuery.substring(0, filterQuery.lastIndexOf(' or'));
     else return;
-    
+
     let columns = 'FileName,DeliverableType,Revision,Trade,Status,Title';
     if(!_isDesign){
         columns += ',SubDiscipline,Contractor';
@@ -554,27 +597,27 @@ const selectFilesInBatchV1 = async function(list, filenames, results, splitRev){
    return await list.items.select(columns).filter(filterQuery).get()
     .then((items)=>{
         if(items.length > 0){
-          
+
           let isFileFound = true;
           let filename, delivType, containsRev, trade, contCode, rlodRev, roldStatus, title, filenameRev;
           for(let item of items){
             filename = item.FileName.toUpperCase();
 
             filenames = filenames.filter(arrayFilename => {
-                if(_CheckRevision || splitRev) 
+                if(_CheckRevision || splitRev)
                   arrayFilename = arrayFilename.substring(0, arrayFilename.lastIndexOf(splitter));
                 return arrayFilename !== filename
             });
 
             isFileFound = true;
-            
+
             delivType = item['DeliverableType'] !== null ? item['DeliverableType'] : 'Empty';
             containsRev = item['Revision'] !== null ? true : false;
 
             trade = item['Trade'] !== null ? item['Trade'] : '';
-            if(_trade === '') 
+            if(_trade === '')
              _trade = trade;
-              
+
             if(!_isDesign){
                 if(trade === '')
                 trade = item['SubDiscipline'] !== null ? item['SubDiscipline'] : '';
@@ -607,7 +650,7 @@ const selectFilesInBatchV1 = async function(list, filenames, results, splitRev){
                     //contCode: contCode,
                     //containsRev: containsRev,
                     //revStartWith: revStartWith,
-                    
+
                     //roldStatus: roldStatus,
             });
 
@@ -617,7 +660,7 @@ const selectFilesInBatchV1 = async function(list, filenames, results, splitRev){
                 if (distinctDelivFilename.indexOf(arrayFilename) === -1)
                   distinctDelivFilename.push(arrayFilename);
 
-                if(_CheckRevision || splitRev) 
+                if(containsRev)
                   arrayFilename = arrayFilename.substring(0, arrayFilename.lastIndexOf(splitter));
                 if( arrayFilename === filename){
                     return{
@@ -636,7 +679,7 @@ const selectFilesInBatchV1 = async function(list, filenames, results, splitRev){
                 else return fileMetaInfo
             })
           }
-        }  
+        }
         return {
             results: results,
             filenames: filenames
@@ -644,7 +687,7 @@ const selectFilesInBatchV1 = async function(list, filenames, results, splitRev){
     })
     // .then(results=>{
     //     return results;
-    // })     
+    // })
 }
 
 const processBatch = async (batchItems, batchfileNames, rows) => {
@@ -652,7 +695,7 @@ const processBatch = async (batchItems, batchfileNames, rows) => {
    const totalFiles = fd.field('FilesNo').value;
 
     let batchSelectPromise = await selectFilesInBatchV1(list, batchfileNames, batchItems, true);
-    if(batchSelectPromise === undefined) 
+    if(batchSelectPromise === undefined)
         return;
 
     batchItems = batchSelectPromise.results;
@@ -673,12 +716,13 @@ const processBatch = async (batchItems, batchfileNames, rows) => {
                 let rowData = {};
                 let { delivType, mesg, status, title, extension, ServerRelativeUrl, filename } = validatedItem;
                 let previewLink =  'not supported';
-                
+
                 let _value = '';
                 if(extension !== undefined){
                 if(pdfTronAllowedPreviewExt.includes(extension))
-                    previewLink = `<a href='${_webUrl}/${pdfTronPreviewUrl}${ServerRelativeUrl}' onclick='previewFile(this);'>Preview Link</a>`; //target='_blank'
-            
+                    //previewLink = `<a href='${_webUrl}/${pdfTronPreviewUrl}${ServerRelativeUrl}' onclick='previewFile(this);'>Preview Link</a>`;
+                    previewLink = `<a href='${_webUrl}/${pdfTronPreviewUrl}${ServerRelativeUrl}' target='_Blank'>Preview Link</a>`;
+
                     _value = "<table align='center'>";
                     let iconUrl = fileIcons[extension];
                     _value += "<tr>" +
@@ -686,7 +730,7 @@ const processBatch = async (batchItems, batchfileNames, rows) => {
                                 "</tr>";
                     _value += "</table>";
                 }
-    
+
                 rowData['isSelected'] = 'yes';
                 rowData['type'] = _value;
                 rowData['extension'] = extension;
@@ -727,7 +771,7 @@ const processArrayInBatches = async (array, batchSize, rowsNo, filesLength) => {
         array.forEach((result) => {
 
             if (batchfileNames.length >= batchSize)
-                return; 
+                return;
 
             //if (!batchfileNames.includes(result.filename)) {
             if (batchfileNames.indexOf(result.filename) === -1){
@@ -767,7 +811,7 @@ const validateFileName = async function(result){
     else{
         // REGISTER FILES THAT U CHECKED AGAINST DATABASE TO REMOVE DUPLICATE CHECK
         //let {isFileFound, delivType, title, containsRev, revStartWith, rlodRev, roldStatus}= await getFileName(filename, splitter);
-        
+
 
         // let fileInfo = await getFileName(filename, splitter);
         // isFileFound = fileInfo.isFileFound;
@@ -790,7 +834,7 @@ const validateFileName = async function(result){
             fileMesg = 'This reference has been marked as <b>Cancelled</b> in the RLOD list'
             let partContainer = document.getElementById('dt');
             let masterMesg = `<p style='color:#ce830e; font-size:14px; font-weight:bold; padding:7px'>
-                                Attention: There are references marked as cancelled. If you proceed submitting, they will be automatically un-cancelled and sent to PM. 
+                                Attention: There are references marked as cancelled. If you proceed submitting, they will be automatically un-cancelled and sent to PM.
                                 Alternatively, you can go back and unselect the cancelled references.</p>`
 
              if ($('#insplbl').length === 0)
@@ -874,7 +918,7 @@ const getFileName = async function(filename, splitter){
     let revStartWith;
     if(tempObj !== undefined && tempObj !== null && tempObj.length > 0)
         revStartWith = tempObj.revStartWith;
-    
+
     return{
         isFileFound: isFileFound,
         delivType: delivType,
@@ -904,7 +948,7 @@ const renameFilenameLink = async function(filenameWithExt, filename){
     let fileItems = await _web.lists.getByTitle(_itemListname).items.filter(`FileLeafRef eq '${filenameWithExt}'`).get();
     if(fileItems !== undefined && fileItems !== null && fileItems.length > 0){
         let item = fileItems[0];
-        let linkUrl = `${_webUrl}/SitePages/PlumsailForms/${_itemListname}/Document/EditForm.aspx?item=${item.Id}&ct=${contentType}`; //0x01010088207B89203E9F46A97B692C834A7689
+        let linkUrl = `${_webUrl}/SitePages/PlumsailForms/${_itemListname}/Document/EditForm.aspx?item=${item.Id}&ct` //=${contentType}`; //0x01010088207B89203E9F46A97B692C834A7689
         return `<a href='${linkUrl}' target='_blank' onclick='previewFile(this, true);'>${filename}</a>`;
     }
     else return '';
@@ -951,8 +995,8 @@ const checkRevision = async function(ahrefElement, fileRev, rlodRev, revStartWit
               mesg = `Can't submit Revision ${revStartWith}${fileRev} While Revision in RLOD is ${revStartWith}${rlodRev} for ${ahrefElement}`;
         }
     }
-   
-    else{ 
+
+    else{
          //If roldStatus != Pending && roldStatus != ClosingStatus(Reviewed)
          if(roldStatus !== 'pending'){
             if((roldStatus !== 'sent to pm' || roldStatus !== 'sent to pmc') && fileRev == rlodRev)
@@ -979,7 +1023,7 @@ const CheckAllowedExtensions = async function(filename, extension, delivType, si
 const isCorrectExt = async function(delivType, filename, filenameExt, AllowedExt, singleCheck, filenamesToCheck){
   if (checkedFiles.includes(filename))
     return '';
- 
+
   let mesg = '';
   let filenames = _files.filter((file) =>{
     let fullfilename = file.Name;
@@ -1008,7 +1052,7 @@ const isCorrectExt = async function(delivType, filename, filenameExt, AllowedExt
         ruleExt = rule.toLowerCase().split('|');
         if(!isMatched)
           isMatched = ruleExt.length === filenames.length ? true: false
-        
+
         if (!allowedExtensionsObj.hasOwnProperty(delivType))
         {
             for(let ext of ruleExt){
@@ -1026,7 +1070,7 @@ const isCorrectExt = async function(delivType, filename, filenameExt, AllowedExt
                           ext = `(<b>${ext}</b>)`;
                           allowedExtensionsMesg += ext.replaceAll('-', ' or ');
                         }
-                        else if(!allowedExtensionsMesg.includes(ext)) 
+                        else if(!allowedExtensionsMesg.includes(ext))
                         allowedExtensionsMesg += ext + ' and ';
                 }
             }
@@ -1053,19 +1097,19 @@ const isCorrectExt = async function(delivType, filename, filenameExt, AllowedExt
         statusMesg: mesg
     });
  }
- else{   
+ else{
     let isAllCorrect = true;
     filenames.map(item => {
         let singleFileMesg = '';
         let filenameWithExt = item.Name.toLowerCase();
         let filename = filenameWithExt.substring(0, filenameWithExt.lastIndexOf(".")).toLowerCase();
         let extension = filenameWithExt.substring(filenameWithExt.lastIndexOf(".") + 1).toLowerCase();
-        
+
         let isFound = splitRules.some(rule =>{
             ruleExt = [];
-            
+
             let isFound = false;
-        
+
             ruleExt = rule.toLowerCase().split('|');
             for(let ext of ruleExt){
                 if(ext.includes(extension)){
@@ -1084,7 +1128,7 @@ const isCorrectExt = async function(delivType, filename, filenameExt, AllowedExt
                     let fullfilename = item.Name.toLowerCase();
                     let tempFile = fullfilename.substring(0, fullfilename.lastIndexOf("."));
 
-                    clonResults = clonResults.filter(result =>{ 
+                    clonResults = clonResults.filter(result =>{
                         let resFullfilename = result.filename.toLowerCase();
                         let resTempFile = resFullfilename.substring(0, resFullfilename.lastIndexOf("."))
                         return  resTempFile !== tempFile;
@@ -1105,7 +1149,7 @@ const isCorrectExt = async function(delivType, filename, filenameExt, AllowedExt
     });
 
     if(isAllCorrect)
-        checkedFiles.push(filename); 
+        checkedFiles.push(filename);
  }
 
 }
@@ -1267,8 +1311,9 @@ const _setData = (Handsontable) => {
                 }
                 let propResults = [];
 
-                
-                props.map(prop =>{
+
+                props.map(prop => {
+                    debugger;
                     let index = prop[0]; //rowIndex
                     let column = prop[1];
                     //let isChecked = prop[3];
@@ -1298,7 +1343,7 @@ const _setData = (Handsontable) => {
                             }
                                 delivType = row.DelivType;
                                 _mesg = row._mesg;
-                                
+
                                 if(value === 'yes'){
                                     filenames.push(rowFilenameWithExt); //`${filename}.${extension}`);
                                 }
@@ -1317,7 +1362,7 @@ const _setData = (Handsontable) => {
                         });
                     }
                 });
-                
+
                 if(propResults.length > 0){
                     let resultAllowedExts;
                      Promise.all(propResults.map(async result =>{
@@ -1327,9 +1372,9 @@ const _setData = (Handsontable) => {
                         let trans = result.transaction;
                         let filenames = result.filenames;
 
-                        if (checkedFiles.includes(filename)) 
+                        if (checkedFiles.includes(filename))
                           return;
-                        
+
                         let filemasterError = '';
                         if(trans === 'add'){
                             let row = clonResults.filter(result =>{ return result.filenameWithExt === filenameWithExt });
@@ -1352,7 +1397,7 @@ const _setData = (Handsontable) => {
                         let errorItems = [];
                         if(result.mesg.startsWith('Missing') || result.mesg === ''){
                             let delivType = result.delivType;
-                            
+
                             //let isFound = false;
                             if(resultAllowedExts !== undefined && resultAllowedExts.length > 0){
                                 let getRows = resultAllowedExts.filter(error =>{ return error.filename === filename });
@@ -1389,18 +1434,18 @@ const _setData = (Handsontable) => {
                                     statusMesg: mesg,
                                     trans: trans
                                 });
-                  
+
                             }
                         }
                         if(statusMesg === '' && result.mesg === '' && trans === 'add'){
 
-                            statusMesg = filemasterError; 
+                            statusMesg = filemasterError;
                             errorItems.push({
                                 filename: filenameWithExt,
                                 statusMesg: statusMesg,
                                 trans: trans
                             });
-                            
+
                         }
                         return errorItems;
                     }))
@@ -1413,11 +1458,11 @@ const _setData = (Handsontable) => {
                                     let filename = item.filename; //this is comment either filename or filenameWithExt
                                     let trans = item.trans;
                                     if(trans === 'remove')
-                                      clonResults = clonResults.filter(result =>{ 
+                                      clonResults = clonResults.filter(result =>{
                                         if(result.mesg.startsWith('Missing')){
                                             return result.filename !== filename
                                         }
-                                        else return result.filenameWithExt !== filename 
+                                        else return result.filenameWithExt !== filename
                                    });
                                     //doUpdate = updateMetaInfo(item.isPairCheck, filename, trans, item.statusMesg);
                                     if(!doUpdate)
@@ -1426,7 +1471,7 @@ const _setData = (Handsontable) => {
                                 }
                             });
                             return doUpdate;
-                        
+
                     })
                     .then((doUpdate)=>{
                         if(doUpdate)
@@ -1448,9 +1493,9 @@ const _setData = (Handsontable) => {
                                     let difference = rlodFilenames.filter(item => !distinctDelivFilename.includes(item));
                                     if(difference.length > 0){
                                         isErrorFound = true;
-                                        let tempMesg = `The below filename ${difference.length} are missing while they are listed in RLOD Under Reference ${_submittalRef}, 
+                                        let tempMesg = `The below filename ${difference.length} are missing while they are listed in RLOD Under Reference ${_submittalRef},
                                                         please upload through ${_itemListname}.<br /><br />`;
-                
+
                                         difference.map(item =>{tempMesg += `${item}<br/>`})
                                         setErrorMessage(tempMesg);
                                     }
@@ -1464,7 +1509,7 @@ const _setData = (Handsontable) => {
                                         'height': '0',
                                         'opacity': '0'
                                     });
-        
+
                                     if($('#customErrorId'). length > 0)
                                     $('#customErrorId').remove();
                                 }
@@ -1472,7 +1517,7 @@ const _setData = (Handsontable) => {
                             }
                             else isErrorFound = true;
                         }
-                       
+
                         validateButtons(isErrorFound);
                     });
                 }
@@ -1558,7 +1603,7 @@ function handleSearchInput(){
            'float': 'left',
            'display': 'inline'
        });
-   
+
        searchFiled.blur(function() {
            $(this).css('border-color', '#ccc');
        });
@@ -1610,26 +1655,27 @@ const evaluateWorkingHour = async function(){
 
         let ArrayWorkEndTime =  await getParameter('WorkEndTime');
         ArrayWorkEndTime = ArrayWorkEndTime.split(',');
-    
+
         if (ArrayWorkStartTime.length > 0 && ArrayWorkEndTime.length > 0) {
             // Convert the time components to TimeSpan
             var WorkStartTime = new Date();
             WorkStartTime.setHours(parseInt(ArrayWorkStartTime[0]), parseInt(ArrayWorkStartTime[1]), parseInt(ArrayWorkStartTime[2]));
-            
+
             var WorkEndTime = new Date();
             WorkEndTime.setHours(parseInt(ArrayWorkEndTime[0]), parseInt(ArrayWorkEndTime[1]), parseInt(ArrayWorkEndTime[2]));
-    
+
             var now = new Date();
             // Check if the current time is within working hours
             if (now > WorkStartTime && now < WorkEndTime) {
                 // Do nothing
             } else return 'Please note that you are not allowed to submit after working hours';
-            
+
         }
-    } else return 'Please note that you are not allowed to submit on weekends.';  
+    } else return 'Please note that you are not allowed to submit on weekends.';
 }
 
-function previewFile(hrefElement, isRename){
+function previewFile(hrefElement, isRename) {
+
     event.preventDefault();
     let linkHref = hrefElement.getAttribute('href');
     let width = '800';
@@ -1637,11 +1683,11 @@ function previewFile(hrefElement, isRename){
     let left = (window.screen.width - 800) / 2;
     if(isRename)
      width = '1050';
-    
+
     const top = (window.screen.height - 600) / 2;
     previewWindow = window.open(linkHref, 'filePreview', `width=${width},height=600,left=${left},top=${top}`);
 
-    preloader_btn(false, true);
+    //preloader_btn(false, true);
     checkPreviewInterval = setInterval(closePreview, 50);
 }
 
@@ -1683,7 +1729,7 @@ var closePreview = async function() {
                     }
                     else _masterErrors = _masterErrors.filter(error => error.filename !== oldFilenameWithExt);
                     isFirstFill = true;
-                    
+
                 }
                 return row;
             });
@@ -1798,13 +1844,13 @@ function updateMetaInfo(filename, trans, statusMesg){
     }
     else if(_isDesign && trans === 'remove'){
         let indexToRemove = distinctDelivFilename.indexOf(filename);
-        if (indexToRemove !== -1) 
+        if (indexToRemove !== -1)
             distinctDelivFilename.splice(indexToRemove, 1);
     }
 
     _data.find((row) => {
         //let proceed = isPairCheck ? row.filename === filename : `${row.filename}.${row.extension}` === filename
-        
+
         let rowFileName = `${row.filename}.${row.extension}`;
         let checkExt = false;
         if(statusMesg.startsWith('Missing') || trans === 'add'){
@@ -1824,7 +1870,7 @@ function updateMetaInfo(filename, trans, statusMesg){
 
             if(statusMesg !== '')
               missingPairErrorsFiles.push(filename);
-            
+
             if(row._mesg !== statusMesg){
                 row._status = setErrorMesg(statusMesg);
                 row._mesg = statusMesg;
@@ -1866,7 +1912,7 @@ function removeDuplicateRows(array) {
 }
 
 const checkTaskStatus = async function(isUpdate, wfStatus){
-    
+
     let mesg = '';
     let query = `Reference eq '${_submittalRef}' and Trade eq '${_darTrade}'`
     let items = await _web.lists.getByTitle(_DesignTasks).items.select("Id, Status, WorkflowStatus, ReviewLink").filter(query).get();
@@ -1912,7 +1958,8 @@ const getPending_RLOD_FullFilenames = async function(){
      });
 }
 
-const handelConstructionSubmit = async function(){
+const handelConstructionSubmit = async function () {
+    debugger;
   let mesg = '',  errorFound = false;
 
   if(enableTransmittal){
@@ -1921,11 +1968,11 @@ const handelConstructionSubmit = async function(){
         mesg = 'Transmittal Number is Required Field';
   }
 
-   _data = _data.filter((item)=>{ 
+   _data = _data.filter((item)=>{
       if(item.isSelected === 'yes'){
         let delivType = item.DelivType !== undefined ? item.DelivType : '';
 
-        if(delivType !== '' && !docType.includes(delivType)) 
+        if(delivType !== '' && !docType.includes(delivType))
             docType.push(delivType);
         return item;
       }
@@ -1977,13 +2024,13 @@ const handelDesignSubmit = async function(){
     let cloneDdata = _data.reduce((accumulator, currentItem) => {
         if (currentItem.isSelected === 'yes'){
             const isDuplicate = accumulator.some(item => item.filename === currentItem.filename);
-            
+
             // If the filename is not a duplicate, add it to accumulator array
             if(!isDuplicate) {
                 accumulator.push(currentItem);
             }
         }
-        
+
         return accumulator;
     }, []);
 
@@ -1994,7 +2041,7 @@ const handelDesignSubmit = async function(){
     for (let i = 0; i < cloneDdata.length; i += batchSize) {
         dataChunks.push(cloneDdata.slice(i, i + batchSize));
     }
-    
+
     // Using for...of loop to iterate over dataChunks
     for (let [chunkIndex, chunk] of dataChunks.entries()) {
         let metaInfo = [];
@@ -2007,23 +2054,23 @@ const handelDesignSubmit = async function(){
             let containsRev = _schema.containsRev;
             let delimeter = _schema.delimeter;
             let revStartWith = _schema.revStartWith;
-    
+
             let filename = item.filename;
             let filenameWithoutRev = containsRev ? item.filename.substring(0, item.filename.lastIndexOf(delimeter)) : item.filename;
-            
+
             if(checkAgainstFNC){
                 rev = containsRev ? item.filename.substring(item.filename.lastIndexOf(delimeter) + 1) : '';
                 if (revStartWith !== undefined)
                     rev = rev.replace(revStartWith, '');
             }
-    
+
             let query = `FileName eq '${filenameWithoutRev}'`;
             if (checkAgainstFNC && !containsRev) {
                 let items  = await _web.lists.getByTitle(_SLOD).items.select('ID').filter(query).getAll();
                 rev = items.length; // FOR MOD Type
                 rev = String(rev).padStart(_bimRevFormat.length, '0');
 
-            } 
+            }
 
             if (UpdatedFiles.indexOf(filename) === -1) {
                 UpdatedFiles.push(filename);
@@ -2032,7 +2079,7 @@ const handelDesignSubmit = async function(){
             if (filenames.indexOf(filename) === -1) {
                 filenames.push(filename);
             }
-            
+
             metaInfo.push({
                 filename: filename,
                 rev: rev
@@ -2063,31 +2110,31 @@ const updateRLOD = function(rlodList, filenames, workflowStatus, metaInfo, total
                             let files = _data.filter(file =>{
                                 return file.filename === item.FullFileName;
                             })
-                    
+
                             files.map(file=>{
                                 let ext = file.extension;
                                 let url = file.fileRelativeUrl;
-                    
+
                                 let fileLink = {
                                     Description: ext,
                                     Url: url
                                 };
-                    
+
                                 if(ext === 'pdf' || ext === 'rvt')
                                 setItem["PDFLink"] = fileLink;
                                 else if(ext === 'dwf' || ext === 'dwfx')
                                 setItem["DWFLink"] = fileLink;
                                 else setItem["DWGLink"] = fileLink;
                             });
-                    
+
                             setItem["Status"] = workflowStatus;
-                    
+
                             if(checkAgainstFNC){
                                 let metaItem = metaInfo.filter(metaItem=> { return metaItem.filename === item.FullFileName });
                                 if(metaItem.length > 0)
                                 setItem["Revision"] = metaItem[0].rev;
                             }
-                    
+
                             setItem["SubmittalRef"] = _submittalRef;
                             setItem["FullFileName"] = item.FullFileName;
                             setItem["CDSNumber"] = "";
@@ -2095,7 +2142,7 @@ const updateRLOD = function(rlodList, filenames, workflowStatus, metaInfo, total
                             setItem["SubmittedDate"] = null;
                             setItem["State"] = "Open";
                             setItem["SentToPMDate"] = new Date();
-                    
+
                             //rlodList.items.inBatch(batch).add(item);
                             rlodList.items.getById(item.Id).inBatch(batch).update(setItem);
                         });
@@ -2218,5 +2265,5 @@ var  detailedLoader = async function(total, index, trans){
             "font-size": "20px",
             "width": "auto"
         }).insertAfter(targetControl);
-    }           
+    }
 }

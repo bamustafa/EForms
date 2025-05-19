@@ -11,8 +11,9 @@ var onRender = async function(layout, moduleName, formType) {
 
     //updateTotal();
 
-    getUserPhoto();
+    //getUserPhoto();
 
+    await getModulesCount();
 
 }
 
@@ -111,5 +112,25 @@ async function fetchResult(apiUrl, method, data) {
 }
 
 
+let getModulesCount = async function () {
+    //let apiUrl = `${_spPageContextInfo.siteAbsoluteUrl}/_layouts/15/PCW/APICalls/SPUtils.aspx?command=GetTotalOpenPerModule`
+
+    debugger;
+    //const user = await pnp.sp.web.currentUser.get();
+    //let apiUrl = `${_spPageContextInfo.siteAbsoluteUrl}/_layouts/15/PCW/APICalls/SPUtils.aspx?Command=GetConstTasksByUser&username=${user.Title}`
+
+    //let apiUrl = `${_spPageContextInfo.siteAbsoluteUrl}/_layouts/15/PCW/APICalls/SPUtils.aspx?command=GetTopContributors`
+
+    let apiUrl = `${_spPageContextInfo.siteAbsoluteUrl}/_layouts/15/PCW/APICalls/SPUtils.aspx?command=GetRecentActivities`
+
+    await fetch(apiUrl)
+        .then(async response => {
+            return response.text()
+         })
+         .then(async data => {
+            let result = JSON.parse(data);
+            console.log(result);
+         });
+}
 
 

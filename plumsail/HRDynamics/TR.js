@@ -3,31 +3,81 @@ var _module, _formType, _web, _webUrl, _siteUrl, _layout, _itemId, _ImageUrl, _L
 let Inputelems = document.querySelectorAll('input[type="text"]');
 let _Email, _Notification = '', _DipN = "", _htLibraryUrl, _errorImg, _submitImg;
 
-
 //handson variables
-let _hot, _container, _data= [], _colArray, batchSize = 15;
+let _hot, _container, _data = [], _colArray, batchSize = 15;
+const greenColor = '#5FC9B3', redColor = '#F28B82', yellowColor = '#6c757d';
+let _formFields = {};
+
+const disableField = (field) => field.disabled = true;
+const enabledField = (field) => field.disabled = false;
+const requiredField = (field) => field.required = true;
 
 //form type
-let _isNew = false, _isEdit = false, _proceed = false;
+let _isNew = false, _isEdit = false, _isDisplay = false; _proceed = false;
 
-var onRender = async function (moduleName, formType, relativeLayoutPath){ 
+var onRender = async function (relativeLayoutPath, moduleName, formType){ 
        
-	try { 
-        const startTime = performance.now();
-        _formType = formType;
-	
-        await getGlobalParameters(relativeLayoutPath, moduleName, formType);
-
-        if(moduleName == 'TR')
-			await onTRRender(formType);
-        else if(moduleName == 'TEST'){
-            _colArray = await getSchema()
-            _spComponentLoader.loadScript(_htLibraryUrl).then(_setData);
-        }		
+    try {      
         
-        const endTime = performance.now();
-        const elapsedTime = endTime - startTime;
-        console.log(`Execution time HRDynamics: ${elapsedTime} milliseconds`);
+        const startTime = performance.now();
+
+        _layout = relativeLayoutPath;
+
+        await loadScripts().then(async () => {
+
+            showPreloader();
+            await extractValues(moduleName, formType);          
+
+            if (moduleName == 'TR') {
+                if (formType === "New")                    
+                    await TR_newForm();
+            }
+            else if (moduleName == "Training") {
+                
+                const TrainingEvaluationsvg = `<svg fill="#000000" width="24" height="24" viewBox="0 0 24 24" id="create-note-alt" data-name="Line Color" xmlns="http://www.w3.org/2000/svg" class="icon line-color"><path id="secondary" d="M19.44,8.22C17.53,10.41,14,10,14,10s-.39-4,1.53-6.18a3.49,3.49,0,0,1,.56-.53L18,4l.47-1.82A8.19,8.19,0,0,1,21,2S21.36,6,19.44,8.22ZM14,10l-2,2" style="fill: none; stroke: rgb(44, 169, 188); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path><path id="primary" d="M12,3H4A1,1,0,0,0,3,4V20a1,1,0,0,0,1,1H20a1,1,0,0,0,1-1V12" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path></svg>`;
+                setIconSource("TrainingEvaluation-icon", TrainingEvaluationsvg);
+                const Contenticonsvg = `<svg fill="#000000" width="24" height="24" viewBox="0 0 24 24" id="create-note-alt" data-name="Line Color" xmlns="http://www.w3.org/2000/svg" class="icon line-color"><path id="secondary" d="M19.44,8.22C17.53,10.41,14,10,14,10s-.39-4,1.53-6.18a3.49,3.49,0,0,1,.56-.53L18,4l.47-1.82A8.19,8.19,0,0,1,21,2S21.36,6,19.44,8.22ZM14,10l-2,2" style="fill: none; stroke: rgb(44, 169, 188); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path><path id="primary" d="M12,3H4A1,1,0,0,0,3,4V20a1,1,0,0,0,1,1H20a1,1,0,0,0,1-1V12" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path></svg>`;
+                setIconSource("Content-icon", Contenticonsvg);
+                const TrainingCommentsvg = `<svg fill="#000000" width="24" height="24" viewBox="0 0 24 24" id="create-note-alt" data-name="Line Color" xmlns="http://www.w3.org/2000/svg" class="icon line-color"><path id="secondary" d="M19.44,8.22C17.53,10.41,14,10,14,10s-.39-4,1.53-6.18a3.49,3.49,0,0,1,.56-.53L18,4l.47-1.82A8.19,8.19,0,0,1,21,2S21.36,6,19.44,8.22ZM14,10l-2,2" style="fill: none; stroke: rgb(44, 169, 188); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path><path id="primary" d="M12,3H4A1,1,0,0,0,3,4V20a1,1,0,0,0,1,1H20a1,1,0,0,0,1-1V12" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path></svg>`;
+                setIconSource("Comments-icon", TrainingCommentsvg);
+
+                _formFields = {
+                    Title: fd.field('Title'),
+                    TypeOfTraining: fd.field('TypeOfTraining'),
+                    Instructor: fd.field('Instructor'),
+                    DurationFrom: fd.field('DurationFrom'),
+                    Location: fd.field('Location'),
+                    
+                    OrganizationRate: fd.field('OrganizationRate'),
+                    TrainerSkillRate: fd.field('TrainerSkillRate'),
+                    DurationRate: fd.field('DurationRate'),
+                    TechnicalLevel: fd.field('TechnicalLevel'),
+                    InteractivityRate: fd.field('InteractivityRate'),
+                    MaterialUsefulness: fd.field('MaterialUsefulness'),
+                    TechnicalFunctionalityRate: fd.field('TechnicalFunctionalityRate'),
+                    TrainingExpectations: fd.field('TrainingExpectations'),
+                    RecommendationToColleagues: fd.field('RecommendationToColleagues'),
+                    OverallImpression: fd.field('OverallImpression'),
+
+                    OverallImpressionComment: fd.field('OverallImpressionComment'),
+                    TrainingBenefitInWork: fd.field('TrainingBenefitInWork'),
+                    TrainingProblems: fd.field('TrainingProblems'),
+                    SuggestionsToImprove: fd.field('SuggestionsToImprove'),
+                    MissingTopics: fd.field('MissingTopics')
+                }
+
+                if(formType === "New")
+                    await Training_newForm();
+                else if(formType=="Edit")
+                    await Training_editForm();
+                else if(formType=="Display")
+                    await Training_displayForm();
+            }            		
+            
+            const endTime = performance.now();
+            const elapsedTime = endTime - startTime;
+            console.log(`Execution time HRDynamics: ${elapsedTime} milliseconds`);            
+        })
 	}
 	catch (e) {
 		//alert(e);
@@ -38,48 +88,37 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
     }
 }
 
-var onTRRender = async function (){	
-
-    _fields = {
-        Name: fd.field("Name"),
-        IDNo: fd.field("IDNo"),
-        Department: fd.field("Department"),
-        Position: fd.field("Position"),
-
-        TypeofTraining: fd.field("TypeofTraining"),
-        Title: fd.field("Title"),
-
-        From: fd.field("From"),
-        To: fd.field("To"),
-
-        VendorName: fd.field("VendorName"),
-        Tel: fd.field("Tel"),
-        Address: fd.field("Address"),
-        Email: fd.field("E_x002d_mail"),
-        Fax: fd.field("Fax"),
-
-
-        location: fd.field("location"),
-        Cost: fd.field("Cost"),
-        chargedTo: fd.field("chargedTo"),
-        AdditionalInformation: fd.field("AdditionalInformation"),
-        Justifications: fd.field("Justifications"),
-        Status: fd.field("Status"),
-        Employee: fd.field("Employee")
-    }
-	
-    _CurrentUser = await GetCurrentUser();
-
-	if(_isNew)
-		await TR_newForm();
-    
-    // _colArray = await getSchema()
-    // _spComponentLoader.loadScript(_htLibraryUrl).then(_setData);
-}
-
 var TR_newForm = async function(){ 
     
     try {
+
+        _fields = {
+            Name: fd.field("Name"),
+            IDNo: fd.field("IDNo"),
+            Department: fd.field("Department"),
+            Position: fd.field("Position"),
+
+            TypeofTraining: fd.field("TypeofTraining"),
+            Title: fd.field("Title"),
+
+            From: fd.field("From"),
+            To: fd.field("To"),
+
+            VendorName: fd.field("VendorName"),
+            Tel: fd.field("Tel"),
+            Address: fd.field("Address"),
+            Email: fd.field("E_x002d_mail"),
+            Fax: fd.field("Fax"),
+
+
+            location: fd.field("location"),
+            Cost: fd.field("Cost"),
+            chargedTo: fd.field("chargedTo"),
+            AdditionalInformation: fd.field("AdditionalInformation"),
+            Justifications: fd.field("Justifications"),
+            Status: fd.field("Status"),
+            Employee: fd.field("Employee")
+        }
         
         const svguserinfo = `<svg width="24" height="24" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione" preserveAspectRatio="xMidYMid meet">
                                 <circle cx="32" cy="32" r="30" fill="#4fd1d9">
@@ -229,8 +268,13 @@ var TR_newForm = async function(){
         setIconSource("details-icon", svgdetails);
         setIconSource("attachment-icon", svgattachment);
 
-        await loadingButtons();
-        formatingButtonsBar('Human Resources: Employee Training Application');       
+        await setButtonActions("Accept", "Submit", `${greenColor}`, 'white');
+        await setButtonActions("ChromeClose", "Cancel", `${yellowColor}`, 'white');
+
+        formatingButtonsBar('Human Resources: Employee Training Application'); 
+        
+        setPSHeaderMessage('');
+        setPSErrorMesg(`Please complete the following form and submit.`);
 
         const TRAdmin = await CheckifUserinSPGroup();
         _fields.Employee.value = _CurrentUser.Title; 
@@ -300,71 +344,184 @@ var TR_newForm = async function(){
     }      
 }
 
-var getGlobalParameters = async function(relativeLayoutPath, moduleName, formType){
+var Training_newForm = async function(){
+    try
+    {        
+        formatingButtonsBar("Evaluation of Training Event Form"); 
 
-    fd.toolbar.buttons[0].style = "display: none;";
-    fd.toolbar.buttons[1].style = "display: none;";   
-
-    if($('.text-muted').length > 0)
-      $('.text-muted').remove();
-    
-    _module = moduleName;
-    _formType = formType;
-    _web = pnp.sp.web;
-    _webUrl = _spPageContextInfo.siteAbsoluteUrl; //https://db-sp.darbeirut.com/sites/QM-eAudit
-    _siteUrl = new URL(_webUrl).origin;
-    _layout = relativeLayoutPath;
-    _itemId = fd.itemId;
-
-    _ImageUrl = _spPageContextInfo.webAbsoluteUrl + '/Style%20Library/tooltip.png',
-    _ListInternalName = _spPageContextInfo.serverRequestPath.split('/')[5],
-    _ProjectNumber = _spPageContextInfo.serverRequestPath.split('/')[2],
-    _ListFullUrl = _spPageContextInfo.webAbsoluteUrl + '/Lists/' + _ListInternalName,
-
-    _errorImg = _layout + '/Images/Error.png';
-    _submitImg = _layout + '/Images/Submitted.png';
-    _htLibraryUrl = _layout + '/controls/handsonTable/libs/handsontable.full.min.js';
-
-    await loadScripts();
-    showPreloader();
-
-   if(_formType === 'New'){
-    clearStoragedFields(fd.spForm.fields);
-    _isNew = true;
-   }
-   else if(_formType === 'Edit')
-    _isEdit = true;
+        setPSHeaderMessage('');
+        setPSErrorMesg(`Please complete the following form and submit to the technical training manager.`); 
+        
+        await setButtonActions("Accept", "Submit", `${greenColor}`, 'white');
+        await setButtonActions("ChromeClose", "Cancel", `${yellowColor}`, 'white'); 
+        
+        Object.values(_formFields).forEach(requiredField);
+    }
+    catch(err){
+        console.log(err.message, err.stack)
+        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, '', '', err.message, err.stack);
+        showPreloader();
+    }
+}
+var Training_editForm= async function(){
+    try
+    {
+        formatingButtonsBar("Evaluation of Training Event Form");
+    }
+    catch(err){
+        console.log(err.message, err.stack)
+        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, '', '', err.message, err.stack);
+        showPreloader();
+    }
+}
+var Training_displayForm = async function(){
+    try
+    {
+        formatingButtonsBar("Evaluation of Training Event Form");
+    }
+    catch(err){
+        console.log(err.message, err.stack)
+        await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, '', '', err.message, err.stack);
+        showPreloader();
+    }
 }
 
-var loadScripts = async function(){
-	const libraryUrls = [		
-        _layout + '/controls/preloader/jquery.dim-background.min.js',
-        _layout + '/plumsail/js/preloader.js',
+//#region General Functions
 
-		_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
-        _layout + '/plumsail/js/customMessages.js',
-        _layout + '/plumsail/js/utilities.js',
-		_layout + '/plumsail/js/commonUtils.js',
-        _layout + '/plumsail/HRDynamics/utils.js'
-	];
-  
-	const cacheBusting = '?t=' + new Date().getTime();
+var extractValues = async function(moduleName, formType){
 
-    libraryUrls.map(url => { 
-		  $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
-		});
-		
-	const stylesheetUrls = [
-		_layout + '/controls/tooltipster/tooltipster.css',
-		_layout + '/plumsail/css/CssStyleCVMain.css',
-        _layout + '/plumsail/css/HRDynamics.css',	
-        _layout + '/controls/handsonTable/libs/handsontable.full.min.css'
-	];
+    //const startTime = performance.now();
+    if($('.text-muted').length > 0)
+      $('.text-muted').remove();
+
+      _web = pnp.sp.web;
+      _isSiteAdmin = _spPageContextInfo.isSiteAdmin;
+      _module = moduleName;
+      _formType = formType;
+      _webUrl = _spPageContextInfo.siteAbsoluteUrl;
+      _siteUrl = new URL(_webUrl).origin;
+
+    if(_formType === 'New')
+        _isNew = true;
+
+    else if(_formType === 'Edit'){
+        _isEdit = true;
+        _itemId = fd.itemId;
+    }
+    else if(_formType === 'Display')
+        _isDisplay = true;
+
+    const listUrl = fd.webUrl + fd.listUrl;
+    const list = await _web.getList(listUrl).get();
+    _list = list.Title;
+
+    _CurrentUser = await pnp.sp.web.currentUser.get();
+    //  const elapsedTime = endTime - startTime;
+    //  console.log(`extractValues: ${elapsedTime} milliseconds`);
+}
+
+function formatingButtonsBar(titelValue){
+
+    $('div.ms-compositeHeader').remove();
+    $('i.ms-Icon--PDF').remove();
+
+    let toolbarElements = document.querySelectorAll('.fd-toolbar-primary-commands');
+    toolbarElements.forEach(function(toolbar) {
+        toolbar.style.display = "flex";
+        toolbar.style.justifyContent = "flex-end";
+    }); 
+    
+   let commandBarElement = document.querySelectorAll('[aria-label="Command Bar."]');
+        commandBarElement.forEach(function(element) {
+        element.style.paddingTop = "16px";
+    }) ;     
+
+    const formContainer = document.querySelector('.fd-form-container.container-fluid');
+    if (formContainer) {
+        formContainer.style.setProperty('margin-top', '-8px', 'important');
+        formContainer.style.setProperty('padding-left', '5px', 'important');
+    }
+
+    const iconPath = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/Images/animdarlogo1.png';
+    const linkElement = `<a href="${_spPageContextInfo.webAbsoluteUrl}" style="text-decoration: none; color: inherit; display: flex; align-items: center; font-size: 18px;">
+                            <img src="${iconPath}" alt="Icon" style="width: 50px; height: 26px; margin-right: 14px;">${titelValue}</a>`;
+    $('span.o365cs-nav-brandingText').html(linkElement);
+
+    $('.o365cs-base.o365cs-topnavBGColor-2').css('background', 'linear-gradient(to bottom, #808080, #4d4d4d, #1a1a1a, #000000, #1a1a1a, #4d4d4d, #808080)');
   
-	stylesheetUrls.map((item) => {
-	  var stylesheet = item;
-	  $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}${cacheBusting}">`);
-	});
+    let co = 0;
+    $('.fd-field-choice').each(function () { 
+
+        if (co === 0) {
+
+            const $choice = $(this); // reference to the first fd-field-choice
+
+            $choice.find('.fd-fill-in-choice').css({
+                display: 'flex',
+                'margin-top': '0px'
+            });
+
+            $choice.find('.fd-fill-in-choice .row').each(function () {
+                this.style.setProperty('width', '200px', 'important');
+            });
+
+            $choice.css('display', 'flex');
+            $choice.find('.col-sm.form-check.d-none.d-sm-block').attr("style", "display: none !important;");
+            $choice.find('.col-sm.form-check:not(.d-none)').css('width', '500px');
+        }
+
+        co++;
+    });
+
+    $('.fd-grid.container-fluid').attr("style", "margin-top: 5px !important; padding: 10px !important;");
+  
+    $('.divGrid').each(function() {
+        $(this).css({             
+            'margin-left': '0px', /* Align with the content */            
+        });
+    }); 
+
+    if (_module === 'TR') {        
+
+        $('.divGrid').each(function() {
+            $(this).css({             
+                'margin-left': '5px', /* Align with the content */            
+            });
+        }); 
+        $('.border-title').each(function() {
+            $(this).css({          
+                'margin-top': '-22px', /* Adjust the position to sit on the border */                  
+            });
+        });
+    }    
+}
+
+var loadScripts = async function(withSign){
+
+    const libraryUrls = [
+      _layout + '/controls/preloader/jquery.dim-background.min.js',
+      _layout + "/plumsail/js/buttons.js",
+      _layout + '/plumsail/js/customMessages.js',
+      _layout + '/controls/tooltipster/jquery.tooltipster.min.js',
+      _layout + '/plumsail/js/preloader.js',
+      _layout + '/plumsail/js/commonUtils.js',
+      _layout + '/plumsail/js/utilities.js'
+    ];
+
+    const cacheBusting = `?t=${Date.now()}`;
+      libraryUrls.map(url => {
+          $('head').append(`<script src="${url}${cacheBusting}" async></script>`);
+        });
+
+    const stylesheetUrls = [
+      _layout + '/controls/tooltipster/tooltipster.css',
+      _layout + '/plumsail/css/DarTemplate.css' + `?t=${Date.now()}`
+    ];
+
+    stylesheetUrls.map((item) => {
+      var stylesheet = item;
+      $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}${cacheBusting}">`);
+    });
 }
 
 const _setData = (Handsontable) => {
@@ -727,3 +884,42 @@ function FixWidget(dt){
         gridContent.style.overflowX = 'hidden';
     }          
 }
+
+function setIconSource(elementId, iconFileName) {
+
+  const iconElement = document.getElementById(elementId);
+
+  if (iconElement) {
+      iconElement.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconFileName)}`;
+  }
+}
+
+const setButtonActions = async function (icon, text, bgColor, color) {
+    
+    if (!_isDisplay)
+        fd.toolbar.buttons[0].style = "display: none;";
+
+    fd.toolbar.buttons[1].style = "display: none;"; 
+
+    fd.toolbar.buttons.push({
+          icon: icon,
+          class: 'btn-outline-primary',
+          text: text,
+          style: `background-color: ${bgColor}; color: ${color || 'white'};`, //color of font button//
+        click: async function () {            
+            
+            if (text == "Close" || text == "Save" || text == "Cancel"){
+                showPreloader();
+                fd.close();
+            }           
+            else if (text == "Submit" ) {               
+                if (fd.isValid) {
+                    showPreloader();                                       
+                    console.log('new child form')
+                    fd.save();                    
+                }
+            }
+        }
+    });
+}
+//#endregion

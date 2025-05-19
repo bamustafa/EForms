@@ -350,3 +350,7 @@ textarea{
 
   padding-top: 3px !important;
 }
+.k-list .k-item.k-state-selected, .k-list-optionlabel.k-state-selected {
+  color: #fff;
+  background-color: #49c4b1 !important;
+}

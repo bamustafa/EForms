@@ -22,30 +22,31 @@ var onRender = async function (moduleName, formType, relativeLayoutPath){
 		if(relativeLayoutPath !== undefined && relativeLayoutPath !== null && relativeLayoutPath !== '')
 		_layout = relativeLayoutPath;		
 
-		await PreloaderScripts();		
-		await loadScripts();
+        await loadScripts().then(async () => {
 
-		clearLocalStorageItemsByField(itemsToRemove);
+            clearLocalStorageItemsByField(itemsToRemove);
 
-		fixTextArea();
+            fixTextArea();
 
-		_modulename = moduleName;
-		_formType = formType;
-		if(moduleName == 'ALGCOR')
-			await onALGCORRender(formType);
+            _modulename = moduleName;
+            _formType = formType;
+            if (moduleName == 'ALGCOR')
+                await onALGCORRender(formType);
 
-		if(formType == 'New')
-			await setButtonToolTip('Save', saveMesg);
-		await setButtonToolTip('Submit', submitMesg);			
-		await setButtonToolTip('Cancel', cancelMesg);	
-		
-		preloader("remove");
+            if (formType == 'New')
+                await setButtonToolTip('Save', saveMesg);
+            await setButtonToolTip('Submit', submitMesg);
+            await setButtonToolTip('Cancel', cancelMesg);
+        });	
 	}
 	catch (e) {
 		alert(e);
 		console.log(e);		
-		preloader();
-	}
+		showPreloader();
+    }
+    finally{
+        hidePreloader();
+    }
 }
 
 var onALGCORRender = async function (formType){	
@@ -150,9 +151,10 @@ var ALGCOR_newForm = async function(){
 
 			fd.validators.length = 0; 
 			if(!fd.isValid)
-			$(fd.field('AttachFiles').$parent.$el).hide();
+			    $(fd.field('AttachFiles').$parent.$el).hide();
 			else
-			{			   
+            {	
+                showPreloader();
 				var NCountofATT = 0;
 				var OCountofATT = 0;
 				for(i = 0; i < fd.field('Attachments').value.length; i++) 
@@ -167,7 +169,11 @@ var ALGCOR_newForm = async function(){
 					}
 				}
 				$(fd.field('AttachFiles').$parent.$el).show();
-				fd.field('AttachFiles').value = "A" + "," + NCountofATT + "," + OCountofATT;
+                fd.field('AttachFiles').value = "A" + "," + NCountofATT + "," + OCountofATT;
+                
+                $(fd.field('RefNo').$parent.$el).show();
+                fd.field('RefNo').value = fd.field('ReservedRef').value;
+                $(fd.field('RefNo').$parent.$el).hide();
 				
 				await updateCounter();
 					
@@ -184,11 +190,13 @@ var ALGCOR_newForm = async function(){
 			
 			if(!fd.isValid)
 			{
-			$(fd.field('AttachFiles').$parent.$el).hide();
-			$(fd.field('Submit').$parent.$el).hide();
+                $(fd.field('AttachFiles').$parent.$el).hide();
+                $(fd.field('Submit').$parent.$el).hide();
 			}
 			else
-			{
+            {
+                showPreloader();
+
 				var NCountofATT = 0;
 				var OCountofATT = 0;
 				for(i = 0; i < fd.field('Attachments').value.length; i++) 
@@ -206,7 +214,11 @@ var ALGCOR_newForm = async function(){
 				fd.field('AttachFiles').value = "A" + "," + NCountofATT + "," + OCountofATT;
 				
 				$(fd.field('Submit').$parent.$el).show();
-				fd.field('Submit').value = true;
+                fd.field('Submit').value = true;
+                
+                $(fd.field('RefNo').$parent.$el).show();
+                fd.field('RefNo').value = fd.field('ReservedRef').value;
+                $(fd.field('RefNo').$parent.$el).hide();
 				
 				await updateCounter();
 				
@@ -219,11 +231,13 @@ var ALGCOR_newForm = async function(){
 		icon: 'ChromeClose',
 		class: 'btn-outline-primary',
 		text: 'Cancel',
-		click: function() {
+        click: function () {
+            
+            showPreloader();
 	
-		fd.validators.length = 0; 			
-		fd.close();
-	}
+            fd.validators.length = 0;             
+		    fd.close();
+	    }
 	});
 
 	fd.field('CORDirection').value = true;
@@ -270,35 +284,45 @@ var ALGCOR_newForm = async function(){
 	});
 	CORDirectionhideOrShow();
 
-	fd.field('Date').$on('change', async function(value) { 
+    fd.field('Date').$on('change', async function (value) { 
+        
+        if (value) {
+
+            let selectedYear = new Date(value).getFullYear();
+            let currentYear = new Date().getFullYear();
+
+            if (selectedYear < currentYear)
+                fd.field('ReservedRef').disabled = false;
+
+            else
+                fd.field('ReservedRef').disabled = true;            
 		
-		FinalVal = value.getFullYear().toString().slice(-2);
+            FinalVal = value.getFullYear().toString().slice(-2);
 		
-		if(_CORDirection === "Out")
-			Stage = "A" + "-" + FinalVal;
-		else
-			Stage = "IN" + "-" + FinalVal;
+            if (_CORDirection === "Out")
+                Stage = "A" + "-" + FinalVal;
+            else
+                Stage = "IN" + "-" + FinalVal;
 				
-		var camlF = "Title" + " eq '" + Stage + "'";
+            var camlF = "Title" + " eq '" + Stage + "'";
 		
-		await pnp.sp.web.lists.getByTitle('Counter').items.select("Title", "Counter").filter(camlF).get().then(function(items){
+            await pnp.sp.web.lists.getByTitle('Counter').items.select("Title", "Counter").filter(camlF).get().then(function (items) {
 						
-			if(fd.field('Stage').value != '')
-			{ 			
-				AutoReference(items, rfVal, ProposalNumber, fd.field('Stage').value, FinalVal);
-			}
-			else
-			{
-				fd.field('ReservedRef').disabled = false;				                    
-				fd.field('ReservedRef').value = "";	
-				fd.field('ReservedRef').disabled = true;
-			}	    
+                if (fd.field('Stage').value != '') {
+                    AutoReference(items, rfVal, ProposalNumber, fd.field('Stage').value, FinalVal);
+                }
+                else {
+                    fd.field('ReservedRef').disabled = false;
+                    fd.field('ReservedRef').value = "";
+                    fd.field('ReservedRef').disabled = true;
+                }
 			
-		});
+            });
+        }
 	});
 
-	fd.field('Stage').$on('change', async function(value){	
-		
+    fd.field('Stage').$on('change', async function (value) {
+        
 		if(_CORDirection === "Out")
 			Stage = "A" + "-" + FinalVal;
 		else
@@ -343,12 +367,15 @@ var ALGCOR_newForm = async function(){
 	var previousValue = fd.field('ReservedRef').value ;
 	fd.field('ReservedRef').$on('change', async function(value) {
 
-		if (value !== previousValue && previousValue !== '') {
-			await CheckDuplicateReference(value);
-			previousValue = value;
-		}
-		else
-			previousValue = value;				
+        if (value !== previousValue && previousValue !== '') {
+            await CheckDuplicateReference(value);
+            previousValue = value;
+            //fd.field('ReservedRef').disabled = false;
+        }
+        else {
+            previousValue = value;
+            //fd.field('ReservedRef').disabled = true;
+        }
 	});	
 }
 
@@ -386,7 +413,8 @@ var ALGCOR_editForm = async function(){
 				$(fd.field('Submit').$parent.$el).hide();
 				}
 				else
-				{
+                {
+                    showPreloader();
 					var NCountofATT = 0;
 					var OCountofATT = 0;
 					for(i = 0; i < fd.field('Attachments').value.length; i++) 
@@ -416,9 +444,10 @@ var ALGCOR_editForm = async function(){
 			text: 'Cancel',
 			click: function() {
 
-			fd.validators.length = 0; 		 
-			fd.close();
-		}
+                showPreloader();
+                fd.validators.length = 0; 		 
+                fd.close();
+            }
 	});
 
 	$(fd.field('AttachFiles').$parent.$el).hide();
@@ -502,7 +531,7 @@ function CORDirectionhideOrShow() {
 		$(fd.field('RefNo').$parent.$el).hide();					
 		$(fd.field('ReservedRef').$parent.$el).show();
 		fd.field('ReservedRef').value = "";	
-		fd.field('ReservedRef').disabled = true;
+		//fd.field('ReservedRef').disabled = true;
 		
 		_CORDirection = "Out";	
 	} 
@@ -514,7 +543,7 @@ function CORDirectionhideOrShow() {
 		$(fd.field('RefNo').$parent.$el).hide();					
 		$(fd.field('ReservedRef').$parent.$el).show();
 		fd.field('ReservedRef').value = "";	
-		fd.field('ReservedRef').disabled = true;
+		//fd.field('ReservedRef').disabled = true;
 		
 		_CORDirection = "In";																
 	}
@@ -528,7 +557,7 @@ function WriteFromBoxToRef() {
 
 function AutoReference(items, rfVal, ProposalNumber, Stage, FinalVal) {
 
-	fd.field('ReservedRef').disabled = false;
+	//fd.field('ReservedRef').disabled = false;
 	var ReservedRef = "";
 	
 	var CountNumber = 1;
@@ -556,7 +585,9 @@ function AutoReference(items, rfVal, ProposalNumber, Stage, FinalVal) {
 	DisableReservedRef(FinalVal);				
 }
 
-async function CheckDuplicateReference(Reference){
+async function CheckDuplicateReference(Reference) {
+    
+    debugger;
 
 	var isRecordExist = false;
 	
@@ -585,7 +616,8 @@ async function CheckDuplicateReference(Reference){
 		fd.field('RefNo').value = Reference;  
 		$(fd.field('RefNo').$parent.$el).hide();
 		
-		_isManualEntry = true;
+        _isManualEntry = true;
+        // fd.field('ReservedRef').disabled = false;
     }
 }
 
@@ -616,8 +648,8 @@ async function updateCounter() {
 				
 	var camlF = "Title" + " eq '" + Stage + "'";
 	
-	var listname = 'Counter';
-	
+	var listname = 'Counter';	
+    
 	await pnp.sp.web.lists.getByTitle(listname).items.select("Id, Title, Counter").filter(camlF).get().then(async function(items){
 		var _cols = { };
         if(items.length == 0){
@@ -629,42 +661,44 @@ async function updateCounter() {
           else if(items.length > 0){
 
             var _item = items[0];
+            var updateCount = true;
 
-			if(_isManualEntry){
-				if(parseInt(_item.Counter) > parseInt(value)){}
+            if (_isManualEntry) {
+                debugger;
+                if (parseInt(_item.Counter) > parseInt(value)) { updateCount = false; }
 				else					
 					value = parseInt(value) + 1;
 			}
 			else           
 				value = parseInt(_item.Counter) + 1;
             	
-			_cols["Counter"] = value.toString();                   
-			await pnp.sp.web.lists.getByTitle(listname).items.getById(_item.Id).update(_cols); 
-			
-		}                   
-         
+            if (updateCount) {
+                _cols["Counter"] = value.toString();
+                await pnp.sp.web.lists.getByTitle(listname).items.getById(_item.Id).update(_cols);
+            }			
+		}       
     });	
 }
 
 function DisableReservedRef(FinalVal){
 
-	if(FinalVal !== null || FinalVal !== '')
-	{
-		const number = parseInt(FinalVal);
+	// if(FinalVal !== null || FinalVal !== '')
+	// {
+	// 	const number = parseInt(FinalVal);
 		
-		if(number < 24)
-		{
-			fd.field('ReservedRef').disabled = false;
-			fd.field('ReservedRef').$on('change', WriteFromBoxToRef());
-		}
-		else
-		{
-			fd.field('ReservedRef').disabled = true;
-			WriteFromBoxToRef();
-		}
-	}
-	else
-		fd.field('ReservedRef').disabled = true;
+	// 	if(number < 24)
+	// 	{
+	// 		fd.field('ReservedRef').disabled = false;
+	// 		fd.field('ReservedRef').$on('change', WriteFromBoxToRef());
+	// 	}
+	// 	else
+	// 	{
+	// 		fd.field('ReservedRef').disabled = true;
+	// 		WriteFromBoxToRef();
+	// 	}
+	// }
+	// else
+	// 	fd.field('ReservedRef').disabled = true;
 }
 
 function CustomListEditor(Status) {				
@@ -685,10 +719,10 @@ function CustomListEditor(Status) {
 
 var loadScripts = async function(){
 	const libraryUrls = [
-		//_layout + '/controls/preloader/jquery.dim-background.min.js',
+		_layout + '/controls/preloader/jquery.dim-background.min.js',
 		_layout + "/plumsail/js/customMessages.js",
 		_layout + '/controls/tooltipster/jquery.tooltipster.min.js',
-		//_layout + '/plumsail/js/preloader.js',
+		_layout + '/plumsail/js/preloader.js',
 		_layout + '/plumsail/js/utilities.js',
 		_layout + '/plumsail/js/commonUtils.js'
 	];
@@ -700,7 +734,7 @@ var loadScripts = async function(){
 		
 	const stylesheetUrls = [
 		_layout + '/controls/tooltipster/tooltipster.css',
-		_layout + '/plumsail/css/CssStyle.css'
+		_layout + '/plumsail/css/CssStyle.css' + `?t=${Date.now()}`,
 		// _layout + '/plumsail/css/CssStyleRACI.css'
 	];
   

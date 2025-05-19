@@ -30,35 +30,12 @@ const customButtons = async function(icon, text, isAttach, Trans, isAttachmentMa
 						 alert(this.responseText);
 					 }
 				};
-				xhttp.open("GET", "http://db-sp.darbeirut.com:8080/api/v1/hw", true);
+				xhttp.open("GET", "https://db-sp.darbeirut.com:9500/api/v1/hello", true);
 
 				//xhttp.open("GET", "https://jsonplaceholder.typicode.com/todos/1", true);
 				//xhttp.open("GET", "http://db-sp16.darbeirut.com/api/v1/hw", true);
 				xhttp.setRequestHeader("Content-type", "application/json");
 				xhttp.send("Your JSON Data Here");
-			 }
-			 else if(moduleName == "TEST" && text == "Submit")
-			 {
-				//https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap
-				 fd.validators.length = 0;
-
-				 const payload = {
-					method: 'GET',
-					headers: { "Accept": "application/json; odata=verbose" },
-					credentials: 'same-origin'    // or credentials: 'include'
-				};
-
-				 const userAction = async() => {
-					const response = await fetch('http://db-sp.darbeirut.com/projects/PILOT-S/_api/web/lists',payload);//'http://db-sp.darbeirut.com:3000/api/v1/tours');
-					const myJson = await response.json(); //extract JSON from the http response
-					const len = await myJson.d.results.length;
-					// do something with myJson
-					alert(len);
-				  }
-				  var xx = await userAction();
-
-				 //preloader(false);
-				 //fd.close();
 			 }
 			 else if(text == "Compile & Close")
 			 {
@@ -1066,7 +1043,8 @@ function isFieldNULL(columnName){
 
 fd.spBeforeSave(() =>
 {
-	preloader();
+    //preloader();
+    showPreloader();
 });
 
 

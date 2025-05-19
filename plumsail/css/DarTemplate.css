@@ -1,88 +1,171 @@
 .fd-grid.container-fluid.divGrid {
-  position: relative;
-  border: 1px solid #ced4da; /* Set your desired border color and width */
-  padding-top: 26px; /* Add padding to create space inside the border */
-  margin: 10px -6px; /* Add margin to space out the container */
-  border-radius: 6px; /* Optional: rounded corners */
-  box-shadow: rgba(0, 0, 0, 0.1) 2px 4px 4px;
-  background-color: #f8f9fa2b !important;
-}
-
-.border-title {
-  position: absolute;
-  top: -12px; /* Adjust the position to sit on the border */
-  left: 20px; /* Align with the content */
-  background-color: #fcfcfc; /* Match the background color to your page */
-  padding: 0 10px; /* Add padding to the title */
-  font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  font-size: 14px;
-  font-weight: bold;
-  color: #FF9800; /* Modern green accent */  
-  letter-spacing: 0.5px; /* Improves readability */
-  transition: all 0.3s ease; /* Smooth transitions for hover effects */
+    position: relative;
+    border: 1px solid #ced4da; /* Set your desired border color and width */
+    padding-top: 26px; /* Add padding to create space inside the border */
+    margin: -6px -6px; /* Add margin to space out the container */
+    border-radius: 6px; /* Optional: rounded corners */
+    box-shadow: rgba(0, 0, 0, 0.1) 2px 4px 4px;
+    background-color: #f8f9fa2b !important;
 }
 
 .fd-form .btn-primary {
-color: #444;
-background-color: #fdfdfd;
-border: 1px solid #ababab;
-padding: 5px 30px;
-display: inline-block;
-margin: 2px 2px;
-border-radius: 6px;
-font-family: Arial, Helvetica, sans-serif;
-font-size: 0.95em;
-font-weight: bold;
-width: max-content;
+    color: #444;
+    background-color: #fdfdfd;
+    border: 1px solid #ababab;
+    padding: 5px 30px;
+    display: inline-block;
+    margin: 2px 2px;
+    border-radius: 6px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.95em;
+    font-weight: bold;
+    width: max-content;
 }
 
 .fd-form .btn-outline-primary {
-color: #444;
-background-color: #fdfdfd;
-border: 1px solid #ababab;
-padding: 5px 30px;
-display: inline-block;
-margin: 2px 2px;
-border-radius: 6px;
-font-family: Arial, Helvetica, sans-serif;
-font-size: 0.95em;
-font-weight: bold;
-width: max-content;
+    color: white !important;
+    background-color: #fdfdfd;
+    border: 1px solid #ababab;
+    padding: 5px 30px;
+    display: inline-block;
+    margin: 2px 2px;
+    border-radius: 6px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.95em;
+    font-weight: bold;
+    width: max-content;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--hover-bg) !important; /* Change to your desired hover background color */
+  color: black !important;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow for the hover effect */
 }
 
 .fd-form .row > .fd-field-title {
-  width: 180px;   
-  font-size: 13px;
+    width: 180px;   
+    font-size: 13px;
 }
 
 .fd-form .fd-title-wrap {
-  font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  font-size: 14px;
-  font-weight: 400;
+    font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    font-weight: 400;
 }
 
 .fd-form-container.container-fluid {
-  padding-left: 18px !important;  
+    padding-left: 18px !important;  
 }
 
 .fd-grid.container-fluid {
 	backdrop-filter: blur(10px);
-  width: 100%;
-  margin-top: -10px;
+    width: 100%;
+    margin-top: 10px;
 }
 
 .fd-form {
-  background-color: transparent !important;
+    background-color: transparent !important;
 }
 
 .icon{
-padding-right: 3px;
+    padding-right: 3px;
 }
 
 .k-upload .k-dropzone .k-dropzone-hint {
     color: #212529;
     text-align: left;
     margin-left: 15px;
+}
+
+.col-sm-12.divGrid {
+    position: relative;
+    border: 1px solid #ced4da !important; /* Set your desired border color and width */
+    padding-top: 26px !important; /* Add padding to create space inside the border */
+    margin: 10px 0px; /* Add margin to space out the container */
+    border-radius: 6px; /* Optional: rounded corners */
+    box-shadow: rgba(0, 0, 0, 0.1) 2px 4px 4px;
+    background-color: #ffffff !important;
+    backdrop-filter: blur(0.7px);  
+}
+
+.border-title {
+    position: absolute;
+    /* margin-top: -58px; 
+    margin-left: 20px;  */
+    background-color: #ffffff !important;  /*Match the background color to your page */
+    padding: 0 10px; /*Add padding to the title*/
+    font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", "-apple-system", "BlinkMacSystemFont", "Roboto", "Helvetica Neue", "sans-serif";
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    font-weight: bold;
+    color: #FF9800; /* Modern green accent */  
+    letter-spacing: 0.5px; /* Improves readability */
+    transition: all 0.3s ease; /* Smooth transitions for hover effects */    
+}
+
+.icon{
+    padding-right: 3px;
+}
+.mainContent_b5013a39{
+    background-color:white;
+}
+.container-fluid {
+    background: transparent !important;  
+    padding-top: 10px !important;  
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Arial', sans-serif; 
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f98a;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.modern-table th {
+    color: #000000;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 10px; 
+    text-align: left !important;  
+}
+
+.modern-table td {
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 12px;
+    background-color: #d6dcdd47;  
+    padding: .5rem 1rem;  
+    text-align: left !important; 
+}
+
+.modern-table tr:last-child td {
+    border-bottom: none;
+}
+
+.fd-form .accordion-item:last-of-type .accordion-button.collapsed {
+    border-bottom-right-radius: 1px;
+    border-bottom-left-radius: 1px;
+    background: linear-gradient(to right, #d8f1da, #aadce0, #dad8fb);
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #3e3ef6;
+    text-decoration: underline;
+}
+
+.fd-form .fd-field-control.col-sm .fd-checkbox {
+    padding-top: 5px !important;   
+}
+
+.fd-form .form-check-input {
+    width: 22px;
+    height: 22px;
+}
+
+.form-check-label{
+    margin-left: 12px;
+    margin-top: 4px;
 }

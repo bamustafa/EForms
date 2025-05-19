@@ -18,259 +18,268 @@ var disableButtonsFNC = false; // FOR setNamingConvention FUNCTION
 const itemsToRemove = ['Status', 'State', 'Code', 'WorkflowStatus'];
 
 var onRender = async function (relativeLayoutPath, moduleName, formType, isLead, isPart) {
-
-  const startTime = performance.now();
-  if (formType !== "Display")
-  { 
-    fd.toolbar.buttons[0].style = "display: none;";
-    fd.toolbar.buttons[1].style = "display: none;";
-  }  
-
-  _layout = relativeLayoutPath;
-
-  await loadScripts();
- 
-  clearLocalStorageItemsByField(itemsToRemove);
-
-  if(formType == "New"){
-    await LimitDateTimeSubmission();
-    clearStoragedFields(fd.spForm.fields);
-  }
-
-  // var script = document.createElement("script"); // create a script DOM node
-  // script.src = _layout + "/plumsail/js/config/configFileRouting.js"; // set its src to the provided URL
-  // document.head.appendChild(script);
-  _htLibraryUrl  = _layout + '/controls/handsonTable/libs/handsontable.full.min.js';
-
-  _module = moduleName;
-  _formType = formType;
-  _isLead = isLead;
-  _isPart = isPart;
-  _isSiteAdmin = _spPageContextInfo.isSiteAdmin;
-
-  if(_isPart){
-   _role = fd.field("Role").value;
-   _partTrade = fd.field("Trade").value;
-    if(_partTrade === 'PMC')
-     _isPMC = true;
-  }
-
-  if(_role === 'TeamLeader')
-   _isTeamLeader = true;
-
-  if(!_isLead && !_isPart)
-    _isMain = true;
-
-    const endTime1 = performance.now();
-    const elapsedTime1 = endTime1 - startTime;
-    console.log(`Execution time extractValues: ${elapsedTime1} milliseconds`);
-
-  try {
-    setTimeout(removePadding, 1000);
+    const startTime = performance.now();
+    try {
     
-    var Trans = "A";
-    if (_isMain || _isLead){
-      if (formType == "New"){
-          Status = "Initiated";
-          
-          try {fd.field('ORFI').clear();}
-          catch{}
-      }
-      else Status = fd.field("Status").value;
-    }
-      
-    if (_isLead || _isPart){
-      Status = fd.field("Status").value;
-      taskStatus = fd.field("Status").value;
-    }
-     
-    if (formType == "Edit" && isPart) {
-      var userNames = fd.field("AssignedTo").value;
-      var _isAllowedUser = false;
-      if (userNames != null) {
-        for (var i = 0; i < userNames.length; i++) {
-          var userName = userNames[i].displayName;
-          
-          //var isValid = false;
-          //var retry = 1;
-          //while (!isValid)
-          //{
-            //try{
-              //if(retry >= retryTime) break;
-            _isAllowedUser = await isUserAllowed(userName);
-            // isValid = true;
-            // }
-              // catch{
-              //   retry++;
-              //   await delay(delayTime);
-              // }
-          //}
-
-          if (_isAllowedUser) {
-            _isAllowedUser = true;
-            break;
-          }
+        if (formType !== "Display")
+        {
+            fd.toolbar.buttons[0].style = "display: none;";
+            fd.toolbar.buttons[1].style = "display: none;";
         }
-        if (!_isAllowedUser) {
-          alert(isAllowedUserMesg);
-          return _isAllowedUser;
-        } 
-      }
-    }
+
+        _layout = relativeLayoutPath;        
+
+        // await loadScripts();
+        await loadScripts().then(async () => {
+
+            showPreloader();
+
+            clearLocalStorageItemsByField(itemsToRemove);
+
+            if (formType == "New") {
+                await LimitDateTimeSubmission();
+                clearStoragedFields(fd.spForm.fields);
+            }
+
+            // var script = document.createElement("script"); // create a script DOM node
+            // script.src = _layout + "/plumsail/js/config/configFileRouting.js"; // set its src to the provided URL
+            // document.head.appendChild(script);
+            _htLibraryUrl = _layout + '/controls/handsonTable/libs/handsontable.full.min.js';
+
+            _module = moduleName;
+            _formType = formType;
+            _isLead = isLead;
+            _isPart = isPart;
+            _isSiteAdmin = _spPageContextInfo.isSiteAdmin;
+
+            if(_module === 'TEST'){
+              await customButtons("Accept", 'Click Me', true, Trans, false, true, false, false, _module);
+              return;
+            }
+
+            if (_isPart) {
+                _role = fd.field("Role").value;
+                _partTrade = fd.field("Trade").value;
+                if (_partTrade === 'PMC')
+                    _isPMC = true;
+            }
+
+            if (_role === 'TeamLeader')
+                _isTeamLeader = true;
+
+            if (!_isLead && !_isPart)
+                _isMain = true;
+
+            const endTime1 = performance.now();
+            const elapsedTime1 = endTime1 - startTime;
+            console.log(`Execution time extractValues: ${elapsedTime1} milliseconds`);
     
-    if (formType == "Display") {
-      script = document.createElement("script");
-      script.src = _layout + "/plumsail/js/buttons.js";
-      document.head.appendChild(script);
+            setTimeout(removePadding, 1000);
 
-      if (moduleName == "IR" && isLead == false && isPart == false)
-        disableIRFields(formType);
+            var Trans = "A";
+            if (_isMain || _isLead) {
+                if (formType == "New") {
+                    Status = "Initiated";
 
-      if(isPart && moduleName !== 'MIR'){
-        hFields = ["ph_dmg", "det_corr", "app_sub", "acc_spl"];
-        HideFields(hFields, false);
-      }
-      else if (moduleName == "DPR"){
-        //_spComponentLoader.loadScript(_layout + '/plumsail/js/commonUtils.js').then(()=> {
-          //_spComponentLoader.loadScript(_layout + '/plumsail/js/customMessages.js').then(async() => {
-            setFormHeaderTitle();
-            await onDPRRender();
-         //});
-      //});
-      return;
-      }
+                    try { fd.field('ORFI').clear(); }
+                    catch { }
+                }
+                else Status = fd.field("Status").value;
+            }
+
+            if (_isLead || _isPart) {
+                Status = fd.field("Status").value;
+                taskStatus = fd.field("Status").value;
+            }
+
+            if (formType == "Edit" && isPart) {
+                var userNames = fd.field("AssignedTo").value;
+                var _isAllowedUser = false;
+                if (userNames != null) {
+                    for (var i = 0; i < userNames.length; i++) {
+                        var userName = userNames[i].displayName;
+
+                        //var isValid = false;
+                        //var retry = 1;
+                        //while (!isValid)
+                        //{
+                        //try{
+                        //if(retry >= retryTime) break;
+                        _isAllowedUser = await isUserAllowed(userName);
+                        // isValid = true;
+                        // }
+                        // catch{
+                        //   retry++;
+                        //   await delay(delayTime);
+                        // }
+                        //}
+
+                        if (_isAllowedUser) {
+                            _isAllowedUser = true;
+                            break;
+                        }
+                    }
+                    if (!_isAllowedUser) {
+                        alert(isAllowedUserMesg);
+                        return _isAllowedUser;
+                    }
+                }
+            }
+
+            if (formType == "Display") {
+                script = document.createElement("script");
+                script.src = _layout + "/plumsail/js/buttons.js";
+                document.head.appendChild(script);
+
+                if (moduleName == "IR" && isLead == false && isPart == false)
+                    disableIRFields(formType);
+
+                if (isPart && moduleName !== 'MIR') {
+                    hFields = ["ph_dmg", "det_corr", "app_sub", "acc_spl"];
+                    HideFields(hFields, false);
+                }
+                else if (moduleName == "DPR") {
+                    //_spComponentLoader.loadScript(_layout + '/plumsail/js/commonUtils.js').then(()=> {
+                    //_spComponentLoader.loadScript(_layout + '/plumsail/js/customMessages.js').then(async() => {
+                    setFormHeaderTitle();
+                    await onDPRRender();
+                    //});
+                    //});
+                    return;
+                }
+            }
+            else {
+                //Edit
+                if (formType == "New") Trans = "A";
+                else {
+                    Trans = "U";
+                    if ((isLead && _AllowManualAssignment) || (isPart && _partTrade === 'PMC')) {
+                        checkTradeAssignment("Lead");
+                        checkTradeAssignment("Part");
+                    }
+                }
+
+                if (_isMain) {
+                    // var isValid = false;
+                    // var retry = 1;
+                    // while (!isValid)
+                    // {
+                    //   try{
+                    //     if(retry >= retryTime) break;
+
+                    var _value = await getParameter("isDigitalForm");
+                    if (_value !== '' && _value !== undefined && _value.toLowerCase() === 'yes')
+                        _isDigitalForm = true;
+
+                    await setFormHeaderTitle();
+                    //      isValid = true;
+                    //   }
+                    //     catch{
+                    //       retry++;
+                    //       await delay(delayTime);
+                    //     }
+                    // }
+                }
+
+                if (_isMain || _isLead || _isPart) {
+                    //#region CHECK USER IF DAR OR CONTRACTOR
+                    var groupName = '';
+
+                    var isValid = false;
+                    var retry = 1;
+                    var mType;
+                    while (!isValid) {
+                        try {
+                            if (retry >= retryTime) break;
+
+                            if (_isMain) {
+                                groupName = await isMultiContractor();
+
+                                if (_isMultiContracotr)
+                                    isContractor = await IsUserInGroup(groupName);
+                                else isContractor = await IsUserInGroup('ContractorDC');
+                            }
+
+                            mTypeItem = await getMajorType(_module);
+                            mTypeItem = mTypeItem[0];
+                            if (_isPart) {
+                                var codes = mTypeItem.Code;
+                                if (codes !== null && codes != '' && codes !== undefined && codes.length > 0)
+                                    fd.field('Code').widget.dataSource.data(codes);
+                            }
+                            else {
+                                try { _isCompliedWithConvention = mTypeItem.IsCompliedWithConvention; } catch (e) { }
+                            }
+                            isValid = true;
+                        }
+                        catch {
+                            retry++;
+                            await delay(delayTime);
+                        }
+                    }
+                    isValid = false;
+
+                    if (isContractor)
+                        isDar = false;
+
+                    if (_isMain && formType === "New") {
+                        if (moduleName != "MOM" && moduleName !== "SLF" && moduleName !== "DPR") {
+                            if (moduleName == "SI" || moduleName == "NCR")
+                                setOldRef("Closed");
+                            else setOldRef("Issued to Contractor");
+                        }
+                    }
+                    //#endregion
+                }
+
+
+                if (moduleName == "SI")
+                    await onSIRender(moduleName, formType, hFields);
+                else if (moduleName == "IR" || moduleName == "MIR")
+                    await onIRRender(moduleName, formType, hFields, isLead, isPart);
+                else if (moduleName == "MAT" || moduleName == "SCR")
+                    await onMATRender(moduleName, formType, hFields, isLead, isPart);
+                else if (moduleName == "DPR")
+                    await onDPRRender();
+                else if (moduleName == "SLF")
+                    await onSLFRender(hFields, isLead, isPart);
+
+                if (_isMain && _formType === 'New' && _module !== 'SI' && _module !== 'DPR')
+                    await validateDisciplineAgainstMatrix();
+
+                if (_isPart && _formType === 'Edit' && (_isTeamLeader || _IsLeadAction || _partTrade === 'PMC') && moduleName != 'MIR') {
+                    var listname = "Part Action";
+                    var byRef = true;
+                    if (moduleName == "MAT" || moduleName == "SCR") byRef = false;
+
+                    await onPageRender(moduleName, listname, byRef);
+                }
+
+                await setButtons(moduleName, formType, Trans, Status, isLead, isPart);
+
+                //_spComponentLoader.loadScript(_layout + '/plumsail/js/customMessages.js').then(async() => {
+                setToolTipMessages();
+                //});
+                fixTextArea();
+            }
+
+            // if(_isMain && _isCompliedWithConvention)
+            //   await renderFieldsOnForm();
+        });
     }
-    else {
-      //Edit
-      if (formType == "New") Trans = "A";
-      else {
-        Trans = "U";
-        if ((isLead && _AllowManualAssignment) || (isPart && _partTrade === 'PMC')) {
-          checkTradeAssignment("Lead");
-          checkTradeAssignment("Part");
-        }
-      }
-
-      if(_isMain){
-        // var isValid = false;
-        // var retry = 1;
-        // while (!isValid)
-        // {
-        //   try{
-        //     if(retry >= retryTime) break;
-
-            var _value = await getParameter("isDigitalForm");
-            if(_value !== '' && _value !== undefined && _value.toLowerCase() === 'yes')
-              _isDigitalForm = true;
-
-             await setFormHeaderTitle();
-        //      isValid = true;
-        //   }
-        //     catch{
-        //       retry++;
-        //       await delay(delayTime);
-        //     }
-        // }
+    catch (e) {
+        alert(e);
+        console.log(e);
+        //preloader();
+        var webURL = document.URL.substring(0, document.URL.indexOf('/PlumsailForms')).replace('SitePages','');
+        //window.location.href = webURL;
     }
-
-    if (_isMain || _isLead || _isPart) {
-      //#region CHECK USER IF DAR OR CONTRACTOR
-      var groupName = '';
-
-      var isValid = false;
-      var retry = 1;
-      var mType;
-      while (!isValid)
-      {
-         try{
-          if(retry >= retryTime) break;
-
-          if (_isMain){
-              groupName = await isMultiContractor();
-
-              if(_isMultiContracotr)
-                isContractor = await IsUserInGroup(groupName);
-              else isContractor = await IsUserInGroup('ContractorDC');
-          }
-
-          mTypeItem = await getMajorType(_module);
-          mTypeItem = mTypeItem[0];
-          if(_isPart){
-            var codes = mTypeItem.Code;
-            if(codes !== null && codes != '' && codes !== undefined && codes.length > 0)
-              fd.field('Code').widget.dataSource.data(codes);
-          }
-          else{
-            try { _isCompliedWithConvention = mTypeItem.IsCompliedWithConvention; } catch(e){}
-          }
-          isValid = true;
-        }
-        catch{
-          retry++;
-          await delay(delayTime);
-        }
-      }
-      isValid = false;
-      
-      if(isContractor) 
-        isDar = false;
-
-        if (_isMain && formType === "New") {
-        if (moduleName !="MOM" && moduleName !== "SLF" && moduleName !== "DPR") {
-          if (moduleName == "SI" || moduleName == "NCR") 
-              setOldRef("Closed");
-          else setOldRef("Issued to Contractor");
-        }
-      }
-      //#endregion
+    finally{      
+        hidePreloader();
     }
-
-
-    if (moduleName == "SI") 
-      await onSIRender(moduleName, formType, hFields);
-    else if (moduleName == "IR" || moduleName == "MIR")
-        await onIRRender(moduleName, formType, hFields, isLead, isPart);
-    else if (moduleName == "MAT" || moduleName == "SCR")
-      await onMATRender(moduleName, formType, hFields, isLead, isPart);
-    else if (moduleName == "DPR")
-      await onDPRRender();
-    else if (moduleName == "SLF")
-      await onSLFRender(hFields, isLead, isPart);
-
-    if(_isMain && _formType === 'New' && _module !== 'SI' && _module !== 'DPR')
-        await validateDisciplineAgainstMatrix();
-    
-    if(_isPart && _formType === 'Edit' && (_isTeamLeader || _IsLeadAction || _partTrade === 'PMC') && moduleName != 'MIR'){
-      var listname = "Part Action";
-      var byRef = true;
-      if (moduleName == "MAT" || moduleName == "SCR") byRef = false;
-
-      await onPageRender(moduleName, listname, byRef); 
-    }
-
-    await setButtons(moduleName, formType, Trans, Status, isLead, isPart);
-
-    //_spComponentLoader.loadScript(_layout + '/plumsail/js/customMessages.js').then(async() => {
-       setToolTipMessages();
-    //});
-    fixTextArea();
-    }
-
-    // if(_isMain && _isCompliedWithConvention)
-    //   await renderFieldsOnForm();
-  }
-  
-  catch (e) {
-    alert(e);
-    console.log(e);
-    
-    preloader();
-    var webURL = document.URL.substring(0, document.URL.indexOf('/PlumsailForms')).replace('SitePages','');
-    //window.location.href = webURL;
-  }
-  const endTime = performance.now();
-  const elapsedTime = endTime - startTime;
-  console.log(`Execution time onRender: ${elapsedTime} milliseconds`);
+    const endTime = performance.now();
+    const elapsedTime = endTime - startTime;
+    console.log(`Execution time onRender: ${elapsedTime} milliseconds`);
 };
 
 //#region (IR & MIR) RENDER MODULE
@@ -304,18 +313,18 @@ var onIRRender = async function (moduleName, formType, hFields, isLead, isPart) 
       hFields = ["AttachFiles", "Submit", "BuildingType", "Level", "Room", "Road", "FromStation", "ToStation", "Zone"];
       fd.field('Remarks').placeholder = 'Remarks';
     }
-  } 
+  }
   else if (formType == "Edit") {
     var fields;
 
     if (isLead) {
       isAllowed = await delayshowHideFunction();
-          
+
       hFields = ["LeadTrade", "PartTrades", "AssignedDate", "Assigned", "WorkflowStatus", "BIC", "SentToPMC", "AttachFiles"];
       if(_isAutoAssign)
         hFields.push("Lead");
       fields = ["Status", "Attachments"];
-    } 
+    }
     else if (isPart) {
       if (moduleName == "MIR")
         hFields = ["Role", "isPMCAssignment", "IsLeadAction", "AttachFiles", "isRejected"];
@@ -326,7 +335,7 @@ var onIRRender = async function (moduleName, formType, hFields, isLead, isPart) 
         if (moduleName == "MIR" && isPart)
           fields = ["ph_dmg", "det_corr", "app_sub", "acc_spl", "Status", "Code", "Comment", "Attachments"];
         else fields = ["Status", "Code", "Comment", "Attachments"];
-      } 
+      }
       else fields = ["Status", "Attachments"];
 
       var RejTrades = fd.field("RejectionTrades").value;
@@ -335,13 +344,13 @@ var onIRRender = async function (moduleName, formType, hFields, isLead, isPart) 
       else fields.push('RejectionTrades');
 
       isAllowed = await showHideTabs(moduleName, BIC, true, false);
-    } 
+    }
     else {
       if (moduleName == "MIR" && isLead == false && isPart == false) {
         fields = [ "Reference", "Rev", "Title", "Question", "HardcopyDate", "MaterialSubmittalNo", "MATReferenceTitle", "MATReferenceRecDate", "MATReferenceBOQ",
                    "MATReferenceSpecs", "Quantity", "Inspection_x0020_Date", "Manufacturer", "ModelNo", "SerialNo", "DateofARRIVALonSite", "CountryofOrigin",
                    "STORAGELocation", "Submittedby", "MaterialSubmittalNo", "Attachments", "Status"];
-        
+
         const fields1 = ["MATReferenceTitle", "MATReferenceRecDate", "MATReferenceBOQ", "MATReferenceSpecs", "Manufacturer"];
         handleHardCopyDate(fields, hFields);
         await DisableFields("Status", "Initiated", "eq", fields1, true, false, true);
@@ -354,7 +363,7 @@ var onIRRender = async function (moduleName, formType, hFields, isLead, isPart) 
       isAllowed = await showHideTabs(moduleName);
     }
 
- 
+
     if (Status == "Closed" || Status == "Issued to Contractor" || taskStatus == "Completed")
       await DisableFields("Status", "Initiated", "neq", fields, true, true, true);
     else await DisableFields("Status", "Initiated", "neq", fields, true, false, true);
@@ -390,7 +399,7 @@ var onSIRender = async function(modulename, formType, hFields) {
 
     HideFields(hFields, true);
     fd.field('InstDetails').placeholder = 'Instruction Details';
-    
+
     //$("textarea.fd-textarea").attr("placeholder", "Question");
   } else if (formType == "Edit") {
     hFields = ["AttachFiles", "Submit", "Issued", "IsValid", "IsAcknowledged", "ReasonofRejection"];
@@ -448,11 +457,11 @@ var onMATRender = async function (moduleName, formType, hFields, isLead, isPart)
        hFields.push("LeadTrade");
       }
       fields = ["Status"];
-    } 
+    }
     else if (isPart) {
       _IsLeadAction = fd.field("IsLeadAction").value;
       _partTrade = fd.field("Trade").value;
-      hFields = ["AttachFiles", "Status", "Assigned", "LeadTrade", "PartTrades", "Role", "isPMCAssignment", "IsLeadAction", "ph_dmg", "det_corr", 
+      hFields = ["AttachFiles", "Status", "Assigned", "LeadTrade", "PartTrades", "Role", "isPMCAssignment", "IsLeadAction", "ph_dmg", "det_corr",
                  "app_sub", "acc_spl", "isRejected", "Resubmit"];
       if (Status == "Completed")
         fields = ["Status", "Code", "Comment", "Attachments"];
@@ -464,12 +473,12 @@ var onMATRender = async function (moduleName, formType, hFields, isLead, isPart)
       else fields.push('RejectionTrades');
 
       isAllowed = await showHideTabs(moduleName, "", isPart);
-    } 
+    }
     else {
       hFields = ["AttachFiles", "Submit", "Status"];
       if (moduleName == "MAT")
         fields = [
-          "Reference", "Rev", "Title", "SubmittedDate", "Area", "Discipline", "SubDiscipline", "Drawingref", "BOQ", "Specs", "Standards", "Manufacturer", "Address", "Agent", 
+          "Reference", "Rev", "Title", "SubmittedDate", "Area", "Discipline", "SubDiscipline", "Drawingref", "BOQ", "Specs", "Standards", "Manufacturer", "Address", "Agent",
           "Availability", "Country", "TotalDuration", "ArrivalTime", "MatDate", "Latestdate", "SubmittedBy", "FinalResponse", "Attachments", "Status"];
       else
       {
@@ -488,7 +497,7 @@ var onMATRender = async function (moduleName, formType, hFields, isLead, isPart)
   }
 
   HideFields(hFields, true);
-  if (_isMain) 
+  if (_isMain)
    setMATCascadedValues(formType);
 };
 //#endregion
@@ -499,7 +508,7 @@ var onSLFRender = async function (hFields, isLead, isPart) {
   var _Status = 'Pending';
   var zoneCount = await getZoneCount();
   var ReviewedURL;
-  
+
   //isSubmit = fd.field("Submit").value;
 
   if (_formType == "New")
@@ -521,10 +530,10 @@ var onSLFRender = async function (hFields, isLead, isPart) {
 
       if(isPart){
         filterStatus = fd.field("Status").value;
-        hFields = ["Status", "PartComments", "ContAttachUrl", "ph_dmg", "det_corr", "app_sub", "acc_spl", "Role", "Code", "isPMCAssignment", 
+        hFields = ["Status", "PartComments", "ContAttachUrl", "ph_dmg", "det_corr", "app_sub", "acc_spl", "Role", "Code", "isPMCAssignment",
                     "IsLeadAction", "AttachFiles", "Attachments", "isRejected","Resubmit"]; //"RejectionTrades"
 
-        
+
         if(zoneCount === 0)
          hFields.push('Zone');
 
@@ -546,7 +555,7 @@ var onSLFRender = async function (hFields, isLead, isPart) {
 
         if (_Status == "Completed") {
             fields = ["ph_dmg", "det_corr", "app_sub", "acc_spl", "Status", "Code", "Comment", "Attachments"];
-        } 
+        }
         else {
           fields = ["Status", "Comment", "Attachments"];
           //_Status = ''
@@ -572,7 +581,7 @@ var onSLFRender = async function (hFields, isLead, isPart) {
 
       if(_isMain && ReviewedURL !== null){}
       else setSLFGrid(true, false);
-    } 
+    }
 
     await DisableFields("Status", _Status, operator, fields, true, false, true);
   }
@@ -589,7 +598,7 @@ var onSLFRender = async function (hFields, isLead, isPart) {
 
       await setLeadPartTrades();
       hFields = ["Attachments", "AttachFiles", "Status", "Submit", "PartTrades", "AssignedDate"];
-     
+
       if(_formType == "Edit")
       hFields.push('Assigned', 'Resubmit');
     }
@@ -606,7 +615,7 @@ var onSLFRender = async function (hFields, isLead, isPart) {
 
 //#region DPR RENDER MODULE
 var onDPRRender = async function () {
-  
+
   if(_formType === 'New'){
     _isCompliedWithConvention = _isCompliedWithConvention !== undefined ? _isCompliedWithConvention : false;
 
@@ -620,11 +629,11 @@ var onDPRRender = async function () {
       catch{}
     }
     else setNamingConvention('Reference');
-    
+
     var currentDate = new Date();
     var daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    
-    fd.field('Date').value = currentDate; 
+
+    fd.field('Date').value = currentDate;
     fd.field('Day').value = daysOfWeek[currentDate.getDay()];
   }
 
@@ -639,7 +648,7 @@ var onDPRRender = async function () {
            }
        }
   });
-  
+
   fd.field('TemperatureMaxi').$on('change', function(value) {
        var TemperatureMini = fd.field('TemperatureMini').value;
        if(TemperatureMini !== null) {
@@ -650,11 +659,11 @@ var onDPRRender = async function () {
           }
        }
   });
-  
-  fd.field('Date').$on('change', function(value) { 
-       if(value !== null) {  
+
+  fd.field('Date').$on('change', function(value) {
+       if(value !== null) {
            fd.field('Day').value = daysOfWeek[value.getDay()];
-           fd.field('Day').disabled = true;   
+           fd.field('Day').disabled = true;
        }
   });
 
@@ -668,18 +677,18 @@ var onDPRRender = async function () {
       padding = '0px 0px 0px 150px';
       var fields = ["Title", "Date",  "Weather", "SignedBy", "TemperatureMini", "TemperatureMaxi", "Attachments"];
       await DisableFields("Status", "Initiated", "neq", fields, true, true, true);
-    
+
       var gridFields = ['OnSiteStaffLabour', 'OnSitePlant', 'DeliveryofMaterial', 'VisitorsonSite', 'DescriptionofWork', 'Remarks'];
       gridFields.map((fld) =>{
         let controlField = fd.control(fld);
-        controlField.ready(function(dt) {  
-          this.readonly = true;  
+        controlField.ready(function(dt) {
+          this.readonly = true;
 
           // var columns = this._columnsSettings;
-          
+
           // if(fld === 'OnSiteStaffLabour')
           //   columns.Trade['width'] = 700;
-          dt.buttons[2].visible = false;        
+          dt.buttons[2].visible = false;
         });
       });
     }
@@ -690,7 +699,7 @@ var onDPRRender = async function () {
 
     if(!_isCompliedWithConvention)
       hFields.push('Reference');
- 
+
     if(_formType === 'Display')
       HideFields(hFields, false);
     else HideFields(hFields, true);
@@ -708,9 +717,9 @@ var onDPRRender = async function () {
    $('.k-grid-header table, .k-grid-footer table').css('width', '').css('table-layout', 'auto');
 
   $('div.col-sm-4 p span').css({
-     'position': 'absolute', 
+     'position': 'absolute',
      'padding': padding
-  }); 
+  });
 
   await setData();
 }
@@ -742,7 +751,8 @@ function SIisUserInGroup(group) {
                   icon: "Accept",
                   class: "btn-outline-primary",
                   text: "Approve",
-                  click: function () {
+                    click: function () {
+                        debugger;
                     $(fd.field("Issued").$parent.$el).show();
                     $(fd.field("IsValid").$parent.$el).show();
 
@@ -826,7 +836,7 @@ function SIisUserInGroup(group) {
                 fd.field("ResDate").value = new Date();
                 fd.field("ResDate").disabled = true;
                 fd.field("ResponsedBy").disabled = false;
-                $(fd.field("ReasonofRejection").$parent.$el).hide();                
+                $(fd.field("ReasonofRejection").$parent.$el).hide();
 
                 fd.toolbar.buttons.push({
                   icon: "Accept",
@@ -1107,7 +1117,7 @@ function setCascadedValues() {
 
 
       fd.field("InspType").$on("change", async function (value) {
-        
+
         filterDiscipline(value);
 
         //if fnc enabled
@@ -1455,7 +1465,7 @@ function setMATMetaInfo(formType) {
               fd.field("Manufacturer").value = foundItem.Manufacturer;
 
             const fields = ["MATReferenceTitle", "MATReferenceRecDate", "MATReferenceBOQ", "MATReferenceSpecs", "Manufacturer",];
-            DisableFields("Status", "Initiated", "eq", fields, true, false, true); 
+            DisableFields("Status", "Initiated", "eq", fields, true, false, true);
             //DisableFields(filterColumn, filterValue, operator, fields, disableControls, disableCustomButtons, defaultButtons)
           }
         });
@@ -1524,7 +1534,7 @@ async function setSLFGrid(showGrid, removeRef) {
         targetList = objValue.targetList;
         targetFilter = objValue.targetFilter;
       }
-    }); 
+    });
   }
 }
 
@@ -1640,7 +1650,7 @@ async function setLeadPartTrades(){
     const query = pnp.sp.web.lists.getByTitle(listName).items.select("Title");
 						await query.orderBy("Title", true)
 							.get()
-							.then(async (items) => { 
+							.then(async (items) => {
 									const TradeArray = [];
 									const leadArray = [];
 									for(let i = 0; i < items.length; i++)
@@ -1650,7 +1660,7 @@ async function setLeadPartTrades(){
 										leadArray.push(trade);
 									}
 									await setTrades(TradeArray, leadArray, _module, false);
-							}); 	
+							});
 }
 
 async function getZoneCount(){
@@ -1668,7 +1678,7 @@ async function getZoneCount(){
 //#region DPR FUNCTIONS
 var getTemplateItems = async function(targetList, colsInternal){
   var itemArray = [];
-  
+
   const cols = colsInternal.join(',');
   var _query = "DeliverableType eq '" + _module + "'";
 
@@ -1694,7 +1704,7 @@ var insertItemsInBulk = async function(itemsToInsert, targetList, tblName, colsI
 
   for (const item of itemsToInsert){
     var _query = '';
-    
+
     if(tblName === '')
       _query = `Title eq '${item.Title}' and Lookup_ID eq null`;
     else _query = `Title eq '${item.Title}' and DeliverableType eq '${_module}' and TableName eq '${tblName}'`;
@@ -1730,13 +1740,13 @@ var insertItemsInBulk = async function(itemsToInsert, targetList, tblName, colsI
   await batch.execute();
 }
 
-var setData = async function(){ 
+var setData = async function(){
   const listname = 'PR Template';
   var templateCols = ['Title', 'No','Hrs', 'TableName','DeliverableType'];
   var colsInternal = ['Title', 'No','Hrs'];
 
   var result = await getTemplateItems(listname, templateCols);
-  
+
   if(result.length > 0){
     var staff = [], equipment = [];
     result.filter(item => {
@@ -1747,14 +1757,14 @@ var setData = async function(){
     });
 
     staff.forEach(obj => {
-        delete obj.TableName; 
+        delete obj.TableName;
         delete obj.DeliverableType;
     });
     await insertItemsInBulk(staff, 'On Site Staff and Labour', '', colsInternal);
     fd.control('OnSiteStaffLabour').refresh();
 
     equipment.forEach(obj => {
-      delete obj.TableName; 
+      delete obj.TableName;
       delete obj.DeliverableType;
     });
     await insertItemsInBulk(equipment, 'On Site Plant & Equipment Record', '', colsInternal);
@@ -1779,7 +1789,7 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
   var isAttachmentRequired = true;
   if(moduleName != 'MIR' && Status !== "Completed" && isPart && (_isTeamLeader || _IsLeadAction || _partTrade == 'PMC') )
     await customButtons("Reply", "Reject", false, Trans);
- 
+
    if (_isLead || _isPMC){ // && (moduleName === 'IR' || moduleName === 'MIR' || moduleName === 'SLF') ) {
       var Trade = fd.field("Trade").value;
 
@@ -1797,7 +1807,7 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
               .find("li:contains(" + Trade + ")")
               .css("pointer-events", "none")
               .css("opacity", "0.6");
-        
+
             fd.field("Part").$on("change", function (value) {
               $("ul.k-reset")
                 .find("li")
@@ -1810,7 +1820,7 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
           var Lead = fd.field("Lead").value;
           // if(Lead == null || Lead == "")
           //   fd.field('Part').disabled = true;
-          //else 
+          //else
           await renderTradeResult(Lead, fd.field("Part").value);
 
           preventDuplicateTradeSelection();
@@ -1821,7 +1831,7 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
           $('div.k-list-scroller ul').find('li').each(function(index){
             var element = $(this);
             var _value = $(element).text().trim();
-        
+
             if(_value === 'PMC'){
               $(element).css("pointer-events", "none").css("opacity", "0.6");
               $(element).prop('disabled', true);
@@ -1834,21 +1844,21 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
     $('div.k-list-scroller ul').find('li').each(function(index){
       var element = $(this);
       var _value = $(element).text().trim();
-  
+
       if(_value === 'PMC'){
         $(element).css("pointer-events", "none").css("opacity", "0.6");
         $(element).prop('disabled', true);
       }
     });
    }
- 
+
    if(moduleName == "SLFI" && formType == "Edit"){
      fd.toolbar.buttons[0].style = "display: none;";
      fd.toolbar.buttons[1].style = "display: none;";
-     
+
      if(Status !== 'Closed')
        await customButtons("Accept", 'Submit', true, Trans, false, true, false, false, moduleName);
- 
+
      await customButtons("ChromeClose", "Cancel", false);
      return;
    }
@@ -1857,7 +1867,7 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
      if(ReviewedURL === null || ReviewedURL === undefined)
       await customButtons("Accept", 'Submit', true, Trans, false, true, false, false, moduleName);
    }
- 
+
    if (_isMain && formType == "Edit" &&(Status == "Closed" || Status == "Issued to Contractor"))
      await customButtons("ChromeClose", "Cancel", false);
    else {
@@ -1873,7 +1883,7 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
              else $("ul.nav,nav-tabs").remove();
          }
        }
-     } 
+     }
      else {
        if (formType == "Display") {
        } else {
@@ -1881,12 +1891,12 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
              await customButtons("Accept", "Assign", true, Trans, false, true, false, true);
          } else {
              if (isPart && Status !== "Completed") {
- 
+
                if(moduleName == "SLF" && isPart && _isTeamLeader){}
                else await customButtons("Save", "Save", true, Trans);
- 
+
                await customButtons("Accept", "Submit", true, Trans, false, true, false, true, moduleName);
-             } 
+             }
              else if (Status == "Initiated" || Status == "Pending" || Status == "Open" || Status == "Assigned" || Status == "Reassigned"){
                  if(moduleName !== "SLF" && Status === "Open"){
                   if(_module == 'DPR' && Status == "Open"){  // FOR EDIT ON DAILY REPORT
@@ -1908,7 +1918,7 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
 
                       if(moduleName !== "DPR")
                         await customButtons("Save", "Save", true, Trans);
-                      
+
                       let runBelow = true;
                       if(moduleName === "SI" && formType == "Edit" )
                         runBelow = false;
@@ -1919,16 +1929,16 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
                    else if(formType == "Edit" && isDar && !_isDigitalForm && Status !== "Initiated"){
                     await customButtons("Save", "Save", true, Trans);
                    }
-                   
-                   
+
+
                    var text = 'Submit';
- 
+
                    if (moduleName == "SLF"){
                      isAttachmentRequired = false;
                      if(formType == "Edit"){
                        text = 'Assign';
                        if(isContractor)
-                         text = 'Submit'; 
+                         text = 'Submit';
                      }
                    }
                }
@@ -1936,12 +1946,12 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
            }
          }
        }
- 
+
      if (isLead && fd.field("Status").value != "Completed")
        await customButtons("Accept", "Compile & Close", false);
- 
+
      if (formType == "Display") {
-     } 
+     }
      else {
       if(moduleName === "SI" && Status === 'Open'){}
       else await customButtons("ChromeClose", "Cancel", false);
@@ -1953,7 +1963,7 @@ var setButtons = async function (moduleName, formType, Trans, Status, isLead, is
 };
 
 function delay(time) {
-  return new Promise(function(resolve) { 
+  return new Promise(function(resolve) {
       setTimeout(resolve, time)
   });
 }
@@ -1969,7 +1979,7 @@ function setToolTipMessages(){
 
   //else addLegend();
   adjustlblText('Comment', ' (Optional)', false);
-  	
+
 	if($('p').find('small').length > 0)
     $('p').find('small').remove();
 }
@@ -1986,13 +1996,13 @@ function removeImage(){
   if($('#loader').length > 0)
    $('#loader').remove();
    clearInterval(intervalId);
-   
+
 }
 
 function hideReeasonofRejection(){
   var elem = $("textarea")[1];
   var _elemValue = elem._value
-  
+
   if(_elemValue === '' || Status === 'Completed' || _isTeamLeader)
     $('div._vpw0q').hide();
   else{
@@ -2003,11 +2013,11 @@ function hideReeasonofRejection(){
 function handleHardCopyDate(fields, hfield){
   var _columnName = 'HCDate';
   if(_formType === 'Edit' && _isMain){
-    
+
     if(!_isDigitalForm && Status !== 'Initiated' && isDar){
 
       var hardCopyDate = fd.field(_columnName).value;
-      if (hardCopyDate !== null || Status === 'Issued to Contractor') 
+      if (hardCopyDate !== null || Status === 'Issued to Contractor')
         fd.field(_columnName).disabled = true;
       else fd.field(_columnName).required = true;
     }
@@ -2019,8 +2029,8 @@ function handleHardCopyDate(fields, hfield){
 
 function setOldRef(_status){
   fd.field('ORFI').ready().then(() => {
-   //fd.field('ORFI').filter = "Reference ne null";  
-   fd.field('ORFI').filter = `Reference ne null  and Status eq '${  _status  }' and IsLatestRev eq '1'`;  
+   //fd.field('ORFI').filter = "Reference ne null";
+   fd.field('ORFI').filter = `Reference ne null  and Status eq '${  _status  }' and IsLatestRev eq '1'`;
    fd.field('ORFI').orderBy = { field: 'Reference', desc: false };
    fd.field('ORFI').refresh();
    });
@@ -2072,7 +2082,7 @@ var setNamingConvention = async function(referenceField){
 
             await renderFieldsOnForm(schema);
             scheamResult = await setFilenameText(schema, delimeter);
-            
+
              if(scheamResult.filenameText !== ''){
               schemaFields = scheamResult.schemaFields.slice(0, -1);
               filenameText = scheamResult.filenameText.slice(0, -1);
@@ -2183,7 +2193,7 @@ var setErrorMesg = async function(inputElement, mesg, elementErrorId, isFNC){
     var htmlContent = "<div id='" + errorId.replace('#','') + "' class='form-text text-danger small'>" + mesg + "</div>";
     $(inputElement).after(htmlContent);
   }
-   
+
   if(disableButtonsFNC || disableButtons){
       $(errorId).html(mesg).attr('style', 'color: rgba(var(--fd-danger-rgb), var(--fd-text-opacity)) !important');
 
@@ -2241,7 +2251,7 @@ var setFilenameText = async function(schema, delimeter){
       schemaFields += fieldName + delimeter;
       return;
     }
-      
+
     if(fieldName !== 'properties'){
       schemaFields += fieldName + delimeter;
       filenameText += fieldName + delimeter;
@@ -2267,7 +2277,7 @@ var validateDisciplineAgainstMatrix = async function(){
 	var FieldsArray = [];
 	if(mTypeItem !== undefined ){
 	  var AutoAssignQueryColumns = mTypeItem.AutoAssignQueryColumns;
-  
+
 	  if(AutoAssignQueryColumns !== undefined && AutoAssignQueryColumns !== null){
 		  if(AutoAssignQueryColumns.includes(","))
 		  {
@@ -2278,7 +2288,7 @@ var validateDisciplineAgainstMatrix = async function(){
 			}
 		  }
 		  else FieldsArray.push(AutoAssignQueryColumns);
-	  
+
 		  var MatrixList = mTypeItem.MatrixList;
 		  if(MatrixList !== undefined && FieldsArray.length > 0){
 		  for(let j = 0; j < FieldsArray.length; j++){
@@ -2301,17 +2311,17 @@ var validateDisciplineAgainstMatrix = async function(){
 				  if(items.length > 0)
 					  result = items[0];
 				});
-  
+
           var fieldnameText = fieldname;
 
           if(fieldname === 'BuildingType')
            fieldnameText = 'Building Name';
 
           var spanWithText = $("span:contains('" + fieldnameText + "'):first");
-          var getLabelElement = spanWithText[0].parentElement.parentElement.children[1];       
+          var getLabelElement = spanWithText[0].parentElement.parentElement.children[1];
           var inputElement= getLabelElement.children[0].children[0];
-          
-          //!_isCompliedWithConvention && 
+
+          //!_isCompliedWithConvention &&
           if (result === undefined){
             disableButtons = true;
             await setErrorMesg(inputElement, `Kindly contact administrator to add ${value.LookupValue} to the matrix to proceed`, elementErrorId);
@@ -2323,7 +2333,7 @@ var validateDisciplineAgainstMatrix = async function(){
 			  });
 			}
 		 }
-	  }  
+	  }
 	}
 }
 
@@ -2333,12 +2343,12 @@ var preventDuplicateTradeSelection = async function(){
     $('div.k-list-scroller ul:eq(1)').find('li').each(function(index){
       var element = $(this);
       var _value = $(element).text().trim();
-  
+
       if(_value === value  || ( _value === 'PMC' && (_module === 'IR' || _module === 'MIR' || _module === 'SLF') )){
         $(element).css("pointer-events", "none").css("opacity", "0.6");
         $(element).prop('disabled', true);
       }
-      else{ 
+      else{
           $(element).css("pointer-events", "auto").css("opacity", "1");
           $(element).prop('disabled', false);
       }
@@ -2349,7 +2359,7 @@ var preventDuplicateTradeSelection = async function(){
     $('div.k-list-scroller ul:eq(0)').find('li').each(function(index){
       var element = $(this);
       var _value = $(element).text().trim();
-  
+
       if( (value.includes(_value)) || ( _value === 'PMC' && (_module === 'IR' || _module === 'MIR' || _module === 'SLF') )){
         $(element).css("pointer-events", "none").css("opacity", "0.6");
         $(element).prop('disabled', true);
@@ -2361,7 +2371,7 @@ var preventDuplicateTradeSelection = async function(){
     });
   });
 
- 
+
 }
 
 var renderTradeResult = async function(leadValue, partValue){
@@ -2400,41 +2410,41 @@ var renderTradeResult = async function(leadValue, partValue){
 }
 
 var loadScripts = async function(){
-  const libraryUrls = [
-    _layout + '/controls/handsonTable/libs/handsontable.full.min.js',
-    _layout + '/controls/preloader/jquery.dim-background.min.js',
-    _layout + "/plumsail/js/buttons.js",
-    _layout + '/plumsail/js/customMessages.js',
-    _layout + '/controls/tooltipster/jquery.tooltipster.min.js',
-    _layout + '/plumsail/js/preloader.js',
-    _layout + '/plumsail/js/commonUtils.js',
-    _layout + '/plumsail/js/utilities.js',
-    _layout + '/plumsail/js/partTable.js',
-    _layout + '/plumsail/js/grid/gridUtils.js',
-    _layout + '/plumsail/js/grid/grid.js'
-  ];
+    const libraryUrls = [
+        _layout + '/controls/handsonTable/libs/handsontable.full.min.js',
+        _layout + '/controls/preloader/jquery.dim-background.min.js',
+        _layout + "/plumsail/js/buttons.js",
+        _layout + '/plumsail/js/customMessages.js',
+        _layout + '/controls/tooltipster/jquery.tooltipster.min.js',
+        _layout + '/plumsail/js/preloader.js',
+        _layout + '/plumsail/js/commonUtils.js',
+        _layout + '/plumsail/js/utilities.js',
+        _layout + '/plumsail/js/partTable.js',
+        _layout + '/plumsail/js/grid/gridUtils.js',
+        _layout + '/plumsail/js/grid/grid.js'
+    ];
 
-  const cacheBusting = '?t=' + new Date().getTime();
-    libraryUrls.map(url => { 
-        $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
-      });
-      
-  const stylesheetUrls = [
-    _layout + '/controls/tooltipster/tooltipster.css',
-    _layout + '/controls/handsonTable/libs/handsontable.full.min.css',
-    _layout + '/plumsail/css/CssStyle.css',
-    _layout + '/plumsail/css/partTable.css'
-  ];
+    const cacheBusting = '?t=' + new Date().getTime();
+    libraryUrls.map(url => {
+        $('head').append(`<script src="${url}${cacheBusting}" async></script>`);
+    });
 
-  stylesheetUrls.map((item) => {
-    var stylesheet = item;
-    $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
-  });
+    const stylesheetUrls = [
+        _layout + '/controls/tooltipster/tooltipster.css',
+        _layout + '/controls/handsonTable/libs/handsontable.full.min.css',
+        _layout + '/plumsail/css/CssStyle.css',
+        _layout + '/plumsail/css/partTable.css'
+    ];
+
+    stylesheetUrls.map((item) => {
+        var stylesheet = item;
+        $('head').append(`<link rel="stylesheet" type="text/css" href="${stylesheet}">`);
+    });
 }
 
 var LimitDateTimeSubmission = async function(){
 
-  var EnableWorkHours = await getParameter("EnableWorkHours"); 
+  var EnableWorkHours = await getParameter("EnableWorkHours");
 
   if (EnableWorkHours.toLowerCase() === "yes") {
 
@@ -2455,20 +2465,20 @@ var LimitDateTimeSubmission = async function(){
               workStartTime.setHours(arrayWorkStartTime[0], arrayWorkStartTime[1], arrayWorkStartTime[2], 0);
               var workEndTime = new Date();
               workEndTime.setHours(arrayWorkEndTime[0], arrayWorkEndTime[1], arrayWorkEndTime[2], 0);
-              const now = new Date();              
+              const now = new Date();
 
               if (now > workStartTime && now < workEndTime) { /* Submit Normally*/ }
               else {
-                alert('Please note that you are not allowed to submit after working hours');      
+                alert('Please note that you are not allowed to submit after working hours');
                 fd.close();
-              }          
+              }
           }
-    } 
+    }
     else {
-      alert('Please note that you are not allowed to submit on Weekend.');        
+      alert('Please note that you are not allowed to submit on Weekend.');
       fd.close();
     }
-    
+
   }
 }
 //#endregion
@@ -2499,7 +2509,7 @@ var getAutReferenceFormat = async function(){
 
 var renderFieldsOnForm = async function(schema){
   var _fieldsToShow = '';
-  
+
  if(_module === 'IR')
    _fieldsToShow = 'Area, Location, Package, Phase';
  else if(_module === 'MAT')

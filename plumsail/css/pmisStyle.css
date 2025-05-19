@@ -1,16 +1,29 @@
+/* ORIGINAL FILE PATH CUSTOMIZED BY HANA HASSAN  */
 :root{
-  --darkgreen: #14987e94;
-  --lightgreen: #5dc7b2b0; 
-  --lightgray: #b5b5b54d;
+  /* customized by hana hassan  */
+  --darkgreen: #61aba2;
+  /* customized by hana hassan  */
+  --lightgreen: rgb(104,152,154); 
+  --lightgray: #eaf5f5;
   --white: white;
   --bordercolor: #ffffff24;
   --btnborder: #ababab;
-  --black: black;
+  /* customized by hana hassan  */
+  --black:black;
+  /* customized by hana hassan  */
   --boxshadow: rgba(0, 0, 0, 0.1);
-  --sucat-color: #2c3e507a ;
+  --sucat-color: #6a898a;
   --hover-bg: #f0f0f0;
   --hover-color: #333333;
+  --background-color : rgb(146,156,165);
+  --dar-main-color:#49c4b1;
+  --accordion-color: #f4f4f4;
+  --table-header-bgcolor:linear-gradient(to right, #ffe8e3, #feb47b8a, #e9c4bb);
+  --approved-row-bg:linear-gradient(to right, hsl(208, 25%, 82%),hsl(208, 25%, 88%) , hsl(208, 25%, 98%));
 }
+
+
+
 
 /* FOR MOBILE */
 
@@ -53,6 +66,20 @@
   width: 40%;
   box-shadow: 0 4px 14px var(--boxshadow);
 }
+body{
+  background-color: var(--white); 
+  overflow-y: hidden;
+}
+
+.o365cs-base .ms-bgc-tp{
+  background-color: var(--dar-main-color) !important;
+}
+
+/* style for hover of proj title and setting */
+.o365cs-base .o365cs-topnavText:hover{
+  color: var(--dar-main-color);
+  background-color: transparent !important;
+}
 
 .vsb-js-search-zone{
   position: relative !important;
@@ -67,12 +94,13 @@
   border-collapse: collapse;
   font-family: 'Arial', sans-serif; 
   box-shadow: 0 2px 10px var(--boxshadow);
-  background-color: #f9f9f98a;
+  /* background-color: #beeae3; */
+  background: var(--table-header-bgcolor);
   border-radius: 4px;
   overflow: hidden;
 }
 .modern-table th {
-  color: var(--black);
+  color:  var(--black);
   font-size: 12px;
   font-weight: bold;
   /* padding-left: 10px;  */
@@ -80,11 +108,16 @@
   padding: 8px; 
   border-bottom: 1px solid #ddd;
 }
+.modern-table th label.d-flex.fd-field-title.col-form-label.center-text {
+  color: var(--black) !important;
+  font-size: 12px;
+  font-weight: bold;
+}
 .modern-table td {
   border-bottom: 1px solid var(--bordercolor);
   font-size: 14px;
-  background-color: #d6dcdd47;
-  color: var(--darkgreen);
+  /* background-color: #d6dcdd47; */
+  /* color: var(--darkgreen); */
   font-weight: bold;
   /* padding: .5rem 1rem;   */
 
@@ -92,17 +125,19 @@
   border-bottom: 1px solid #ddd;
 }
 
+/* Set your desired color for the header row
 .modern-table tr:nth-child(1) {
-  background-color: #9aa3ab; /* Set your desired color for the header row */
-  color: white;
-}
+  background-color: var(--tab-color) !important; 
+  color: var(--black) !important;
+} 
+*/
 
 .modern-table tr:nth-child(odd):not(:first-child) {
-  background-color: #f5f5f5; /* Light grey for even rows */
+  background-color: var(--white) !important; /* Light grey for even rows */
 }
 
 .modern-table tr:nth-child(even):nth-child(n+2) {
-  background-color: #ffffff; /* White for odd rows */
+  background-color: var(--white) !important; /* White for odd rows */
 }
 
 .modern-table tr:last-child td {
@@ -110,7 +145,7 @@
 }
 
 #tblItemsId th {
-  color: white;  
+  color: var(--black);  
 }
 
 .ctlStyle{
@@ -133,8 +168,8 @@
 
 /* START BACKGROUND INFO */
 .accordion-button { 
-  background-color: var(--sucat-color) !important;
-  color: var(--white) !important; 
+  background-color: var(--accordion-color) !important;
+  color: var(--black) !important; 
   font-weight: bold !important;
   display: flow !important;
 }
@@ -144,41 +179,214 @@
 /* START DATATABLE */
 .fd-sp-datatable-wrapper{  border: 0px !important }
 
-.k-grid-header-wrap { background-color: var(--lightgray); }
+/* .k-grid-header-wrap { background-color: var(--tab-color)!important; color: var(--black) !important; } */
+
+
+.k-grid-header-wrap { background: var(--table-header-bgcolor)!important; color: var(--black) !important; }
 
 .fd-form .fd-sp-datatable-wrapper .fd-sp-datatable-toolbar { padding: 6px; }
 
-.fd-form .fd-sp-datatable-wrapper>.fd-sp-datatable {border: 1px solid var(--bordercolor) !important}
+.fd-form .fd-sp-datatable-wrapper>.fd-sp-datatable {border: 1px solid var(--white) !important}
 /* END DATATABLE */
 
 
 
 /* START TABS */
-.fd-form .nav{
+
+
+/* made commented by hana hassan  */
+/* .fd-form .nav{
   padding-left: 7px !important;
-}
+} */
+ /* made commented by hana hassan  */
+
+
+
 
 .fd-form .nav-tabs .nav-item {
   /* margin-bottom: 5px; */
-  width: 215px;
+  width: 235px;
   text-align: center;
 }
-
+ul.nav{
+  padding-left: 5px !important;
+}
+ul.nav:not(.nav-item){
+  padding-top: 10px !important;
+}
 /* added on 25-7-2024 */
 .fd-form .nav-tabs{
-  border-bottom: 0px !important
+  border-bottom: 0px !important;
+}
+
+/*  start of customized by hana hassan  */
+
+#spPageChromeAppDiv div[class^=canvasWrapper_] {
+  position: static;
 }
 
 .fd-form .nav-tabs .nav-link.active, .fd-form .nav-tabs .nav-item.show .nav-link {
-  background-color: transparent !important;
-  border-color: transparent !important
+  background-color:transparent;
+  border-color:transparent !important;
+  box-shadow: none;
+}
+.fd-field-lookup{
+  background-color: hsl(180, 35%, 94%);
 }
 
+/* master buttons hover  */
+
+.nav.nav-tabs .nav-item{
+  border-color:hsl(171, 51%, 83%);
+  background-color: hsl(171, 51%, 83%) ;
+}
+.nav.nav-tabs .nav-item:hover{
+  color:  var(--black)!important;
+  border: var(--dar-main-color) !important;
+  box-shadow: var(--dar-main-color) !important;
+}
+
+/* style for inner table rows bg color */
+.k-master-row{
+  background-color:var(--white)!important;}
+
+
+/* style for the textareas color */
+  textarea{
+  background-color:var(--white)!important;
+}
+/* container div */
+.fd-grid .container-fluid{
+  background-color: transparent !important;
+  padding-top: 10px !important;
+  border-color: 3px solid var(--white) !important;
+}
+
+/*   style of color of secondary buttons */
+.fd-form .nav-link{
+  color:var(--black) !important;
+}
+.fd-form .nav-link:hover{
+  color:var(--dar-main-color);
+  font-weight:bolder !important;
+}
+
+
+/* style for hover of secdondary buttons */
+.nav-link{
+  border-bottom: 3px solid hsl(171, 51%, 83%) !important;
+
+}
+
+.nav-link.active:not(:hover){
+  border-bottom: 3px solid var(--dar-main-color) !important;
+
+}
+
+ .nav-tabs li, .nav li{
+  border-bottom: none !important;
+}
+
+.nav-tabs li:hover{
+border-bottom: none !important;
+}
+.nav-tabs li:focus{
+  border-bottom: none !important;
+  }
+
+/* style for select files button & selected dropdown  */
+.k-button{
+  background-color: hsl(180, 35%, 94%)!important;
+  border-color: hsl(180, 35%, 78%) !important;
+}
+
+.k-button:hover{
+ background-color: var(--dar-main-color) !important;
+}
+
+.k-list .k-item.k-state-selected, .k-list-optionlabel.k-state-selected {
+  color: black;
+  background-color: #eaf5f5;
+}
+
+/* style for date and calender pop up */
+.k-calendar .k-calendar-td.k-state-selected .k-link {
+  border-color: hsl(180, 35%, 94%) !important;
+  background-color: hwb(180 92% 4%) !important ;
+}
+
+/* style for the radio buttons selected */
+.fd-form .form-check-input:checked {
+  background-color: var(--dar-main-color) !important;
+  border-color: hsl(184, 21%, 41%)!important;
+
+}
+
+
+
+/* style for button of adding adding new item */
+.fd-form .btn-primary:hover {
+  color: var(--white) !important ;
+  background-color: var(--dar-main-color) !important;
+  
+}
+.fd-form .btn-primary {
+  color: var(--dar-main-color) !important;
+  background-color: var(--white) !important;
+
+
+}
+
+
+ /* style for checkbox selected when editing or deleteing current items */
+ .k-checkbox:focus{
+  border-color:var(--white) !important;
+  color: var(--white) !important;
+  background-color: var(--dar-main-color) !important; 
+ }
+.k-checkbox:checked, .k-checkbox.k-checked {
+  border-color:var(--white) !important;
+  color: var(--white) !important;
+  background-color:var(--dar-main-color) !important; 
+  
+}
+.k-grid tr.k-state-selected>td {
+  color: var(--white) !important;
+  background-color: var(--white) !important;
+}
+
+.fd-form .btn-secondary:hover {
+    color: var(--white) !important;
+    background-color: var(--dar-main-color) !important ;
+
+}
+
+
+/* style for input bg color in general info tab */
+.k-grid-content.k-auto-scrollable{
+  background-color: var(--white) !important;
+}
+
+input, .k-multiselect-wrap.k-floatwrap{
+  background-color: var(--white) !important;
+}
+.fd-form .k-dropdown .k-dropdown-wrap {
+  border-color: var(--white);
+  color: #373a3c;
+  background-color: var(--white);
+}
+.k-upload .k-dropzone {
+  border-color: var(--white);
+  color: #212529;
+  background-color: var(--white);
+}
+
+/* style for when master button is selected */
 .fd-form .nav-tabs .active.nav-link {
-  background-color: var(--darkgreen);
-  /* 
-  border-color: var(--darkgreen);  */
-  color: var(--black); /* White text for better contrast */
+  background-color: var(--dar-main-color) !important;
+  
+  /* border-color: var(--darkgreen) ;  */
+  color: var(--white) !important; /* White text for better contrast */
   font-weight: bold;
 
   /* box-shadow: 0 2px 4px var(--boxshadow);
@@ -188,18 +396,56 @@
   border-top-left-radius: 6px; */
 }
 
+
+.accordion-body{
+  background-color: var(--white) !important;
+  -webkit-filter: blur(7px);
+}
+
+.k-grid-header{
+  background-color: var(--white) !important;
+}
+
+
+.k-state-hover{
+  background-color: var(--dar-main-color) !important;
+  border-color: var(--white);
+}
+
+
+
+l
+/* 
+.fd-form .nav-tabs .nav-link:hover {
+   margin-bottom: none !important; 
+  background: none !important;
+  border:none !important; 
+  border-top-left-radius:none !important;
+  border-top-right-radius: none !important;
+} */
+
+
+
+/* style for the master button when not active */
 .fd-form .nav-tabs .nav-link {  
-  transition: background-color 0.2s ease, color 0.2s ease;
-  border-color: var(--bordercolor);
-  background-color: #ffffff24;
-  color: var(--black);
+  /* transition: background-color 0.2s ease, color 0.2s ease; */
+  /* border-color: var(--bordercolor); */
+  background-color: hsl(171, 51%, 83%) !important;
+  color: black !important;
+  /* box-shadow: 0 2px 4px var(--boxshadow);
   border-radius: 2px;
-  box-shadow: 0 2px 4px var(--boxshadow);
+  border-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0; */
 
   font-size: 13px;
   font-family: 'Arial';
-  border-top-right-radius: 6px;
+  /* border-top-right-radius: 6px; */
 }
+
+
+/* end of customized by hana hassan  */
+
 
 .fd-form .nav-tabs .nav-link:hover {
   /* background-color: var(--lightgreen);
@@ -211,12 +457,7 @@
   border-top-right-radius: 6px; */
 }
 
-.tabset, .tabs-top, .fd-grid, .container-fluid {
-  background: #efefef6b !important;  
-  padding-top: 10px !important;
-  /* backdrop-filter: blur(0.5px) !important; 
-  border-radius: 4px !important;*/
-}
+
 
 .fd-form .tabset { 
   margin-bottom: 0px !important; 
@@ -254,11 +495,12 @@
   font-family: Arial, Helvetica, sans-serif !important;
   font-size: 0.96em !important;
   font-weight: bold !important;
-  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease; 
+  /* transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;  */
 }
 
 .btn-outline-primary:hover {
-  background-color: var(--hover-bg) !important; /* Change to your desired hover background color */
+  background-color: 
+  transparent!important; /* Change to your desired hover background color */
   color: var(--hover-color) !important;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow for the hover effect */
 }
@@ -268,29 +510,27 @@
   justify-content: flex-end;
 }
 
-/* var(--sucat-color) */
-.lbldummyStyle{
-  background-color: #9aa3ab !important; 
-  color: var(--white) !important;
-}
+
+
 /* END BUTTONS */
 
 
 /* START GENERAL */
-.fd-form { background-color: transparent !important; }
+.fd-form { background-color: transparent !important ; }
 
 .fd-sp-field-text input{ box-shadow: 0 2px 4px var(--boxshadow); }
+
 
 
 /* commented on 25-7-2024
 .fd-form-container .container-fluid{ padding: 15px 12px 0px 12px; }
 */
-
-.fd-form a:not(.nav-link):not(.disabled) { color: blue !important; font-weight: 500; }
-
+/* customized by hana hassan  */
+.fd-form a:not(.nav-link):not(.disabled) { color: var(--black) !important; font-weight: 500; } 
+/* customized by hana hassan  */
 
 /* START ROOT HEADER (LOGO WITH TITLE) */
-.ms-compositeHeader{ padding-bottom: 0px !important; }
+.ms-compositeHeader{ padding-bottom: 0px !important; display: none; }
 
 .ms-compositeHeader-topWrapper{ height: 5px !important; }
 
@@ -299,18 +539,22 @@
 .title-75 { font-size: 22px; }
  /* End ROOT HEADER */
 
-.col, .d-md-block{ padding: 0px 10px 0 10px !important; }
+.col, .d-md-block{ padding: 0px 0px 0 0px !important; }
 
-.CanvasComponent{ padding: 0.7% 0 0 0.5% !important; }
+.CanvasComponent{ padding: 0.7% 0 0 0.4% !important; }
 
-.ControlZone  {
+.ControlZone {
   box-sizing: border-box;
-  /* background: url('../css/Images/ImgCV.jpg') no-repeat center center fixed; */
-  background: linear-gradient(to right, rgb(218 237 216), rgb(187 229 218), rgb(158 214 224), rgb(150 182 235), rgb(175 169 240), rgb(175 168 240), rgb(168 165 239));
+  background-image: url("ProjCenter/features/libs/img/pm-bg.png");
+  background-size: cover;
+background-position:center;
+background-position-y:top;
+background-repeat:no-repeat;
+  background-color: white;
   -moz-background-size: cover;
   -o-background-size: cover;
-  background-size: cover;
-} 
+}
+
 
 .fd-title-wrap{
   font-weight: bold;
@@ -339,7 +583,7 @@
   /* color: #ffffff;
   background-color: var(--sucat-color);  */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  /* transition: background-color 0.3s ease, color 0.3s ease; */
   border-top-right-radius: 8px;
   border-top-left-radius: 8px;
 }
@@ -489,7 +733,7 @@ b[data-v-386d995a]{ color:red !important; }
   color: rgb(96, 94, 92);
   text-decoration: none;
   padding: 14px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  /* transition: background-color 0.3s ease, color 0.3s ease; */
   border-radius: 14px;
 }
 
@@ -501,7 +745,7 @@ b[data-v-386d995a]{ color:red !important; }
 }
 
 .sp-appBar-borderLeft {
-  height: 20px;
+  height: 100%;
   width: 1px;
   background-color: rgb(96, 94, 92);
   margin-left: 10px;
@@ -510,6 +754,8 @@ b[data-v-386d995a]{ color:red !important; }
 .sp-appBar {
   background-color: #ebeeec;
   position: absolute;
+  height: 100%;
+
   /* border-bottom-left-radius: 10px; */
 }
 
@@ -518,8 +764,11 @@ b[data-v-386d995a]{ color:red !important; }
   padding: 0;
   margin: 0;
   position: absolute;
-  background-color: #f3f2f1;
+  background:linear-gradient(to bottom, hsl(220, 23%, 96%), hsl(220, 23%, 100%));
   border-bottom-left-radius: 10px;
+  height: 100%;
+
+ 
 }
 
 .sp-appBar-linkLi {
@@ -584,71 +833,49 @@ b[data-v-386d995a]{ color:red !important; }
 }
 
 .sp-appBar-tooltip {
-  display: inline-block;
+  display: inline-block; 
   font-size: 12px;
 } */
 
-
-
-
-.phase-title {
+.approved-status{
+  background: var(--approved-row-bg) !important;
+  color: #49c4b1;
   font-weight: bold;
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  display: block;
-  color: #333;
+}
+ .pending-status{
+  color:  #3d5265;
+  font-weight: bold;
+ }
+tr:hover{
+  background-color: transparent !important;
+}
+.fd-grid.container-fluid.divGrid {
+  position: relative;
+  border: 1px solid #ced4da !important; /* Set your desired border color and width */
+  padding-top: 26px; /* Add padding to create space inside the border */
+  margin: 10px -6px; /* Add margin to space out the container */
+  border-radius: 6px; /* Optional: rounded corners */
+  box-shadow: rgba(0, 0, 0, 0.1) 2px 4px 4px;
+  background-color: #ffffffd5 !important;
+  backdrop-filter: blur(0.7px);
+  
 }
 
-.custom-phases {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-left: 8px !important;
+.border-title {
+  position: absolute;
+  top: -12px; /* Adjust the position to sit on the border */
+  left: 20px; /* Align with the content */
+  background-color: #fff; /* Match the background color to your page */
+  padding: 0 10px; /*Add padding to the title*/
+  font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  font-weight: bold;
+  color: #c14242; /* Modern green accent */  
+  letter-spacing: 0.5px; /* Improves readability */
+  transition: all 0.3s ease; /* Smooth transitions for hover effects */
 }
 
-.phase-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-}
-
-.phase-option input[type="radio"] {
-  accent-color: #007bff; /* Bootstrap primary color */
-  cursor: pointer;
-}
-
-.phase-option label {
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
-
-.phase-option label:hover {
-  background-color: #f8f9fa;
-}
-
-.phase-option input[disabled] + label {
-  color: #6c757d; /* Disabled text color */
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
-  font-size: 1rem;
-  padding: 0.5rem 1.5rem;
-  border-radius: 4px;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-  border-color: #004085;
-}
-
-.btn{
-  margin-left:12px;
-  margin-top: 11px;
-}
+.icon{
+  padding-right: 3px;
+  }

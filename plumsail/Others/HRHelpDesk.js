@@ -37,7 +37,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType){
             await extractValues(moduleName, formType);
             await setCustomButtons();
             
-            formatingButtonsBar('Human Resources: Service Desk');
+            formatingButtonsBar('Human Resources: Service Desk');           
 
             if (_isEdit) 
                 await handleEditForm();                
@@ -66,6 +66,9 @@ var handleNewForm = async function () {
  
     setIconSource("overview-icon", svguserinfo); 
 
+    setPSHeaderMessage('', '-25px', '30px');
+    setPSErrorMesg(`Please fill in the below fields.`);
+
     _formFields.RequestType.ready().then(function() {      
         _formFields.RequestType.orderBy = { field: 'Title', desc: false };
         _formFields.RequestType.refresh();
@@ -92,11 +95,15 @@ var handleEditForm = async function () {
  
     setIconSource("overview-icon", svguserinfo);  
 
+    //setPSHeaderMessage(''); 
+    setPSHeaderMessage('', '-25px', '30px');
+
     let arrayFields = [_formFields.Title, _formFields.AffectedUser, _formFields.RequestType, _formFields.EmployeeID, _formFields.DateAssigned,
-    _formFields.DateEngaged, _formFields.DateResolved, _formFields.DateClosed, _formFields.Attachments];
+    _formFields.DateEngaged, _formFields.DateResolved, _formFields.DateClosed];
     
     _DisableFormFields(arrayFields, true);
-    disableRichTextField('Body');
+    //disableRichTextField('Body');
+    disableRichTextFieldColumn(_formFields.Description);
 
     let status = _formFields.Status.value;
     //setPSErrorMesg(status);
@@ -105,7 +112,15 @@ var handleEditForm = async function () {
     if (status === 'Closed') {
         _DisableFormFields([_formFields.Status, _formFields.Priority, _formFields.AssignedTo, _formFields.StartDate, _formFields.DueDate], true);
         $('span').filter(function () { return $(this).text() === submitDefault; }).parent().attr("disabled", "disabled");
-        disableRichTextField('Comments');
+        //disableRichTextField('Comments');
+        disableRichTextFieldColumn(_formFields.Comments);
+
+        _DisableFormFields( _formFields.Attachments, true);
+
+        setPSErrorMesg(`Your request has been reviewed.`);
+    }
+    else {
+        setPSErrorMesg(`Please review the below request.`);
     }
     
 }
@@ -116,8 +131,10 @@ var handleDisplayForm = async function () {
  
     setIconSource("overview-icon", svguserinfo);
 
+    //setPSHeaderMessage('');
+    setPSHeaderMessage('', '-25px', '30px');
+    setPSErrorMesg(`Form Display`);
 }
-
 
 //#region General
 var loadScripts = async function(withSign){
@@ -179,6 +196,45 @@ var extractValues = async function(moduleName, formType){
     //  const elapsedTime = endTime - startTime;
     //  console.log(`extractValues: ${elapsedTime} milliseconds`);
 }
+
+function disableRichTextFieldColumn(field){
+
+    let elem = $(field.$el);//$(fd.field(fieldname).$el).find('.k-editor tr');
+
+	elem.each(function(index, element){	
+
+		let iframe = $(element).find('iframe');
+
+		if(iframe.length > 0){
+
+			let content = iframe.contents();
+			let divElement = content.find('div');
+
+			var lblElement = $('<label>', {
+			  for: 'inputField',
+			}).html(divElement.html());
+
+			if(divElement.length === 0){
+				lblElement = $('<label>', {
+					for: 'inputField',
+				  }).html(content[0].activeElement.innerHTML);
+			}
+
+			lblElement.css({
+				'padding-top': '6px',
+				'padding-bottom': '6px',
+				'padding-left': '12px',
+				'background-color': '#e9ecef',
+				'width': '100%',
+				'border-radius': '4px'
+			});
+
+			let tblElement = iframe.parent().parent().parent().parent();
+			tblElement.parent().append(lblElement);
+			tblElement.remove();
+		}	
+	})
+}
 //#endregion
 
 //#region Custom Buttons
@@ -238,34 +294,38 @@ function setToolTipMessages(){
 
 function formatingButtonsBar(titelValue){
 
-  $('div.ms-compositeHeader').remove();
-  $('i.ms-Icon--PDF').remove();
+    $('div.ms-compositeHeader').remove();
+    $('i.ms-Icon--PDF').remove();
 
-  let toolbarElements = document.querySelectorAll('.fd-toolbar-primary-commands');
-  toolbarElements.forEach(function(toolbar) {
-      toolbar.style.display = "flex";
-      toolbar.style.justifyContent = "flex-end";
-  });
+    let toolbarElements = document.querySelectorAll('.fd-toolbar-primary-commands');
+    toolbarElements.forEach(function(toolbar) {
+        toolbar.style.display = "flex";
+        toolbar.style.justifyContent = "flex-end";
+    });
 
-  let commandBarElement = document.querySelectorAll('[aria-label="Command Bar."]');
-      commandBarElement.forEach(function(element) {
-      element.style.paddingTop = "16px";
-  }) ;
+    let commandBarElement = document.querySelectorAll('[aria-label="Command Bar."]');
+    commandBarElement.forEach(function(element) {
+        element.style.paddingTop = "16px";
+    }); 
 
-  document.querySelector('.col-sm-12').style.setProperty('padding-top', '0px', 'important');
+    document.querySelector('.col-sm-12').style.setProperty('padding-top', '0px', 'important'); 
+    $('.col-sm-12').attr("style", "display: block !important;justify-content:end;");   
+    $('.fd-grid.container-fluid').attr("style", "margin-top: -15px !important; padding: 10px;");
+    $('.fd-form-container.container-fluid').attr("style", "margin-top: -10px !important;");   
 
-  const iconPath = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/Images/animdarlogo1.png';
-  const linkElement = `<a href="${_spPageContextInfo.webAbsoluteUrl}" style="text-decoration: none; color: inherit; display: flex; align-items: center; font-size: 18px;">
+    const iconPath = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/Images/animdarlogo1.png';
+    const linkElement = `<a href="${_spPageContextInfo.webAbsoluteUrl}" style="text-decoration: none; color: inherit; display: flex; align-items: center; font-size: 18px;">
                           <img src="${iconPath}" alt="Icon" style="width: 50px; height: 26px; margin-right: 14px;">${titelValue}</a>`;
-  $('span.o365cs-nav-brandingText').html(linkElement);
+    $('span.o365cs-nav-brandingText').html(linkElement);
 
-  $('.o365cs-base.o365cs-topnavBGColor-2').css('background', 'linear-gradient(to bottom, #808080, #4d4d4d, #1a1a1a, #000000, #1a1a1a, #4d4d4d, #808080)');
+    $('.o365cs-base.o365cs-topnavBGColor-2').css('background', 'linear-gradient(to bottom, #808080, #4d4d4d, #1a1a1a, #000000, #1a1a1a, #4d4d4d, #808080)');
 
-  $('.fd-form p').css({
-      'margin-top': '0',
-      'margin-bottom': '1rem',
-      'display': 'none'
-  });
+    $('.border-title').each(function() {
+        $(this).css({          
+            'margin-top': '-35px', /* Adjust the position to sit on the border */
+            'margin-left': '20px', /* Align with the content */            
+        });
+    });
 }
 
 function setIconSource(elementId, iconFileName) {

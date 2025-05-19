@@ -9,7 +9,7 @@ let Inputelems = document.querySelectorAll('input[type="text"]');
 let ListNamebyOffice = '', officeName = '';
 
 var _modulename = "", _formType = "";
-let fontSize = '17px';
+let fontSize = '15px';
 
 let _Email, _Notification = '', rfCORVal = '', From = '', To = '', _refNo = '', _loginName; 
 
@@ -24,12 +24,21 @@ var Body = '';
 let realEmail = ''; 
 let realDisplayName = ''; 
 
+let Acknowledged = '', Seen = '', Department = '', Office = '', EmployeeGrade = '', EmployeeTitle = '', AcknowledgeDate = '', SeenDate = '', EmployeeID = '',
+    EmployeeName = '', GradeDesc = '', Profession = '', Location = '', isPromoted = ''; 
+
+let EmployeeData = {};
+
 let CurrentUser;
 let _proceed = false;
+let _isUserHasAccess = true;
 
 const hideField = (field) => $(fd.field(field).$parent.$el).hide();
 const showField = (field) => $(fd.field(field).$parent.$el).show();
 const disableField = (field) => fd.field(field).disabled = true;
+const enabledField = (field) => fd.field(field).disabled = false;
+const removeRequireField = (field) => fd.field(field).required = false;
+const clearField = (field) => fd.field(field).value = '';
 
 var onRender = async function (moduleName, formType){    
 	try { 
@@ -83,7 +92,7 @@ var JobAr_newForm = async function(){
         fd.toolbar.buttons[1].style = "display: none;";        
         
         await loadingButtons();
-        formatingButtonsBar();  
+        formatingButtonsBar();        
         
         //CustomclearStoragedFields(fd.spForm.fields); 
         
@@ -92,30 +101,56 @@ var JobAr_newForm = async function(){
         var spanPDElement = document.querySelector('.EditSection');
         var notehtml = document.getElementById('noteD1');
         var noteDiv = document.getElementById('noteDiv');
-        var noteD2 = document.getElementById('noteD2');
+        var noteD2 = document.getElementById('noteD2');   
+        
+        let user = await pnp.sp.web.currentUser.get();
+        let { Title: CurrentUser, Email: realEmail } = user;
 
-        await pnp.sp.web.currentUser.get().then(user => {                  
-            //realLoginName = user.LoginName.split('|')[1];
-            realDisplayName = user.Title;
-            CurrentUser = user.Title;
-            realEmail = user.Email;       
-            //console.log(`LoginName: ${realLoginName}`);
-            console.log(`DisplayName: ${realDisplayName}`);
-            console.log(`Email: ${realEmail}`);
-        });
-
-        //debugger;
+        console.log(`Current User: ${CurrentUser}`);
+        console.log(`Email: ${realEmail}`);          
+        
+        const emailMappings = {           
+            'Ahmed.AhmedSalem@dar.com': 'ahmed.hishamsalem@dar.com',
+            'Ahmed.AliGad-Allah@dar.com': 'Ahmed.Gad-Allah@dar.com',
+            'Mustafa.Sayed@dar.com': 'mustafa.elsherif@dar.com',
+            'Ahmed.SaiedFahmy@dar.com': 'ahmed.ashrafsaied@dar.com',
+            'Ibrahim.AbdullahOmar@dar.com': 'Ibrahim.Abdelazim@dar.com',
+            'Kerollus.Makkar@dar.com': 'kerollus.magdy@dar.com',
+            'Ahmed.Megahed@dar.com': 'ahmed.hassan3@dar.com',
+            'Mohamed.Abdelall@dar.com': 'Mohamed.Anter@dar.com',
+            'Mohamed.IbrahimTaha@dar.com': 'Mohamed.TahaIbrahim@dar.com',
+            'Salah.Abdulsalam@dar.com': 'salah.essameldin@dar.com',
+            'Moataz.HosnyMohamed@dar.com': 'moataz.hosny@dar.com',
+            'Abdelrahman.AnwarIbrahimGalal@dar.com': 'abdelrahman.amin@dar.com',
+            'Osama.HamoudaElougazy@dar.com': 'osama.ougazy@dar.com',
+            'Ahmed.FreezGadElrab@dar.com': 'Ahmed.SalahNafea@dar.com',
+            'Ahmed.SaiedFahmy@dar.com': 'Ahmed.AshrafSaied@dar.com',
+            'Ahmed.MohamedTaie@dar.com': 'ahmed.taie@dar.com',
+            'Hazem.MohamedAbdulkariem@dar.com': 'hazem.abdulkariem@dar.com',
+            'Hady.TawfikMohammed@dar.com': 'Hady.Gamal@dar.com',
+            'SeifEl-Din.SayedHassanien@dar.com': 'seifel-din.sayed@dar.com',
+            'Mohamed.MohamedHarfoush@dar.com': 'mohamed.harfoush2@dar.com',
+            'Ahmed.ZaafanHassan@dar.com': 'Ahmed.Zaafan@dar.com'
+        };
+        
+        realEmail = emailMappings[realEmail] || realEmail;
 
         const HRAdmin = await CheckifUserinSPGroup();
         console.log(`Group: ${HRAdmin}`);
 
-        await handleAchknowledge(realEmail, realDisplayName);
+        await handleAchknowledge(realEmail);
 
-        if(HRAdmin === 'HR'){
+        if (HRAdmin === 'HR') {
+            
+            spanPDElement.style.display = 'block';
+            spanPDElement.style.marginTop = '8px'; 
+            noteD1.style.marginTop = '-28px'; 
 
-            spanPDElement.style.marginTop = '8px';
-            fd.field('EditFlag').value = false;          
-            ['EditedUser', 'EmployeeTitle', 'EmployeeGrade'].forEach(hideField);            
+            fd.field('EditFlag').value = false; 
+            
+            const editFields = [ 'EditedUser', 'EmployeeTitle', 'EmployeeGrade', 'EmpID', 'EmpName', 'grade_descriptor', 'Profession', 'Office_API', 'Department_API', 'isPromoted' ];
+            
+            editFields.forEach(hideField);            
 
             fd.field('EditFlag').$on('change', async function (value) {
                 
@@ -138,64 +173,103 @@ var JobAr_newForm = async function(){
                         await loadingUpdateButtons();
                     }
                     
-                    ['EditedUser', 'EmployeeTitle', 'EmployeeGrade'].forEach(showField);
+                    editFields.forEach(showField);
                     fd.field('EditedUser').required = true;
 
-                    fd.field('EditedUser').value = '';
-                    fd.field('EmployeeTitle').value = '';
-                    fd.field('EmployeeGrade').value = '';
+                    editFields.forEach(clearField);                        
 
                     notehtml.style.display = 'none';                
                     noteD2.style.display = 'none';
+                    noteDiv.style.display = 'none';
 
                     fd.field('EditedUser').$on('change', async function (value) {
-                        //debugger;
+                  
                         if (value) { 
-
-                            //realLoginName = value.Description.split('|')[1];
+                            
                             realDisplayName = value.DisplayText;
-                            realEmail = value.EntityData.Email;       
-                            //console.log(`LoginName: ${realLoginName}`);
+                            realEmail = value.EntityData.Email; 
+                            
                             console.log(`DisplayName: ${realDisplayName}`);
                             console.log(`Email: ${realEmail}`);
 
                             GetserviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetEmployeeDetailsJobDescription&upn=${realEmail}`; 
                             PostAdminserviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=PostAdminEmployeeJobDescription&upn=${realEmail}`; 
-                            let EmplyeeFromMaster = await getRestfulResult(GetserviceUrl);                     
-
-                            EmployeeGrade = EmplyeeFromMaster.Grade;
-                            EmployeeTitle = EmplyeeFromMaster.jobTitle;  
-                            officeName = EmplyeeFromMaster.Office; 
+                            let EmplyeeFromMaster = await getRestfulResult(GetserviceUrl);                    
                             
-                            fd.field('EmployeeTitle').value = EmployeeTitle;
-                            fd.field('EmployeeGrade').value = EmployeeGrade;
+                            EmployeeData = {
+                                EmployeeGrade: EmplyeeFromMaster.Grade,
+                                EmployeeTitle: EmplyeeFromMaster.jobTitle,
+                                Office: EmplyeeFromMaster.Office,
+                                Department: EmplyeeFromMaster.Department,
+                                Acknowledged: EmplyeeFromMaster.isAcknowledged,
+                                AcknowledgeDate: EmplyeeFromMaster.isAcknowledgedDate,
+                                Seen: EmplyeeFromMaster.isSeen,
+                                SeenDate: EmplyeeFromMaster.isSeenDate,
+                                EmployeeID: EmplyeeFromMaster.id,
+                                EmployeeName: EmplyeeFromMaster.name,
+                                GradeDesc: EmplyeeFromMaster.grade_descriptor,
+                                Profession: EmplyeeFromMaster.profession,
+                                Location: EmplyeeFromMaster.location,
+                                isPromoted: EmplyeeFromMaster.isPromoted
+                            };
 
-                            fd.field('EmployeeTitle').required = true;
-                            fd.field('EmployeeGrade').required = true;
+                            ({ EmployeeGrade, EmployeeTitle, Office, Department, Acknowledged, AcknowledgeDate, Seen, SeenDate, EmployeeID, EmployeeName, GradeDesc, Profession, Location, isPromoted } = EmployeeData);
+
+                            console.log(`Edited EmployeeData: ${JSON.stringify(EmployeeData, null, 2)}`);
+                            
+                            const fieldMapping = {
+                                EmployeeTitle: "EmployeeTitle",
+                                EmployeeGrade: "EmployeeGrade",
+                                Office: "Office_API",
+                                Department: "Department_API",
+                                EmployeeID: "EmpID",
+                                EmployeeName: "EmpName",
+                                GradeDesc: "grade_descriptor",
+                                Profession: "Profession",
+                                isPromoted: "isPromoted"
+                            };                           
+
+                            Object.keys(fieldMapping).forEach(key => {
+
+                                if (EmployeeData[key] !== undefined) {
+
+                                    let field = fd.field(fieldMapping[key]);
+
+                                    if (key === "isPromoted") {                            
+                                        field.value = formatText(EmployeeData[key]); // Select dropdown option                                        
+                                    }
+                                    else if (key === "EmployeeID") {
+                                        field.value = EmployeeData[key];
+                                        field.disabled = true;
+                                    }
+                                    else {
+                                        field.value = EmployeeData[key];  // Set value for other fields
+                                    }
+
+                                    field.required = true; // Set required dynamically
+                                }
+                            });
                         }
                         else {
 
                             realDisplayName = '';
                             realEmail = ''; 
                             
-                            fd.field('EmployeeTitle').disabled = false;
-                            fd.field('EmployeeGrade').disabled = false;
+                            const customFields = ['EmployeeTitle', 'EmployeeGrade', 'EmpID', 'EmpName', 'grade_descriptor', 'Profession', 'Office_API', 'Department_API', 'isPromoted'];
                             
-                            fd.field('EmployeeTitle').value = '';
-                            fd.field('EmployeeGrade').value = '';
-
-                            fd.field('EmployeeTitle').required = false;
-                            fd.field('EmployeeGrade').required = false;
+                            customFields.forEach(enabledField);
+                            customFields.forEach(clearField);                            
+                            customFields.forEach(removeRequireField);
                         }
                     });
                 }
                 else{
-                    fd.field('EditedUser').required = false;
-                    ['EditedUser', 'EmployeeTitle', 'EmployeeGrade'].forEach(hideField);
+                    // fd.field('EditedUser').required = false;
+                    // ['EditedUser', 'EmployeeTitle', 'EmployeeGrade'].forEach(hideField);
 
-                    notehtml.style.display = 'block';
-                    //noteDiv.style.display = 'block';
-                    noteD2.style.display = 'block';                   
+                    // notehtml.style.display = 'block';
+                    // noteDiv.style.display = 'block';
+                    // noteD2.style.display = 'block';                   
                 }
             });
         }
@@ -205,7 +279,7 @@ var JobAr_newForm = async function(){
     catch (err) {
         
         await _generateErrorEmail(_spPageContextInfo.siteAbsoluteUrl, '', '', err.message, err.stack);         
-        alert('Kindly be informed that we have been notified of the issue, and it will be resolved shortly.');
+        alert('Access error, please reach out to your HR department.');
         var webUrl = window.location.origin + _spPageContextInfo.siteServerRelativeUrl;
         window.location.href = webUrl;
     }  	
@@ -245,28 +319,28 @@ var JobAr_editForm = async function(){
         var isSiteAdmin = _spPageContextInfo.isSiteAdmin; 
 
         if (LoginName.toLowerCase() !== realLoginName.toLowerCase() && !isSiteAdmin){
-            var content = `</br><p>Apologies, this item is not related to you.</p></br>`;
+            var content = `<br /> <p>Apologies, this item is not related to you.</p><br /> `;
             $('#my-html').append(content);
 			alert("Apologies, this item is not related to you.");
 	    	fd.close();
 		}
         else{
 
-            var content = `</br><p style='font-size: ${fontSize};'>Dear <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeName},</span></p></br> 
+            var content = `<br /> <p style='font-size: ${fontSize};'>Dear <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeName},</span></p><br />  
 
-                            <p style='font-size: ${fontSize};'>We have an important update related to the recent implementation of our new Job Architecture (JA) framework.</p></br> 
+                            <p style='font-size: ${fontSize};'>We have an important update related to the recent implementation of our new Job Architecture (JA) framework.</p><br />  
 
                             <p style='font-size: ${fontSize};'>As part of this new framework, there have been changes to your role, specifically in your job title and grade. 
                                 These adjustments are based on the comprehensive review we have undertaken to ensure our structure is aligned 
-                                with both our strategic goals and industry best practices. Please be assured that there will be no changes to your compensation or benefits as a result of this update.</p></br> 
+                                with both our strategic goals and industry best practices. Please be assured that there will be no changes to your compensation or benefits as a result of this update.</p><br />  
 
                             <p style='font-size: ${fontSize};'>Your new Grade - <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeGrade}</span></p>
-                            <p style='font-size: ${fontSize};'>Your new Job Title - <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeTitle}</span></p></br> 
+                            <p style='font-size: ${fontSize};'>Your new Job Title - <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeTitle}</span></p><br />  
 
                             <p style='font-size: ${fontSize};'>It is important that you acknowledge and confirm your understanding of these changes, as they form an update to your current terms of employment.</p>
-                            <p style='font-size: ${fontSize};'>For any questions regarding your new title and grade, please reach out to your line manager. They will be able to provide further clarity and support.</p></br> 
+                            <p style='font-size: ${fontSize};'>For any questions regarding your new title and grade, please reach out to your line manager. They will be able to provide further clarity and support.</p><br />  
                         
-                            <p style='font-size: ${fontSize};'>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p></br> 
+                            <p style='font-size: ${fontSize};'>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p><br />  
                             
                             <p style='font-size: ${fontSize};'>Best regards,</p>                       
                             <p><span style='font-weight: bold;font-size: ${fontSize};'>${Office}</span>, <span style='font-weight: bold;font-size: ${fontSize};'>${Department}</span></p>`;
@@ -350,8 +424,7 @@ var JobAr_displayForm = async function(){
 
     try {
 
-        fixTextArea();
-        //debugger;
+        fixTextArea();    
 
         fd.toolbar.buttons[1].text = "Cancel";
         fd.toolbar.buttons[1].icon = "Cancel";
@@ -387,28 +460,28 @@ var JobAr_displayForm = async function(){
         var isSiteAdmin = _spPageContextInfo.isSiteAdmin; 
 
         if (LoginName.toLowerCase() !== realLoginName.toLowerCase() && !isSiteAdmin){
-            var content = `</br><p>Apologies, this item is not related to you.</p></br>`;
+            var content = `<br /> <p>Apologies, this item is not related to you.</p><br /> `;
             $('#my-html').append(content);
 			alert("Apologies, this item is not related to you.");
 	    	fd.close();
 		}
         else{
             
-            var content = `</br><p style='font-size: ${fontSize};'>Dear <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeName},</span></p></br> 
+            var content = `<br /> <p style='font-size: ${fontSize};'>Dear <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeName},</span></p><br />  
 
-                            <p style='font-size: ${fontSize};'>We have an important update related to the recent implementation of our new Job Architecture (JA) framework.</p></br> 
+                            <p style='font-size: ${fontSize};'>We have an important update related to the recent implementation of our new Job Architecture (JA) framework.</p><br />  
 
                             <p style='font-size: ${fontSize};'>As part of this new framework, there have been changes to your role, specifically in your job title and grade. 
                                 These adjustments are based on the comprehensive review we have undertaken to ensure our structure is aligned 
-                                with both our strategic goals and industry best practices. Please be assured that there will be no changes to your compensation or benefits as a result of this update.</p></br> 
+                                with both our strategic goals and industry best practices. Please be assured that there will be no changes to your compensation or benefits as a result of this update.</p><br />  
 
                             <p style='font-size: ${fontSize};'>Your new Grade - <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeGrade}</span></p>
-                            <p style='font-size: ${fontSize};'>Your new Job Title - <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeTitle}</span></p></br> 
+                            <p style='font-size: ${fontSize};'>Your new Job Title - <span style='font-weight: bold;font-size: ${fontSize};'>${EmployeeTitle}</span></p><br />  
 
                             <p style='font-size: ${fontSize};'>It is important that you acknowledge and confirm your understanding of these changes, as they form an update to your current terms of employment.</p>
-                            <p style='font-size: ${fontSize};'>For any questions regarding your new title and grade, please reach out to your line manager. They will be able to provide further clarity and support.</p></br> 
+                            <p style='font-size: ${fontSize};'>For any questions regarding your new title and grade, please reach out to your line manager. They will be able to provide further clarity and support.</p><br />  
                         
-                            <p style='font-size: ${fontSize};'>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p></br> 
+                            <p style='font-size: ${fontSize};'>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p><br />  
                             
                             <p style='font-size: ${fontSize};'>Best regards,</p>                       
                             <p><span style='font-weight: bold;font-size: ${fontSize};'>${Office}</span>, <span style='font-weight: bold;font-size: ${fontSize};'>${Department}</span></p>`;
@@ -904,20 +977,116 @@ async function loadingButtons(){
 
                 showPreloader();
 
+                AcknowledgeDate = new Date().toISOString();
+
                 const updateData = {
                     isAcknowledged: "yes",
-                    isAcknowledgedDate: new Date().toISOString()
-                };
+                    isAcknowledgedDate: AcknowledgeDate
+                };                
 
                 await postRestfulResult(PostserviceUrl, updateData);
 
-                var Subject = `Important Update: Job Architecture Framework Changes - ${realDisplayName}`;
-                var encodedSubject = htmlEncode(Subject); 
-                var encodedBody = htmlEncode(Body);
-                
-                await _sendEmail('JobArch', encodedSubject + '|' + encodedBody, '', realEmail, '', '');  
-          
                 var webUrl = window.location.origin + _spPageContextInfo.siteServerRelativeUrl;
+
+                //let editlink = `${_ListFullUrl}/NewForm.aspx`;                
+
+                let Subject = `Job Architecture Framework Changes - Addendum to Employment Agreement - ${realDisplayName}`;               
+                let BodyEmail = `<html>
+                                <head>
+                                    <meta http-equiv=""Content-Type"" content=""text/html; charset=utf-8"">
+                                    <style>
+                                        body {
+                                            font-family: Arial, sans-serif;
+                                            background-color: #f4f4f4;
+                                            margin: 0;
+                                            padding: 0;
+                                            font-size: 15px;
+                                            color: #333333;
+                                        }
+                                        .container {
+                                            width: 100%;                         
+                                            margin: 0 auto;
+                                            padding: 10px;
+                                            background-color: #fdfdfd;
+                                        }
+                                        .header {
+                                            background-color: #3bdbc0;
+                                            color: #ffffff;
+                                            padding: 12px 20px;
+                                            font-size: 16px;
+                                            font-weight: bold;
+                                            text-align: center;                            
+                                        }
+                                        .content {
+                                            padding: 10px;
+                                            font-size: 14px;
+                                            line-height: 1.6;
+                                            color: #555555;
+                                        }
+                                        .content p {
+                                            margin: 5px 0;
+                                        }
+                                        .footer {
+                                            text-align: center;
+                                            color: #888888;
+                                            font-size: 12px;
+                                            padding: 10px 0;
+                                        }
+                                        .action-button {
+                                            display: inline-block;
+                                            background-color: #4CAF50;
+                                            color: #ffffff;
+                                            padding: 10px 15px;
+                                            border-radius: 4px;
+                                            text-decoration: none;
+                                            font-weight: bold;
+                                            text-align: center;
+                                            margin-top: 15px;
+                                        }
+                                        .action-button:hover {
+                                            background-color: #45a049;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <table class='container' cellpadding='0' cellspacing='0'>                                                                     
+                                        <tr>
+                                            <td class='content'>                                          
+                                                <p>Dear ${realDisplayName},</p>
+                                                <br />
+                                                <p>Thank you for acknowledging the letter. Please find attached your individual letter for future reference.</p>
+                                                <p>Should you have any queries on Job architecture, please <a href="${webUrl}" class="link">click here</a>.</p>
+                                                <br /> 
+                                                <p>Best regards,</p>
+                                                <br />                         
+                                                <p><strong>Phillip Farrow</strong></p> 
+                                                <p><strong>Chief Human Resources Officer</strong></p>  
+                                                <img src='data:image/png;base64,base64Image' alt='Purchase Order Image'/>
+                                            </td>
+                                        </tr> 
+                                        <tr>
+                                            <td class='footer'>
+                                                <p>This is an automated message. Please do not reply to this email.</p>
+                                            </td>
+                                        </tr>                                       
+                                    </table>
+                                </body>
+                            </html>`; 
+                
+                let formatAckDate = new Date(AcknowledgeDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }).replace(/\//g, '-'); // Replace slashes with dashes
+             
+                let encodedSubject = htmlEncode(Subject); 
+                let letterHTML = getLetterasHTML();
+                let encodedBody = htmlEncode(letterHTML);
+                let encodedBodyEmail = htmlEncode(BodyEmail);
+                let pdfAttName = `${EmployeeID} - ${realDisplayName} - ${formatAckDate} - Confirmation Letter.pdf`;
+                
+                await _sendEmail('JobArch', encodedSubject + '|' + encodedBodyEmail+ '|' + encodedBody + '|' + pdfAttName, '', realEmail, '', '');            
+                
                 window.location.href = webUrl;
             }            
         }
@@ -944,20 +1113,24 @@ async function loadingUpdateButtons(){
         disabled: false,
         text: 'Update',
         style: `background-color:${greenColor}; color:white; width:180px !important`,
-        click: async function() {  	
+        click: async function () { 
+            
             if(fd.isValid){
 
                 showPreloader(); 
+
+                const customFields = ['EmployeeTitle', 'EmployeeGrade', 'EmpName', 'grade_descriptor', 'Profession', 'Office_API', 'Department_API', 'isPromoted'];
+                const APIColumns = ['jobTitle', 'Grade', 'name', 'grade_descriptor', 'profession', 'Office', 'Department', 'isPromoted'];                
                 
-                let EmployeeTitle = fd.field('EmployeeTitle').value;
-                let EmployeeGrade = fd.field('EmployeeGrade').value;
+                const updateData = {};
 
-                fd.field('EmployeeTitle').disabled = true;
-                fd.field('EmployeeGrade').disabled = true;
+                customFields.forEach((field, index) => {
+                    let fieldValue = fd.field(field).value; 
+                    fd.field(field).disabled = true; 
+                    updateData[APIColumns[index]] = fieldValue;
+                });    
 
-                const updateData = {
-                    Grade: EmployeeGrade,
-                    jobTitle: EmployeeTitle,
+                const updateData2 = {                   
                     ModifiedBy: CurrentUser,
                     ModifiedDate: new Date().toISOString(),
                     isSeen: 'No',
@@ -966,17 +1139,83 @@ async function loadingUpdateButtons(){
                     isAcknowledgedDate: null
                 };
 
-                await postRestfulResult(PostAdminserviceUrl, updateData);
+                const finalUpdateData = { ...updateData, ...updateData2 };
 
-                var Subject = `Important Update: Your Job Architecture - ${realDisplayName} is Updated`;
-                var encodedSubject = htmlEncode(Subject); 
-                ListNamebyOffice = getListNameByOffice(officeName);
-                let href = `${_webUrl}/Lists/${ListNamebyOffice}/NewForm.aspx`;
-                Body = `Kindly be informed that your Job Architecture information has been updated.  
-                        Please click <a href="${href}">here</a> to access it.`;
-                var encodedBody = htmlEncode(Body);
+                console.log(finalUpdateData);
+
+                await postRestfulResult(PostAdminserviceUrl, finalUpdateData);
+
+                //#region send email
+
+                //var Subject = `Important Update: Your Job Architecture - ${realDisplayName} is Updated`;
+                //var encodedSubject = htmlEncode(Subject); 
+                //ListNamebyOffice = getListNameByOffice(officeName);
+                //let href = `${_webUrl}/Lists/${ListNamebyOffice}/NewForm.aspx`;               
                 
-                await _sendEmail('JobArch-noAtt', encodedSubject + '|' + encodedBody, '', realEmail, '', '');  
+                // Body = `
+                //         <html>
+                //         <head>
+                //             <style>
+                //                 body {
+                //                     font-family: Arial, sans-serif;
+                //                     font-size: 14px;
+                //                     line-height: 1.6;
+                //                     color: #333;
+                //                     margin: 0;
+                //                     padding: 0;
+                //                 }
+                //                 .container {
+                //                     max-width: 600px;
+                //                     margin: 0 auto;
+                //                     padding: 20px;
+                //                     background-color: #f9f9f9;
+                //                     border-radius: 8px;
+                //                     border: 1px solid #e0e0e0;
+                //                 }
+                //                 .header {
+                //                     text-align: center;
+                //                     font-size: 18px;
+                //                     font-weight: bold;
+                //                     color: #2d2d2d;
+                //                 }
+                //                 .content {
+                //                     margin: 20px 0;
+                //                     font-size: 14px;
+                //                     color: #333;
+                //                 }
+                //                 .link {
+                //                     color: #007bff;
+                //                     text-decoration: none;
+                //                 }
+                //                 .footer {
+                //                     margin-top: 30px;
+                //                     text-align: center;
+                //                     font-size: 12px;
+                //                     color: #777;
+                //                 }
+                //             </style>
+                //         </head>
+                //         <body>
+                //             <div class="container">                                     
+                //                 <div class="content">
+                //                     <br />  
+                //                     <p>Dear ${realDisplayName},</p>
+                //                     <p>Kindly be informed that your Job Architecture information has been updated.</p>
+                //                     <p>Please feel free to click <a href="${href}" class="link">here</a> to log in and learn more about the Job Architecture exercise.</p>
+                //                     <p>Best regards,</p>
+                //                     <p>HR</p>
+                //                     <br />  
+                //                 </div>                                        
+                //             </div>
+                //         </body>
+                //         </html>
+                //         `;
+                
+                //var encodedBody = htmlEncode(Body);
+                
+                //await _sendEmail('JobArch-noAtt', encodedSubject + '|' + encodedBody, '', realEmail, '', '');  
+                
+                //#endregion
         
                 hidePreloader();
             }            
@@ -1075,7 +1314,7 @@ function formatingButtonsBar(){
     
     document.querySelectorAll(".ms-CommandBar.fd-form.fd-form-toolbar").forEach((el) => {        
         el.style.setProperty("margin-top", "15px", "important");
-    });    
+    });   
 }
 
 function parseGrade(grade) {
@@ -1259,14 +1498,14 @@ function GetHTMLBody(EmailbodyHeader, ToName, DoneBy) {
 	Body += "<div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9;'>"; 	
     
     Body += "<div style='margin-top: 10px;'>";
-    Body += '</br>' ;
+    Body += '<br /> ' ;
 	Body += "<p style='margin: 0 0 10px;'>Dear <strong>" + ToName + "</strong>,</p>";    
     Body += EmailbodyHeader;
     Body += "<p style='margin: 0 0 10px;'>Best regards,</p>";
     Body += "<p style='margin: 0 0 10px;'><strong>" + DoneBy + "</strong></p>";
-    Body += '</br>' ;
+    Body += '<br /> ' ;
     Body += "<p style='margin: 0 0 10px;'><strong>Acknowledged Date:</strong> " + currentDate + "</p>";
-    Body += '</br>' ;
+    Body += '<br /> ' ;
 	Body += "</div>";				
 	Body += "</div>";
 	Body += "</body>";
@@ -1708,27 +1947,275 @@ function getListNameByOffice(officeName) {
     return officeMap[officeName.toLowerCase()] || ''; // Return mapped value or empty string if not found
 }
 
+function formatText(value) {
+    if (typeof value === "string" && value.length > 0) {
+        return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+    }
+    return value; // Return unchanged if not a string
+}
+
+function formatDate(dateString) {
+    let date = new Date(dateString);
+
+    return new Intl.DateTimeFormat('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        timeZoneName: 'long'
+    }).format(date);
+}
+
 function checkAccessAndRedirect(moduleName, office) {
 
     const restrictions = {
-        'jobar': ['beirut'],
-        'dc': ['dubai'],
-        'sa': ['riyadh'],
-        'an': ['amman'],
-        'ae': ['amman'],
-        'ej': ['amman'],
-        'oa': ['amman'],
+        'jobar': ['dc'],
+        'dc': ['dc'],
+        'sa': ['sa'],
+        'an': ['an'],
+        'ae': ['ae'],
+        'ej': ['ej'],
+        'oa': ['oa'],
     };
 
     moduleName = moduleName.toLowerCase();
     office = office.toLowerCase();
 
     if (restrictions[moduleName] && !restrictions[moduleName].includes(office)) {
+
+        _isUserHasAccess = false;
         alert("Apologies, you have accessed a link that is not related to your area.");
 
         var webUrl = window.location.origin + _spPageContextInfo.siteServerRelativeUrl;
         window.location.href = webUrl;
     }
+}
+
+function getLetterasHTML() {  
+
+    let stampDateAcknowledged = formatDate(new Date().toISOString());  
+
+    let PromotionHTML = `<html>
+                        <head>
+                            <style>
+                                .content {                                    
+                                    font-size: 15px;
+                                    color: #333;
+                                    line-height: 1.3;
+                                }
+                                p {
+                                    margin: 0; /* Adds space below paragraphs */
+                                    padding: 0; /* Padding inside the paragraph does not affect line spacing */
+                                }
+                                .logo-container {
+                                    text-align: right;
+                                }                                                               
+                            </style>
+                        </head>
+                        <body>
+                            <div id="emailContent" class="content">                               
+                                <div class="logo-container">                                
+                                <img src='DarLogbase64' alt='darlogo' width="120px" height="80px"/>
+                                </div>                               
+                                <p><strong>Employee Name: </strong>${realDisplayName}</p>
+                                <p><strong>Employee ID: </strong>${EmployeeID}</p>
+                                <p><strong>Department: </strong>${Department}</p>                             
+                                <br /> 
+                                <p><strong>Subject: Addendum to Employment Agreement</strong></p>
+                                <br />                           
+                                <p>Dear ${realDisplayName},</p>
+                                <br /> 
+                                <p>I am pleased to inform you that you have been promoted to a new level within the company. As part of this promotion, and Dar Al-Handasah's newly introduced Job Architecture framework for all employees, your new grade will be <strong>${EmployeeGrade}</strong>, and your new title will be <strong>${EmployeeTitle}</strong>.</p>
+                                <br /> 
+                                <p style="margin-bottom: 16px;">As part of this alignment initiative, we want to reassure you that:</p>                           
+                                <ul>
+                                    <li>There are no changes to your job content, role, or reporting lines.</li>
+                                    <li>Your compensation and benefits remain unchanged as per your current employment terms.</li>
+                                    <li>These updates are part of Dar's broader effort to modernize and align job structures with industry standards, providing greater clarity in career progression and professional growth.</li>
+                                </ul> 
+                                <br />                              
+                                <p style="margin-top: -14px !important;">To better understand the new grading framework and job titles, we encourage you to review Dar's Job Architecture document and the accompanying Employee FAQs, which offer insights into the benefits and structure of this framework.</p>                              
+                                <br /> 
+                                <p>Should you have any questions, please feel free to reach out to your Department Partner or HR Representative for further clarification.</p>
+                                <br /> 
+                                <p>Congratulations once again on your promotion, and we appreciate your continued contributions to Dar Al-Handasah and look forward to supporting your career development within the company.</p> 
+                                <br />                          
+                                <p>Best regards,</p>
+                                <br />                         
+                                <p><strong>Phillip Farrow</strong></p> 
+                                <p><strong>Chief Human Resources Officer</strong></p>                                                            
+                                <img src='base64Image' alt='darlogo' width="300px" height="100px"/>
+                                <br /><br />
+                                <p>This letter was acknowledged on date: <strong>${stampDateAcknowledged}</strong></p>
+                            </div>
+                        </body>
+                        </html>`; 
+    
+    let NonPromotion = `<html>
+                        <head>
+                            <style>
+                                .content {                                    
+                                    font-size: 15px;
+                                    color: #333;
+                                    line-height: 1.3;
+                                }
+                                p {
+                                    margin: 0; /* Adds space below paragraphs */
+                                    padding: 0; /* Padding inside the paragraph does not affect line spacing */
+                                }
+                                .logo-container {
+                                    text-align: right;
+                                }                                                               
+                            </style>
+                        </head>
+                        <body>
+                            <div id="emailContent" class="content">                               
+                                <div class="logo-container">                                
+                                <img src='DarLogbase64' alt='darlogo' width="120px" height="80px"/>
+                                </div>                               
+                                <p><strong>Employee Name: </strong>${realDisplayName}</p>
+                                <p><strong>Employee ID: </strong>${EmployeeID}</p>
+                                <p><strong>Department: </strong>${Department}</p>                             
+                                <br /> 
+                                <p><strong>Subject: Addendum to Employment Agreement</strong></p>
+                                <br />                           
+                                <p>Dear ${realDisplayName},</p>
+                                <br /> 
+                                <p>I am pleased to inform you that as part of Dar Al-Handasah's newly introduced Job Architecture framework, applicable to all Dar employees, your new grade will be <strong>${EmployeeGrade}</strong>, and your new title will be <strong>${EmployeeTitle}</strong>.</p>
+                                <br /> 
+                                <p style="margin-bottom: 16px;">As part of this alignment initiative, we want to reassure you that:</p>                           
+                                <ul>
+                                    <li>There are no changes to your job content, role, or reporting lines.</li>
+                                    <li>Your compensation and benefits remain unchanged as per your current employment terms.</li>
+                                    <li>These updates are part of Dar's broader effort to modernize and align job structures with industry standards, providing greater clarity in career progression and professional growth.</li>
+                                </ul> 
+                                <br />                              
+                                <p style="margin-top: -14px !important;">To better understand the new grading framework and job titles, we encourage you to review Dar's Job Architecture document and the accompanying Employee FAQs, which offer insights into the benefits and structure of this framework.</p>                              
+                                <br /> 
+                                <p>Should you have any questions, please feel free to reach out to your Department Partner or HR Representative for further clarification.</p>
+                                <br /> 
+                                <p>We appreciate your continued contributions to Dar Al-Handasah and look forward to supporting your career development within the company.</p> 
+                                <br />                          
+                                <p>Best regards,</p>
+                                <br />                         
+                                <p><strong>Phillip Farrow</strong></p> 
+                                <p><strong>Chief Human Resources Officer</strong></p>                                                            
+                                <img src='base64Image' alt='darlogo' width="300px" height="100px"/>
+                                <br /><br />
+                                <p>This letter was acknowledged on date: <strong>${stampDateAcknowledged}</strong></p>
+                            </div>
+                        </body>
+                        </html>`;   
+
+    if (isPromoted && isPromoted.toLowerCase() === "yes")
+        return PromotionHTML;
+    else
+        return NonPromotion;
+}
+
+function getLetterasHTMLNoLogos() {  
+
+    let stampDateAcknowledged = formatDate(new Date().toISOString());  
+
+    let PromotionHTML = `<html>
+                        <head>
+                            <style>
+                                .content {                                    
+                                    font-size: 15px;
+                                    color: #333;
+                                    line-height: 1.3;
+                                }
+                                p {
+                                    margin: 0; /* Adds space below paragraphs */
+                                    padding: 0; /* Padding inside the paragraph does not affect line spacing */
+                                }                                                                                               
+                            </style>
+                        </head>
+                        <body>
+                            <div id="emailContent" style="max-width: 50%; width: 100%; font-size: ${fontSize}; text-align: left;" class="responsive-text"> 
+                                <br /> 
+                                <p><strong>Employee Name: </strong>${realDisplayName}</p>
+                                <p><strong>Employee ID: </strong>${EmployeeID}</p>
+                                <p><strong>Department: </strong>${Department}</p>                             
+                                <br />                                                          
+                                <p>Dear ${realDisplayName},</p>
+                                <br /> 
+                                <p>I am pleased to inform you that you have been promoted to a new level within the company. As part of this promotion, and Dar Al-Handasah's newly introduced Job Architecture framework for all employees, your new grade will be <strong>${EmployeeGrade}</strong>, and your new title will be <strong>${EmployeeTitle}</strong>.</p>
+                                <br /> 
+                                <p style="margin-bottom: 16px !important;">As part of this alignment initiative, we want to reassure you that:</p>                           
+                                <ul>
+                                    <li>There are no changes to your job content, role, or reporting lines.</li>
+                                    <li>Your compensation and benefits remain unchanged as per your current employment terms.</li>
+                                    <li>These updates are part of Dar's broader effort to modernize and align job structures with industry standards, providing greater clarity in career progression and professional growth.</li>
+                                </ul> 
+                                <br />                              
+                                <p style="margin-top: -14px !important;">To better understand the new grading framework and job titles, we encourage you to review Dar's Job Architecture document and the accompanying Employee FAQs, which offer insights into the benefits and structure of this framework.</p>                              
+                                <br /> 
+                                <p>Should you have any questions, please feel free to reach out to your Department Partner or HR Representative for further clarification.</p>
+                                <br /> 
+                                <p>Congratulations once again on your promotion, and we appreciate your continued contributions to Dar Al-Handasah and look forward to supporting your career development within the company.</p> 
+                                <br />                          
+                                <p>Best regards,</p>
+                                <br />                         
+                                <p><strong>Phillip Farrow</strong></p> 
+                                <p><strong>Chief Human Resources Officer</strong></p>                      
+                            </div>
+                        </body>
+                        </html>`; 
+    
+    let NonPromotion = `<html>
+                        <head>
+                            <style>
+                                .content {                                    
+                                    font-size: 15px;
+                                    color: #333;
+                                    line-height: 1.3;
+                                }
+                                p {
+                                    margin: 0; /* Adds space below paragraphs */
+                                    padding: 0; /* Padding inside the paragraph does not affect line spacing */
+                                }                                                                                               
+                            </style>
+                        </head>
+                        <body>
+                            <div id="emailContent" style="max-width: 50%; width: 100%; font-size: ${fontSize}; text-align: left;" class="responsive-text">     
+                                <br />     
+                                <p><strong>Employee Name: </strong>${realDisplayName}</p>
+                                <p><strong>Employee ID: </strong>${EmployeeID}</p>
+                                <p><strong>Department: </strong>${Department}</p>                             
+                                <br />                                         
+                                <p>Dear ${realDisplayName},</p>
+                                <br /> 
+                                <p>I am pleased to inform you that as part of Dar Al-Handasah's newly introduced Job Architecture framework, applicable to all Dar employees, your new grade will be <strong>${EmployeeGrade}</strong>, and your new title will be <strong>${EmployeeTitle}</strong>.</p>
+                                <br /> 
+                                <p style="margin-bottom: 16px !important;">As part of this alignment initiative, we want to reassure you that:</p>                           
+                                <ul>
+                                    <li>There are no changes to your job content, role, or reporting lines.</li>
+                                    <li>Your compensation and benefits remain unchanged as per your current employment terms.</li>
+                                    <li>These updates are part of Dar's broader effort to modernize and align job structures with industry standards, providing greater clarity in career progression and professional growth.</li>
+                                </ul> 
+                                <br />                              
+                                <p style="margin-top: -14px !important;">To better understand the new grading framework and job titles, we encourage you to review Dar's Job Architecture document and the accompanying Employee FAQs, which offer insights into the benefits and structure of this framework.</p>                              
+                                <br /> 
+                                <p>Should you have any questions, please feel free to reach out to your Department Partner or HR Representative for further clarification.</p>
+                                <br /> 
+                                <p>We appreciate your continued contributions to Dar Al-Handasah and look forward to supporting your career development within the company.</p> 
+                                <br />                          
+                                <p>Best regards,</p>
+                                <br />                         
+                                <p><strong>Phillip Farrow</strong></p> 
+                                <p><strong>Chief Human Resources Officer</strong></p>                                
+                            </div>
+                        </body>
+                        </html>`;   
+
+    if (isPromoted && isPromoted.toLowerCase() === "yes")
+        return PromotionHTML;
+    else
+        return NonPromotion;
 }
 
 var getRestfulResult = async function(serviceUrl){
@@ -1794,72 +2281,78 @@ var postRestfulResult = async function(apiUrl, updateData) {
     }
 }
 
-var handleAchknowledge = async function(realEmail, realDisplayName){
+var handleAchknowledge = async function(realEmail){
 
-    // ${_currentUser.Email}`;
-
-    let Acknowledged = '';
-    let Seen = '';
-    let Department = '';
-    let Office = '';
-    let EmployeeGrade = '';
-    let EmployeeTitle = '';
-    let AcknowdledgeDate = '';
-    let SeenDate = ''; 
+    // ${_currentUser.Email}`;   
     
     GetserviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetEmployeeDetailsJobDescription&upn=${realEmail}`;        
     PostserviceUrl = `${_webUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=PostEmployeeJobDescription&upn=${realEmail}`;   
 
     let EmplyeeFromMaster = await getRestfulResult(GetserviceUrl); 
 
-    //debugger;
+    EmployeeData = {
+        EmployeeGrade: EmplyeeFromMaster.Grade,
+        EmployeeTitle: EmplyeeFromMaster.jobTitle,
+        Office: EmplyeeFromMaster.Office,
+        Department: EmplyeeFromMaster.Department,
+        Acknowledged: EmplyeeFromMaster.isAcknowledged,
+        AcknowledgeDate: EmplyeeFromMaster.isAcknowledgedDate,
+        Seen: EmplyeeFromMaster.isSeen,
+        SeenDate: EmplyeeFromMaster.isSeenDate,
+        EmployeeID: EmplyeeFromMaster.id,
+        EmployeeName: EmplyeeFromMaster.name,
+        GradeDesc: EmplyeeFromMaster.grade_descriptor,
+        Profession: EmplyeeFromMaster.profession,
+        Location: EmplyeeFromMaster.location,
+        isPromoted: EmplyeeFromMaster.isPromoted
+    };    
 
-    EmployeeGrade = EmplyeeFromMaster.Grade;
-    EmployeeTitle = EmplyeeFromMaster.jobTitle;
-    Office = EmplyeeFromMaster.Office;
-    Department = EmplyeeFromMaster.Department;
-    Acknowledged = EmplyeeFromMaster.isAcknowledged;
-    AcknowdledgeDate = EmplyeeFromMaster.isAcknowledgedDate;
-    Seen = EmplyeeFromMaster.isSeen;
-    SeenDate = EmplyeeFromMaster.isSeenDate;   
+    ({ EmployeeGrade, EmployeeTitle, Office, Department, Acknowledged, AcknowledgeDate, Seen, SeenDate, EmployeeID, EmployeeName, GradeDesc, Profession, Location, isPromoted } = EmployeeData);
 
-    checkAccessAndRedirect(_modulename, Office);    
+    console.log(`EmployeeData: ${JSON.stringify(EmployeeData, null, 2)}`);
 
-    if (Seen && Seen.toLowerCase() === "no") {
-
-        const updateData = {
-            isSeen: "yes",
-            isSeenDate: new Date().toISOString(),
-        };
-
-        let isSeenPost = await postRestfulResult(PostserviceUrl, updateData);
-    }     
+    checkAccessAndRedirect(_modulename, Location);  
     
-    //var isSiteAdmin = _spPageContextInfo.isSiteAdmin; 
+    if (_isUserHasAccess) {
+
+        if (Seen && Seen.toLowerCase() === "no") {
+
+            const updateData = {
+                isSeen: "yes",
+                isSeenDate: new Date().toISOString(),
+            };
+
+            let isSeenPost = await postRestfulResult(PostserviceUrl, updateData);
+        }
     
-    var content = `
+        //var isSiteAdmin = _spPageContextInfo.isSiteAdmin;       
+
+        realDisplayName = EmployeeName;
+    
+        var content = `
         <div style="max-width: 50%; width: 100%; font-size: ${fontSize}; text-align: left;" class="responsive-text">
-            </br><p>Dear <span style="font-weight: bold;">${realDisplayName},</span></p></br> 
+            <br /> <p>Dear <span style="font-weight: bold;">${realDisplayName},</span></p><br />  
 
-            <p>We have an important update related to the recent implementation of our new Job Architecture (JA) framework.</p></br> 
+            <p>We have an important update related to the recent implementation of our new Job Architecture (JA) framework.</p><br />  
 
             <p>As part of this new framework, there have been changes to your role, specifically in your job title and grade. 
                 These adjustments are based on the comprehensive review we have undertaken to ensure our structure is aligned 
-                with both our strategic goals and industry best practices. Please be assured that there will be no changes to your compensation or benefits as a result of this update.</p></br> 
+                with both our strategic goals and industry best practices. Please be assured that there will be no changes to your compensation or benefits as a result of this update.</p><br />  
 
             <p>Your new Grade - <span style="font-weight: bold;">${EmployeeGrade}</span></p>
-            <p>Your new Job Title - <span style="font-weight: bold;">${EmployeeTitle}</span></p></br> 
+            <p>Your new Job Title - <span style="font-weight: bold;">${EmployeeTitle}</span></p><br />  
 
             <p>It is important that you acknowledge and confirm your understanding of these changes, as they form an update to your current terms of employment.</p>
-            <p>For any questions regarding your new title and grade, please reach out to your line manager. They will be able to provide further clarity and support.</p></br> 
+            <p>For any questions regarding your new title and grade, please reach out to your line manager. They will be able to provide further clarity and support.</p><br />  
         
-            <p>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p></br> 
+            <p>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p><br />  
             
-            <p>Best regards,</p>                       
-            <p><span style="font-weight: bold;">${Office}</span>, <span style="font-weight: bold;">${Department}</span></p>
+            <p>Best regards,</p>                                    
+            <p><strong>Phillip Farrow</strong></p> 
+            <p><strong>Chief Human Resources Officer</strong></p>  
         </div>`;
     
-    var EmailbodyHeader =  `<p>As part of this new framework, there have been changes to your role, specifically in your job title and grade. 
+        var EmailbodyHeader = `<p>As part of this new framework, there have been changes to your role, specifically in your job title and grade. 
                 These adjustments are based on the comprehensive review we have undertaken to ensure our structure is aligned 
                 with both our strategic goals and industry best practices. Please be assured that there will be no changes to your compensation or benefits as a result of this update.</p>
 
@@ -1869,16 +2362,17 @@ var handleAchknowledge = async function(realEmail, realDisplayName){
             <p>It is important that you acknowledge and confirm your understanding of these changes, as they form an update to your current terms of employment.</p>
             <p>For any questions regarding your new title and grade, please reach out to your line manager. They will be able to provide further clarity and support.</p>
         
-            <p>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p></br>`;
+            <p>Thank you for your continued commitment to Dar, and please do not hesitate to contact us if you need any additional information.</p><br /> `;
     
-    Body = GetHTMLBody(EmailbodyHeader, realDisplayName, `${Office}, ${Department}`);
+        //Body = GetHTMLBody(EmailbodyHeader, realDisplayName, `${Office}, ${Department}`);
 
-    $('#my-html').append(content);
+        content = getLetterasHTMLNoLogos();
+        $('#my-html').append(content);
 
-    let imgUrlLegend = `${_webUrl}${_layout}/Images/legend.png`;          
-    let imgUrlSettled = `${_webUrl}${_layout}/Images/Settle.png`;
+        let imgUrlLegend = `${_webUrl}${_layout}/Images/legend.png`;
+        let imgUrlSettled = `${_webUrl}${_layout}/Images/Settle.png`;
     
-    let legendTbl = `<table style="border: 0px solid black;" cellpadding="0" cellspacing="0">
+        let legendTbl = `<table style="border: 0px solid black;" cellpadding="0" cellspacing="0">
                         <tr>
                             <td>
                                 <fieldset style="background-color: #ffe9991a;color: #333;padding: 4px;border-radius: 6px;border: 1px solid #ccc;">
@@ -1907,36 +2401,31 @@ var handleAchknowledge = async function(realEmail, realDisplayName){
                         </tr>                                                            
                     </table>`;
 
-    $('#jobLegend').append(legendTbl);         
+        $('#jobLegend').append(legendTbl);
     
-    var buttons = fd.toolbar.buttons;
-    var acknowledgeButton = buttons.find(button => button.text === 'Acknowledge'); 
+        var buttons = fd.toolbar.buttons;
+        var acknowledgeButton = buttons.find(button => button.text === 'Acknowledge');
 
-    if(Acknowledged && Acknowledged.toLowerCase() === "yes") {                      
-        acknowledgeButton.disabled = true;
-        acknowledgeButton.style = `background-color: #737373; color:white; width:200px !important`;             
+        if (Acknowledged && Acknowledged.toLowerCase() === "yes") {
+            acknowledgeButton.disabled = true;
+            acknowledgeButton.style = `background-color: #737373; color:white; width:200px !important`;
 
-        $('#noteDiv').show();
+            $('#noteDiv').show();
         
-        const lastAccessedDate = new Date(`${AcknowdledgeDate}`);
-
-        const formattedDate = lastAccessedDate.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+            const lastAccessedDate = formatDate(`${AcknowledgeDate}`);
         
-        document.getElementById("acknowledgeDate").innerHTML = `<span style="font-weight: bold;">${formattedDate}</span>`;
-        $('#noteDiv').parent().append("<br>");           
-        $('#my-html').parent().append(`<img id="ackimage" src=${_spPageContextInfo.webAbsoluteUrl}/_layouts/15/PCW/General/EForms/Images/MailSign.png alt="Acknowledge Image" style="display: block; margin-top: 10px;margin-left: -6px;">`);
-        $('#my-html').parent().append("<br>");
-        $('#jobLegend').hide();        
-    }
-    else{
-        acknowledgeButton.disabled = false;             
-        $('#my-html').parent().append(`<img id="ackimage" src=${_spPageContextInfo.webAbsoluteUrl}/_layouts/15/PCW/General/EForms/Images/MailSign.png alt="Acknowledge Image" style="display: block; margin-top: 10px;margin-left: -6px;">`);
-        $('#my-html').parent().append("<br>"); 
-        $('#jobLegend').parent().append("<br>");        
-    }    
+            document.getElementById("acknowledgeDate").innerHTML = `<span style="font-weight: bold;font-size: 15px">${lastAccessedDate}</span>`;
+            $('#noteDiv').parent().append("<br>");
+            $('#my-html').parent().append(`<img id="ackimage" src=${_spPageContextInfo.webAbsoluteUrl}/_layouts/15/PCW/General/EForms/Images/MailSign.png alt="Acknowledge Image" style="display: block; margin-top: 10px;margin-left: -6px;">`);
+            $('#my-html').parent().append("<br>");
+            $('#jobLegend').hide();
+        }
+        else {
+            acknowledgeButton.disabled = false;
+            $('#my-html').parent().append(`<img id="ackimage" src=${_spPageContextInfo.webAbsoluteUrl}/_layouts/15/PCW/General/EForms/Images/MailSign.png alt="Acknowledge Image" style="display: block; margin-top: 10px;margin-left: -6px;">`);
+            $('#my-html').parent().append("<br>");
+            $('#jobLegend').parent().append("<br>");
+        }
+    }  
 }
 //#endregion

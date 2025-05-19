@@ -20,7 +20,7 @@ if (preloaderMain) {
 	  z-index: 9999; /* High z-index to cover all elements */
 	  display: none; /* Hidden by default */
 	}
-	
+
 	/* Loader animation */
 	.loader {
 	  position: absolute;
@@ -34,7 +34,7 @@ if (preloaderMain) {
 	  height: 60px;
 	  animation: spin 1s linear infinite;
 	}
-	
+
 	/* Keyframes for the spinning loader */
 	@keyframes spin {
 	  0% {
@@ -51,10 +51,10 @@ if (preloaderMain) {
 	const preloaderDiv = document.createElement('div');
 	preloaderDiv.id = 'preloader';
 	preloaderDiv.className = 'preloader';
-	
+
 	const loaderDiv = document.createElement('div');
 	loaderDiv.className = 'loader';
-	
+
 	preloaderDiv.appendChild(loaderDiv);
 	preloaderMain.appendChild(preloaderDiv);
 }
@@ -66,7 +66,7 @@ var  preloader_btn = async function(isCC, ignoreImage){
 	try {
 		var targetControl = 'div.ControlZone';
 		 //'div.ControlZone-control'//'div.fd-toolbar-primary-commands';
-		
+
 		var webUrl = '';
 		var darknessFloat = 0.8;
 		let top = "300px", left = "790px";
@@ -102,7 +102,7 @@ var  preloader_btn = async function(isCC, ignoreImage){
 	}
    catch(err) { console.log(err.message); }
 }
- 
+
 //var preloader = async function(isDefaultClose){
 function preloader(isDefaultClose, isCC){
 	try{
@@ -115,20 +115,20 @@ function preloader(isDefaultClose, isCC){
 			catch(er){console.log(er);}
 
 		}
-		
+
 	   var cloButton = $('div.fd-toolbar-primary-commands button:contains("Cancel")');
 	   var EditLength = $('div.fd-toolbar-primary-commands button:contains("Edit")').length;
 
 	   if(cloButton.length > 0 && isDefaultClose == true)
 	   {
-		   preloader_btn(); 
+		   preloader_btn();
 	   }
-	   
+
 	   else if(EditLength > 0 && isDefaultClose == true)
 	   {
 		  $('div.fd-toolbar-primary-commands button:contains("Edit")').click(function () {
 		     preloader_btn();
-		  });   
+		  });
 	   }
 	   else preloader_btn(isCC);
 	}
@@ -169,12 +169,12 @@ function Remove_Pre(ignoreImage){
 				console.log('Both curtain and loader removed');
 				clearInterval(preTimeOut);
 			}
-	}    
+	}
 }
 
 function showPreloader() {
 	preloaderItem.style.display = 'block';
-}  
+}
 
 function hidePreloader() {
 	preloaderItem.style.display = 'none';

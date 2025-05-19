@@ -6,9 +6,9 @@ _isLLChecker = false, _isReader = false, _isConfidential = false, _isBuilding = 
 
 var projectNo = '', projectTitle = '', CurrentUser;
 
-var ProjectInfo = 'Project Info', Category = 'Category', SubCategory = 'SubCategory', MatrixFields = 'Matrix Fields', MTDs = 'MTDs', Firms = 'Firms', Questions = 'Questions', 
-    ContractReview = 'Contract Review', OtherPartiesFirms = 'Other Parties Firms', Sustainability = 'Sustainability', Level = 'Levels', Roles = 'Roles', 
-    ProjectRoles = 'Project Roles', GISLocation = 'GIS Location', RevDepartments = 'Review Departments', CompReports = 'Completion Reports', 
+var ProjectInfo = 'Project Info', Category = 'Category', SubCategory = 'SubCategory', MatrixFields = 'Matrix Fields', MTDs = 'MTDs', Firms = 'Firms', Questions = 'Questions',
+    ContractReview = 'Contract Review', OtherPartiesFirms = 'Other Parties Firms', Sustainability = 'Sustainability', Level = 'Levels', Roles = 'Roles',
+    ProjectRoles = 'Project Roles', GISLocation = 'GIS Location', RevDepartments = 'Review Departments', CompReports = 'Completion Reports',
     TradeContractReview = 'Trade Contract Review', LLChecker = 'LLChecker';
 
 var formFields = {};
@@ -32,10 +32,10 @@ var appBarItems, isgetTradeRoleFinalized = false;
 const blueColor = '#6ca9d5', greenColor = '#5FC9B3', redColor = '#F28B82'; // Buttons Colors
 
 var onRender = async function (relativeLayoutPath, moduleName, formType) {
-  _layout = relativeLayoutPath;  
+  _layout = relativeLayoutPath;
 
     try{
-      
+
       if(moduleName === 'PINT'){
         _isMain = true;
         addMessageEventListener();
@@ -46,7 +46,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType) {
         showPreloader();
         await extractValues(moduleName, formType);
       })
-      
+
       if(_isMain)
        await onPINTRender();
       else if(_module === 'MTD')
@@ -63,11 +63,11 @@ var onRender = async function (relativeLayoutPath, moduleName, formType) {
         await onRevDeptTardeFormsRender()
       else if(_module === 'CR')
         await onCRTardeFormsRender()
-      
+
       if(!_isDisplay){
         if(_module === 'CR'){
           const intervalId = setInterval(function() {
-          
+
             if (isgetTradeRoleFinalized) {
               setCustomButtons();
               clearInterval(intervalId);
@@ -85,7 +85,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType) {
       fd.toolbar.buttons[0].style = "display: none;";
       console.log(e);
     }
-    finally {      
+    finally {
       hidePreloader();
     }
 
@@ -110,7 +110,7 @@ var loadScripts = async function(withSign){
 
       _layout + '/plumsail/ProjCenter/utils.js',
       _layout + '/plumsail/ProjCenter/Dictionaries.js',
-      _layout + '/plumsail/ProjCenter/PIR/metrics.js',   
+      _layout + '/plumsail/ProjCenter/PIR/metrics.js',
       _layout + '/plumsail/ProjCenter/PIR/backgroundInfo.js',
       _layout + '/plumsail/ProjCenter/PIR/designProcess.js',
       _layout + '/plumsail/ProjCenter/PIR/Sustainability.js',
@@ -122,7 +122,7 @@ var loadScripts = async function(withSign){
       _layout + '/plumsail/ProjCenter/DPIR/revDepartments.js',
       _layout + '/plumsail/ProjCenter/DPIR/tradeForms.js',
       _layout + '/plumsail/ProjCenter/DPIR/tradeContractReview.js',
-      
+
       _layout + '/plumsail/ProjCenter/CR/cr.js',
       _layout + '/plumsail/ProjCenter/CR/crTradeForms.js'
     ];
@@ -171,7 +171,7 @@ var extractValues = async function(moduleName, formType){
   if(_isMain || _module === 'DPIR' || _module === 'CR'){
     if(_isMain)
       _isConfidential = fd.field('IsConfidential').value;
-     
+
       await getCurrentUserRole()
       if (!_isUserAllowed){
         //if(!_isSiteAdmin){
@@ -180,7 +180,7 @@ var extractValues = async function(moduleName, formType){
         //}
       }
   }
- 
+
 
     if(_isMain){
       let gisUrl = `${_webUrl}/SitePages/PlumsailForms/GISLocation/Item/NewForm.aspx`
@@ -210,7 +210,7 @@ var extractValues = async function(moduleName, formType){
           svgPath: `
             <!-- Top Triangle -->
             <path d="M16.5,2.5L4,8.25L15,14L19.5,10.75L16.5,2.5Z" fill="#002050"/>
-            
+
             <!-- Bottom Triangle -->
             <path d="M4,8.25L4,21.5L15,14L4,8.25Z" fill="#002050"/>
 
@@ -238,7 +238,7 @@ var extractValues = async function(moduleName, formType){
       localStorage.setItem('FullProjTitle', fullProjTitle);
 
       fullProjTitle += ' - Project Management Initiation Form'
-      setPageStyle(fullProjTitle);        
+      setPageStyle(fullProjTitle);
     }
     else projectNo = localStorage.getItem('projectNo');
 
@@ -256,7 +256,7 @@ var extractValues = async function(moduleName, formType){
     $('div.multiselect-dropdown').remove();
 
     //_spComponentLoader.loadScript(_layout + '/plumsail/ProjCenter/utils.js').then(async ()=> {
-   
+
    //});
    CurrentUser = await GetCurrentUser()
 
@@ -274,7 +274,7 @@ var setCustomButtons = async function () {
     fd.toolbar.buttons[1].style = "display: none;";
     //fd.toolbar.buttons[2].style = "display: none;";
 
-   
+
     if(!_hideSubmit){
 
       if(_module !== 'GIS' && ((_module === 'DPIR' || _module === 'CR') && _isGLMain) )
@@ -302,7 +302,7 @@ const setButtonActions = async function(icon, text, bgColor){
           text: text,
           style: `background-color: ${bgColor}; color: white;`,
           click: async function() {
-            
+
             if(text == "Close" || text == "Cancel"){
               const lowerText = text.toLowerCase();
               if (confirm(`Are you sure you want to ${lowerText}?`)){
@@ -337,7 +337,7 @@ const setButtonActions = async function(icon, text, bgColor){
                }
             }
             else if(text == submitText){
-            
+
                if(_module === 'MTD'){
                   if(_isNew)
                     await setStatus('Pending');
@@ -357,26 +357,26 @@ const setButtonActions = async function(icon, text, bgColor){
                   let dept = fd.field("Title").value
                   await isAllTradesSubmitted(dept)
 
-                  setTimeout(() => { 
+                  setTimeout(() => {
                     fd.save()
                     .then(async ()=>{
                       setTimeout(() => {
                         window.close();
-                      }, 100);          
+                      }, 100);
                     })
                  }, 500);
                }
 
                 else if(_module === 'DPIR'){
-                  
+
                   if(fd.field('Attachments').value.length == 0){
                     setPSErrorMesg("Kindly upload a tentative list of drawings under Docs & Drawings List")
                     return;
                   }
-                  
-  
+
+
                   let {mesg,items} = await getTabFields('DPIRTabs');
-                
+
                   if(mesg === ''){
                     if (confirm('Are you sure you want to Submit?')){
                       await insertTradeQuestions(items, TradeContractReview, ['Question', 'Answer', 'Comments','NeedPMAction', 'Department'])
@@ -397,7 +397,7 @@ const setButtonActions = async function(icon, text, bgColor){
 
                     if(mesg === ''){
                       if (confirm('Are you sure you want to Submit?')){
-                        
+
                         let itemMetaInfo = await getFieldsData(MatrixFields);
                         let query = `Title eq '${projectNo}'`;
                         let {dpirItems} = await isDPIR_RowValid()
@@ -452,10 +452,10 @@ function addMessageEventListener(){
       return;
 
     if(data._module === 'CR'){
-    
+
       let PCRtradeFormID = data.PCRtradeFormID;
       let PCRtradeFormStatus = data.PCRtradeFormStatus;
-      
+
       if(PCRtradeFormID !== null && PCRtradeFormStatus !== null){
         let textColor = '';
 
@@ -468,7 +468,7 @@ function addMessageEventListener(){
 
             let elementStatusTd = $(`a[itemid='${PCRtradeFormID}']`);
             elementStatusTd.parent().next().find('label').text(PCRtradeFormStatus).attr('style', textColor);
-      
+
       }
     }
   });
@@ -479,10 +479,10 @@ function addMessageEventListener(){
 var onPINTRender = async function (){
 
   const startTime = performance.now();
- 
+
    //let firmsdt = await getFirms()
    if(_isEdit)
-     localStorage.setItem('MasterId', _itemId);   
+     localStorage.setItem('MasterId', _itemId);
 
     fd.control('firmdt').filter = 'IsActive eq 1';
     fd.control('otherfirmdt').filter = 'IsActive eq 1';
@@ -491,20 +491,20 @@ var onPINTRender = async function (){
       GetDictionaries(fd.field('Title').value), // Dictionaries.js
 
      await Promise.all([
-      
+
     // PIR (MAIN TAB)
       onMetricsRender(),  // metrics.js
       onBackGroundInfoRender(), // backgroundInfo.js
 
       onDesignProcessRender(), // designProcess.js
       onSusRender('susdt', 'Goal', 'Title', 'Level', Level), // Sustainability.js
-      
+
        setActiveFirms('firmdt'), //current PRC.js
        setActiveFirms('otherfirmdt'), //current PRC.js
 
        onContReviewRender(), // contractReview.js
-      
-       // DPIR (2nd TAB) 
+
+       // DPIR (2nd TAB)
        onRevDepRender(), //  revDepartments.js
 
        // PhCR, PCR
@@ -518,10 +518,10 @@ var onPINTRender = async function (){
       const endTime = performance.now();
       const elapsedTime = endTime - startTime;
       console.log(`overall: ${elapsedTime} milliseconds`);
-  
+
       //getConsoleLogRoles();
      });
-     
+
 }
 
 let setActiveFirms = async function(dtName){
@@ -533,11 +533,11 @@ let setActiveFirms = async function(dtName){
     editData.field('Firm').useCustomFilterOnly = true;
     editData.field('Firm').orderBy = { field: 'Title', desc: false };
   })
-  
+
   const endTime = performance.now();
   const elapsedTime = endTime - startTime;
   console.log(`setActiveFirms: ${elapsedTime} milliseconds`);
- 
+
 }
 
 var setMainRules = async function(){
@@ -567,11 +567,11 @@ function handleCascadedTabsView(){
   const getTabs = containers.querySelectorAll('.tabset .tabs-top');
   getTabs.forEach((tab, index) => {
     if(index == 0){
-  
-        const tabsUL = tab.querySelectorAll('.nav-item');        
-        tabsUL.forEach(navItem => {          
+
+        const tabsUL = tab.querySelectorAll('.nav-item');
+        tabsUL.forEach(navItem => {
           navItem.style.width = '200px';
-          navItem.style.textAlign = 'center'; // Center the text within the tab item            
+          navItem.style.textAlign = 'center'; // Center the text within the tab item
         //   navItem.style.margin = '0 2px'; // Margin between tabs
         //   navItem.style.border = 'none'; // Remove default border
         //   navItem.style.borderBottom = '2px solid transparent'; // Default bottom border
@@ -588,8 +588,8 @@ function handleCascadedTabsView(){
         //       navItem.style.fontWeight = 'bold'; // Bold text for active tab
         //   }
         });
-    }   
-  });  
+    }
+  });
 }
 
 async function setPINT_Permissions(){
@@ -601,7 +601,7 @@ async function setPINT_Permissions(){
 
     if(!mainPlayers && !_isLLChecker)
        fd.container('TabsMain').tabs[2].disabled = true; // Disable Completion Report
-    
+
    if(!_isPD && !_isPM && !_isQM){
       tabs.push({
         masterTab: secondChildTab,
@@ -627,7 +627,7 @@ async function handleProjectInfoFields(){
     IsConfidential: fd.field('IsConfidential'),
     Description: fd.field('Description'),
     Attachments: fd.field('Attachments'),
-    
+
     //Classification & Metrics
     Category: fd.field('Category'),
     SubCategory: fd.field('SubCategory'),
@@ -673,7 +673,7 @@ async function handleProjectInfoFields(){
       }
       else if(key === 'MTD' || key === 'Client' || key === 'BIM' || key === 'SUS' || key === 'FIRM' || key === 'OtherFirm')
         field.readonly = true;
-      else if(field === "Attachments"){	
+      else if(field === "Attachments"){
         $('div.k-upload-button').remove();
         $('button.k-upload-action').remove();
         $('.k-dropzone').remove();

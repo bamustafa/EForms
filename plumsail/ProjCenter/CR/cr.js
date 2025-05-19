@@ -22,7 +22,6 @@ var onCompletionReportRender = async function(){
     
     await getItems()
     .then(async (items)=>{
-      debugger;
         if(items.length > 0){
             handleType(items);
         }else{
@@ -121,16 +120,8 @@ let handleType = async function(items){
           }, 100);
     }
 
-    //formFields.Phases
-    var latestPhaseVisit = '';
-    fd.field("Phases").$on("change", async function (phase){
-
-       if(phase){
-            if(latestPhaseVisit === phase)
-              return;
-            else latestPhaseVisit = phase
-       }
-
+    formFields.Phases.$on("change", async function (phase){
+       
         $('#pmtrade').remove()
      
         if(phase !== null && phase !== ''){
@@ -146,26 +137,6 @@ let handleType = async function(items){
                 
               return item.Phases === phase && item.Title !== 'PM'
             });
-
-
-            if(filterItems.length === 0){
-              await getItems()
-                    .then(async (items)=>{
-                        if(items.length > 0){
-                          filterItems = items.filter((item)=>{ 
-                            if(item.Phases === phase && item.Title === 'PM'){
-                              let linkUrl = `${_webUrl}/SitePages/PlumsailForms/${listnameFromUrl}/Item/EditForm.aspx?item=${item.Id}`;
-                              pmLink = `<a id="pmtrade" itemid="${item.Id}" role="button" href= ${linkUrl} onclick="openInCustomWindow(event)">Proceed to finalize PM task</a>`
-                            }
-                            
-                          if(item.Phases === phase && item.Title !== 'PM' && item.Status !== 'Approve')
-                            isTradesApproved = false
-                            
-                          return item.Phases === phase && item.Title !== 'PM'
-                        });
-                      }
-                    })
-            }
 
             if(!isTradesApproved)
               pmLink = ''; // remove pmlink if not all trades approved for phase
@@ -235,7 +206,7 @@ let setPhaseStatus = async function(items){
 
         let phase = phases[i];
         let status = 'In Progress';
-        let textColor = 'color:#936106cf';
+        let textColor = 'color:#8677b1';
 
         let allItemsTotal = items.filter((item)=>{
               return item.Phases === phase && item.Status !== 'Approve'
@@ -243,7 +214,7 @@ let setPhaseStatus = async function(items){
 
         if(allItemsTotal.length === 0){
             status = 'Approved'
-            textColor = 'color:green';
+            textColor = 'color:#49c4b1';
         }
         else if(allItemsTotal.length === 1){
           let item = allItemsTotal[0];
@@ -294,7 +265,7 @@ let renderCRTable = async function(items, pmLink){
         let tradeItemUrl = `${_webUrl}/SitePages/PlumsailForms/${listnameFromUrl}/Item/EditForm.aspx?item=${Id}`;
 
         //let customText = GLMainId.length === 0 ? 'GL Main is not assigned' : '';
-        let bgcolor = Status === 'Approve' ? `background: ${approvedBgColor}`: ''
+        let bgcolor = Status === 'Approve' ? `color:#49c4b1 `: ''
         tbl += `<tr style="${bgcolor}">`
         tbl += await renderCRItemControls(i+1, Id, Title, Status, RejRemarks, Phases, tradeItemUrl);
         tbl += '</tr>'
@@ -325,11 +296,11 @@ let renderCRItemControls = async function(index, Id, Trade, Status, RejRemarks, 
     let textColor = '';
     
     if(Status === 'Approve')
-      textColor = 'color:green;font-weight:bold;'
+      textColor = 'color:#49c4b1;font-weight:bold;'
     else if(Status === 'Reject')
-      textColor = 'color:red;font-weight:bold;'
-     else if(Status === 'Submitted')
-      textColor = 'color:#936106cf;font-weight:bold;'
+      textColor = 'color:red ;font-weight:bold;'
+     else if(Status === 'In Progress')
+      textColor = 'color:#8677b1;font-weight:bold;'
 
     let isDiabled = '', isReadOnly = '';
     if(Status !== 'Submitted' || (!_isPM && !_isPD)){

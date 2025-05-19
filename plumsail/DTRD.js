@@ -3,10 +3,13 @@ var _hot, _container, _data = [], _searchResultCount = 0, _Fields = [], _fieldsI
 
 var _isNew = false, _isEdit = false, _isDisplay = false, _isMain = true, _isLead = false, _isPart = false, isChamp = false;
 var delayTime = 100, retryTime = 10, _timeout;
+let _isDTRDL = false;
 
 var _rootSite = '';
 var _editableColumns = ['Considered', 'WhyNotConsidered'];
-var _editableColumnsWidth = ['100px', '350px'];
+let isConsideredBool = true;
+
+var _editableColumnsWidth = ['150px', '350px'];
 var _colIndex = 0;
 
 var defaultClassName = 'TransparentRow htMiddle';
@@ -25,54 +28,83 @@ let isSentToChampion = false, isApproved = true, dimSubmit = false;
 let DTRDC = 'DRDC', DTRDL = 'DRDL', _commonMembers;
 
 var onRender = async function (relativeLayoutPath, moduleName, formType){
-  try{ 
-    const startTime = performance.now();
-    $(fd.field('RejTrades').$parent.$el).hide();
+  try{
+        const startTime = performance.now();
+        $(fd.field('RejTrades').$parent.$el).hide();
 
-    _layout = relativeLayoutPath;
+        _layout = relativeLayoutPath;
 
-    _spComponentLoader.loadScript( _layout + '/controls/preloader/jquery.dim-background.min.js').then(()=>{
-      _spComponentLoader.loadScript( _layout + '/plumsail/js/preloader.js').then(()=>{
-        preloader();
-      })
-    })
-    .then(async ()=>{
+        _spComponentLoader.loadScript( _layout + '/controls/preloader/jquery.dim-background.min.js').then(()=>{
+        _spComponentLoader.loadScript( _layout + '/plumsail/js/preloader.js').then(()=>{
+            //showPreloader();
+            showPreloader();
+        })
+        })
+        .then(async ()=>{
 
-      debugger;
+        //debugger;
+        await extractValues(relativeLayoutPath, moduleName, formType);
+            
+            debugger;
 
-      await extractValues(relativeLayoutPath, moduleName, formType);
-    
-      let members = await getSharePointGroupMembers(DTRDL);
-      if(members.length === 0){
-        alert('DRD is not applicable');
-        fd.close();
-      }
-      await getListFields();
-  
-      const startTime1 = performance.now();
-      _data = await getData();
-      const endTime1 = performance.now();
-      const elapsedTime1 = endTime1 - startTime1;
-      console.log(`getData: ${elapsedTime1} milliseconds`);
-  
-      _spComponentLoader.loadScript(_htLibraryUrl).then(renderHandsonTable)
-      .then(async ()=>{
-        await setStatuses();
-      })
-      .then(async ()=>{
-        await bindTrades();
-        setRowsReadOnly(); //WRITE ERRORS HERE
-      })
-      .then(async ()=>{
-        await setCustomButtons();
-        setButtonCustomToolTip('Submit', submitMesg);
-        setButtonCustomToolTip('Cancel', cancelMesg);
-      });
-  
-      preloader("remove");
-      const endTime = performance.now();
-      const elapsedTime = endTime - startTime;
-      console.log(`Execution onRender: ${elapsedTime} milliseconds`);
+        let members = await getSharePointGroupMembers(DTRDL);
+        if(members.length === 0){
+            alert('DRD is not applicable');
+            fd.close();
+        }
+        await getListFields();
+
+        const startTime1 = performance.now();
+        _data = await getData();
+        const endTime1 = performance.now();
+        const elapsedTime1 = endTime1 - startTime1;
+        console.log(`getData: ${elapsedTime1} milliseconds`);
+
+        _spComponentLoader.loadScript(_htLibraryUrl).then(renderHandsonTable)
+        .then(async ()=>{
+            await setStatuses();
+        })
+        .then(async ()=>{
+            await bindTrades();
+            setRowsReadOnly(); //WRITE ERRORS HERE
+        })
+        .then(async ()=>{
+            await setCustomButtons();
+            setButtonCustomToolTip('Submit', submitMesg);
+            setButtonCustomToolTip('Cancel', cancelMesg);
+
+            // 👇 Count null values in "Considered" column and toggle button state         
+            const ConsideredIndex = _hot.propToCol('Considered');
+            const ConsideredType = _hot.getCellMeta(0, ConsideredIndex)?.type;
+             
+            if (ConsideredType === 'dropdown') {
+                
+                let rowObjects = [];
+                for (let i = 0; i < _hot.countRows(); i++) {
+                    rowObjects.push(_hot.getSourceDataAtRow(i));
+                }
+
+                let nullConsideredCount = rowObjects.filter(row => row.Considered == null).length;             
+
+                if (nullConsideredCount > 0) {
+                    mesg = 'nullConsideredCount';
+                    setErrorMessage(mesg, 'Submit');
+                }
+            } 
+
+            if (_isDTRDL) {
+                mesg = 'nullConsideredCount';
+                setErrorMessage(mesg, 'Submit');
+                setErrorMessage(mesg, 'Save');
+            }
+
+            //hidePreloader();
+            hidePreloader();
+
+            const endTime = performance.now();
+            const elapsedTime = endTime - startTime;
+            console.log(`Execution onRender: ${elapsedTime} milliseconds`);
+        });      
     })
   }
   catch (e) {
@@ -98,10 +130,10 @@ var loadScripts = async function(){
   ];
 
   const cacheBusting = `?v=${Date.now()}`;
-    libraryUrls.map(url => { 
-        $('head').append(`<script src="${url}${cacheBusting}" async></script>`); 
+    libraryUrls.map(url => {
+        $('head').append(`<script src="${url}${cacheBusting}" async></script>`);
     });
-      
+
   const stylesheetUrls = [
        _layout + '/controls/tooltipster/tooltipster.css',
        _layout + '/controls/handsonTable/libs/handsontable.full.min.css',
@@ -120,20 +152,20 @@ var loadScripts = async function(){
 }
 
 var getSoapResponse = async function(method, serviceUrl, isAsync, soapContent, getResultTag){
-	var xhr = new XMLHttpRequest(); 
-    xhr.open(method, serviceUrl, isAsync); 
-    xhr.onreadystatechange = async function() 
+	var xhr = new XMLHttpRequest();
+    xhr.open(method, serviceUrl, isAsync);
+    xhr.onreadystatechange = async function()
     {
-        if (xhr.readyState == 4) 
-        {   
-            try 
+        if (xhr.readyState == 4)
+        {
+            try
             {
                 if (xhr.status == 200 && getResultTag !== '')
-                {                
+                {
                     const obj = this.responseText;
                     var xmlDoc = $.parseXML(this.responseText),
                     xml = $(xmlDoc);
-					
+
                     var value= xml.find(getResultTag);
                     if(value.length > 0){
                         text = value.text();
@@ -141,11 +173,11 @@ var getSoapResponse = async function(method, serviceUrl, isAsync, soapContent, g
                         _rootSite = value[0].children[1].textContent;
                     }
                 }
-                else console.log(`status ${xhr.status} - ${xhr.statusText} `);          
+                else console.log(`status ${xhr.status} - ${xhr.statusText} `);
             }
-            catch(err) 
+            catch(err)
             {
-                console.log(err + "\n" + text);             
+                console.log(err + "\n" + text);
             }
         }
     }
@@ -192,7 +224,7 @@ var extractValues = async function(relativeLayoutPath, moduleName, formType){
 }
 
 var setCustomButtons = async function () {
-  
+
 
     if(missingTrades.length === 0 && PendingChampTrades.length === 0){
       await setButtonActions("ChromeClose", "Cancel");
@@ -208,7 +240,7 @@ var setCustomButtons = async function () {
           if(statuses[0] !== 'Completed')
             await setButtonActions("Accept", "Submit");
         }
-        
+
         await setButtonActions("ChromeClose", "Cancel");
         return;
       }
@@ -235,21 +267,21 @@ const setButtonActions = async function(icon, text){
           class: 'btn-outline-primary',
           text: text,
           click: async function(){
-           
+
            if(text == "Close" || text == "Cancel"){
-               preloader();
+               showPreloader();
                fd.close();
            }
            else if(text == "Save"){
-            preloader();
+            showPreloader();
             setItemsforInsertion('Pending')
             .then( () => {
               fd.close();
             });
-            
+
            }
-           else if(text == "Submit"){        
-             preloader();
+           else if(text == "Submit"){
+             showPreloader();
              setItemsforInsertion('Sent to Champion')
              .then(async () => {
                 query = `<Where><Eq><FieldRef Name='Status' /><Value Type='Text'>Sent to Champion</Value></Eq></Where>`;
@@ -268,7 +300,7 @@ const setButtonActions = async function(icon, text){
            }
 
            else if(text == "Validated"){
-            preloader();
+            showPreloader();
             setItemsforInsertion('Completed')
               .then(async () => {
                 missingTrades = missingTrades.filter(item => item !== _currentTrade);
@@ -289,8 +321,8 @@ const setButtonActions = async function(icon, text){
             //    alert('select trades for rejection and proceed');
             //    return;
             // }
-          
-            preloader();
+
+            showPreloader();
             setItemsforInsertion('Rejected')
               .then(async () => {
                 //query = setQuery(rejTrades);
@@ -307,7 +339,7 @@ const setButtonActions = async function(icon, text){
 }
 
 function delay(time) {
-    return new Promise(function(resolve) { 
+    return new Promise(function(resolve) {
         setTimeout(resolve, time)
     });
 }
@@ -352,19 +384,27 @@ function setErrorMessage(errMesg, textButton){
   );
   }
 
-  function handleErrors(element, errorMessage, buttonText) {
-    if (errorMessage !== '') {
-        element.css({
-            'height': 'auto',
-            'opacity': '1'
-        });
-        errorMessage = '<br/>' + errorMessage;
-        var mesgElement = $('#customErrorId');
-         if(mesgElement.length === 0)
-          $('p.alert-heading').append(`<p id='customErrorId'>${errorMessage}</p>`);
-         else mesgElement.html(errorMessage);
+function handleErrors(element, errorMessage, buttonText) {    
+      
+    if (errorMessage !== '') {       
+        
+        if (errorMessage !== 'nullConsideredCount') {
+            element.css({
+                'height': 'auto',
+                'opacity': '1'
+            });
+
+            errorMessage = '<br/>' + errorMessage;
+            var mesgElement = $('#customErrorId');
+
+            if (mesgElement.length === 0)
+                $('p.alert-heading').append(`<p id='customErrorId'>${errorMessage}</p>`);
+            else mesgElement.html(errorMessage);            
+        }       
+
         $('span').filter(function () { return $(this).text() == buttonText; }).parent().css('color', '#737373').attr("disabled", "disabled");
-    } else {
+    }      
+    else {
         element.css({
             'height': '0',
             'opacity': '0'
@@ -431,10 +471,10 @@ function setQuery_notUsed(rejTrades){
 //#endregion
 
 //#region GET FIELD AND BIND TO LISTBOX
-var getListFields = async function(){  
+var getListFields = async function(){
     _colIndex = 0;
     await setFieldsSchema(true, false);
-    await setFieldsSchema(false, true); 
+    await setFieldsSchema(false, true);
 }
 
 var setFieldsSchema = async function(isEditableColumns, bindFieldsToControl){
@@ -525,7 +565,13 @@ var setFieldsSchema = async function(isEditableColumns, bindFieldsToControl){
 
            if(isEditableColumns){
             if(_editableColumns.includes(internalName))
-              fetchFields(isEditableColumns, displayName, internalName, fieldType);
+                   fetchFields(isEditableColumns, displayName, internalName, fieldType);
+
+               if (internalName === 'Considered'){
+                   if(fieldType === 'SP.FieldChoice')
+                     isConsideredBool = false;
+                   console.log(isConsideredBool);
+               }
            }
 
            else {
@@ -540,13 +586,13 @@ var setFieldsSchema = async function(isEditableColumns, bindFieldsToControl){
          });
      })
     .then(() =>{
-      if(bindFieldsToControl){ 
+      if(bindFieldsToControl){
         _schemaInstance = JSON.parse(JSON.stringify(_fieldSchema));
         bindHTMLControls();
       }
     })
     .then(() =>{
-      if(bindFieldsToControl) 
+      if(bindFieldsToControl)
         ensureFunction('setListBox');
     })
     .catch(error => {
@@ -606,10 +652,6 @@ var bindHTMLControls = async function(){
 
 function setListBox(){
 
-    //$("#jqxSplitter").jqxSplitter({ theme: 'summer', panels: [{ size: '100px' }] });
-    //debugger;
-    //$('#jqxSplitter').jqxSplitter({ width: '100%', panels: [{ size: '20%' }] });
-
     const listBox = $("#listBoxA");
     listBox.jqxListBox({ checkboxes: true, filterable: true, source: _fieldsDisplayName, width: 300, height: 680});
 
@@ -627,7 +669,7 @@ function setListBox(){
         var args = event.args;
         var itemTitle = args.label;
         //var itemIndex = args.item.index;
-        if (args.checked) 
+        if (args.checked)
           updateSchema(itemTitle, 'add');
         else updateSchema(itemTitle, 'remove');
     });
@@ -636,111 +678,113 @@ function setListBox(){
 
 //#region GET DATA AND BIND TO HANDSONTABLE WITH VALIDATION
 var getData = async function(){
-  var _itemArray = [];
-  let ignoreChecking = false;
-  
-  // let groupName = await getAllowedTeam();
-  // console.log(`groupName is ${groupName}`);
-  
-   await getUserTrade();//'ME';
-   console.log(`groupName is ${_currentTrade}`);
+    var _itemArray = [];
+    let ignoreChecking = false;
 
-  if(_currentTrade === undefined){
-    let isExist = await IsUserInGroup(DTRDL);
-    if(!isExist){
-      alert('you are not allowed to view items');
-      fd.close();
+    // let groupName = await getAllowedTeam();
+    // console.log(`groupName is ${groupName}`);
+   
+    await getUserTrade();//'ME';
+    console.log(`groupName is ${_currentTrade}`);
+
+    if(_currentTrade === undefined){
+        let isExist = await IsUserInGroup(DTRDL);
+        if(!isExist){
+        alert('you are not allowed to view items');
+        fd.close();
+        }
+        _isDTRDL = true;
+        console.log(`I am DRDL`);    
     }
-  }
-  else{
+    else{
+        let tradeMembers = await getSharePointGroupMembers(_currentTrade);
+        let dtrdcMembers = await getSharePointGroupMembers(DTRDC);
+        _commonMembers = compareArrays(dtrdcMembers, tradeMembers);
+
+        if(_commonMembers.length === 0){
+        alert('please select DRD champion');
+        fd.close();
+        }
+    }
+
     debugger;
-    let tradeMembers = await getSharePointGroupMembers(_currentTrade);
-    let dtrdcMembers = await getSharePointGroupMembers(DTRDC);
-    _commonMembers = compareArrays(dtrdcMembers, tradeMembers);
-
-    if(_commonMembers.length === 0){
-      alert('please select DRD champion');
-      fd.close();
+    let currentStatus;
+        var _query = `LeadDiscipline eq '${_currentTrade}'`;
+        if (_isDTRDL)
+            _query = `Status eq 'Completed'`;
+    let statusitems =  await _web.lists.getByTitle(_list).items.filter(_query).select('Status,LeadDiscipline').getAll();
+    if(statusitems.length > 0){
+        for(const item of statusitems){
+        currentStatus = item.Status;
+        if(currentStatus !== 'Completed'){
+            isApproved = false;
+            break;
+        }
+        }
     }
-  }
-
-
- 
-   let currentStatus;
-   var _query = `LeadDiscipline eq '${_currentTrade}'`;
-   let statusitems =  await _web.lists.getByTitle(_list).items.filter(_query).select('Status,LeadDiscipline').getAll();
-   if(statusitems.length > 0){
-    for(const item of statusitems){
-      currentStatus = item.Status;
-      if(currentStatus !== 'Completed'){
-        isApproved = false;
-        break;
-      }
-    }
-  }
-  else  isApproved = false;
+    else  isApproved = false;
 
    //`substringof('${_currentTrade}', LeadDiscipline)`;
-  if(isApproved){
-    _query = `LeadDiscipline ne 'blabla'`
-  }
-  else if(isChamp && currentStatus !== 'Rejected')
-   _query = `LeadDiscipline eq '${_currentTrade}' and Status eq 'Sent to Champion'`;
+    if(isApproved){
+        _query = `LeadDiscipline ne 'blabla'`
+    }
+    else if(isChamp && currentStatus !== 'Rejected')
+    _query = `LeadDiscipline eq '${_currentTrade}' and Status eq 'Sent to Champion'`;
 
 
-   let isItemsFound  = true;
-  var rootWeb = _web;
-  let items =  await rootWeb.lists.getByTitle(_list).items.filter(_query).getAll();
-  if(items.length === 0){
-      rootWeb = new Web(_rootSite);
-      _fieldsInternalName = _fieldsInternalName.filter(col => col !== "Status");
+    let isItemsFound  = true;
+    var rootWeb = _web;
+    let items =  await rootWeb.lists.getByTitle(_list).items.filter(_query).getAll();
+    if(items.length === 0){
+        rootWeb = new Web(_rootSite);
+        _fieldsInternalName = _fieldsInternalName.filter(col => col !== "Status");
 
-      if(isChamp){
-        ignoreChecking = true;
-        isItemsFound = false;
-      }
-  }
-  
-  if(!ignoreChecking){
-    var _cols = _fieldsInternalName.join(',');
-    await rootWeb.lists.getByTitle(_list).items.filter(_query)
-    .select('Id,' + _cols)
-    .getAll().then(async function(items){
-      _itemCount = items.length;
-      if (_itemCount > 0) {
-        for(var i = 0; i < _itemCount; i++){
-          var item = items[i];
-          var rowData  = {};
-
-          for(var j = 0; j < _fieldsInternalName.length; j++){
-              var _colname = _fieldsInternalName[j];
-              var _value = item[_colname];
-              rowData[_colname] = _value;
-
-              // if(_colname === 'LeadDiscipline'){
-              //   let tempStatus = item['Status'];
-              //   if(tempStatus !== 'Rejected' && !submittedTrades.includes(_value))
-              //     submittedTrades.push(_value);
-              // }
-              //else 
-              if(_colname === 'Status'){
-                if(!statuses.includes(_value))
-                  statuses.push(_value);
-              }
-          }
-          _itemArray.push(rowData);
+        if(isChamp || _isDTRDL){
+            ignoreChecking = true;
+            isItemsFound = false;
         }
-      }
-    });
-  }
+    }
 
- if(!isApproved && !isItemsFound){
-  if(isChamp){
-    alert('you login as Champ, not items yet found to send to Lead');
-    fd.close();
-  }
- }
- return _itemArray;
+    if(!ignoreChecking){
+        var _cols = _fieldsInternalName.join(',');
+        await rootWeb.lists.getByTitle(_list).items.filter(_query)
+        .select('Id,' + _cols)
+        .getAll().then(async function(items){
+        _itemCount = items.length;
+        if (_itemCount > 0) {
+            for(var i = 0; i < _itemCount; i++){
+            var item = items[i];
+            var rowData  = {};
+
+            for(var j = 0; j < _fieldsInternalName.length; j++){
+                var _colname = _fieldsInternalName[j];
+                var _value = item[_colname];
+                rowData[_colname] = _value;
+
+                // if(_colname === 'LeadDiscipline'){
+                //   let tempStatus = item['Status'];
+                //   if(tempStatus !== 'Rejected' && !submittedTrades.includes(_value))
+                //     submittedTrades.push(_value);
+                // }
+                //else
+                if(_colname === 'Status'){
+                    if(!statuses.includes(_value))
+                    statuses.push(_value);
+                }
+            }
+            _itemArray.push(rowData);
+            }
+        }
+        });
+    }
+
+    if(!isApproved && !isItemsFound){
+    if(isChamp){
+        alert('you login as Champ, not items yet found to send to Lead');
+        fd.close();
+    }
+    }
+    return _itemArray;
 }
 
 function compareArrays(arr1, arr2) {
@@ -748,7 +792,7 @@ function compareArrays(arr1, arr2) {
 
   arr1.forEach(obj1 => {
     const matchingObj = arr2.find(obj2 => obj1.Title === obj2.Title);
-    
+
     if (matchingObj !== undefined) {
       differences.push(obj1);
     }
@@ -772,7 +816,7 @@ var getAllowedTeam_notUsed = async function(){
     }
     return groupName
 }
-  
+
 const renderHandsonTable = (Handsontable) => {
 
      _container = document.getElementById('dt');
@@ -796,26 +840,61 @@ const renderHandsonTable = (Handsontable) => {
           licenseKey: htLicenseKey
      });
 
-     let index = _hot.propToCol('Status'); //set data
+    let index = _hot.propToCol('Status'); //set data
+
+    if (isConsideredBool) {
         _hot.updateSettings({
-          hiddenColumns: {
-            columns: [index],
-            indicators: false // Show the hidden columns indicators
-          }
+            hiddenColumns: {
+                columns: [index],
+                indicators: false // Show the hidden columns indicators
+            }
         });
+    }
+    else {
+        _hot.updateSettings({
+            hiddenColumns: {
+                columns: [index],
+                indicators: false
+            },
+            columns: _hot.getSettings().columns.map(col => {
+                if (col.data === 'Considered') {
+                    return {
+                        ...col,
+                        type: 'dropdown',
+                        source: ['Considered', 'Not Considered', 'Considered with minor modification'],
+                        strict: true,
+                        allowInvalid: false
+                    };
+                }
+                return col;
+            }),
+            cells: function (row, col, prop) {
+                const cellProperties = {};
+
+                if (prop === 'Considered') {
+                    cellProperties.renderer = function (instance, td, row, col, prop, value, cellProperties) {
+                        Handsontable.renderers.TextRenderer.apply(this, arguments);
+                        td.style.background = '#e0f7fa'; // Light blue background for example
+                        td.style.cursor = 'pointer';
+                    };
+                }
+
+                return cellProperties;
+            }
+        });
+    }
 
      setSearchField();
 
   if(!_isDisplay){
     setErrorMessage(getErrors(), 'Submit');
-     hooks();
+    hooks();
   }
 }
 
 var updateSchema = async function(fieldTitle, trans){
   if(trans === 'remove'){
     var columnIndexTofind = _schemaInstance.findIndex(column => column.title === fieldTitle);
-    //updatedFieldSchema = [..._fieldSchema];
     _schemaInstance.splice(columnIndexTofind, 1);
   }
   else if(trans === 'add'){
@@ -848,12 +927,12 @@ var setRowsReadOnly = async(value, rowIndex, colIndex) => {
   };
 
   var considered = _editableColumns[0];
-  
+
   if(rowIndex !== undefined && colIndex !== undefined){
     validateEditableColumns(value, rowIndex, colIndex, defaultMetaObject, errorMetaObject);
-    setErrorMessage(getErrors(), 'Submit');  
+    setErrorMessage(getErrors(), 'Submit');
   }
-  
+
   else{
     const rowCount = _hot.countRows();
     for (var row = 0; row < rowCount; row++) {
@@ -863,7 +942,7 @@ var setRowsReadOnly = async(value, rowIndex, colIndex) => {
             _hot.setCellMeta(row, columnIndex, 'readOnly', true);
           }
           else{
-            if(item.data === 'Considered'){
+            if(item.data === 'Considered' || !item.data){
               let isConsidered = _hot.getDataAtCell(row, columnIndex);
               validateEditableColumns(isConsidered, row, columnIndex, defaultMetaObject, errorMetaObject);
               columnIndex++;
@@ -872,12 +951,12 @@ var setRowsReadOnly = async(value, rowIndex, colIndex) => {
           }
           columnIndex++;
         });
-    }   
+    }
   }
   _hot.render();
 }
 
-var validateEditableColumns = async function(isConsidered, rowIndex, columnIndex, defaultMetaObject, errorMetaObject){ 
+var validateEditableColumns = async function(isConsidered, rowIndex, columnIndex, defaultMetaObject, errorMetaObject){
   var verifyIndex = columnIndex + 1;
   var _mesg = ''
   var verifyValue = _hot.getDataAtCell(rowIndex, verifyIndex);
@@ -885,47 +964,87 @@ var validateEditableColumns = async function(isConsidered, rowIndex, columnIndex
    if(isConsidered){
       if (verifyValue === null || verifyValue === ''){
         _hot.setCellMetaObject(rowIndex, verifyIndex, errorMetaObject);
-        _mesg = `Why not Considered is required field at row ${rowIndex+1} <br/>`;
-        addError(rowIndex, _mesg);
+          _mesg = `Justification is required field at row ${rowIndex + 1} <br/>`;
+          debugger;
+          addError(rowIndex, _mesg);
       }
       else{
         _hot.setCellMeta(rowIndex, verifyIndex, 'readOnly', false);
         removeError(rowIndex);
       }
    }
-   else { 
+   else {
     _hot.setCellMetaObject(rowIndex, verifyIndex, defaultMetaObject);
     removeError(rowIndex);
    }
 }
 
  var hooks = async function(){
-  _hot.addHook('afterChange', (changes, source) => {
-    if (source === 'edit') {
-        changes.forEach(([rowIndex, prop, oldValue, value]) => {
-            const columnIndex = _hot.propToCol(prop);
-            if (_hot.getCellMeta(rowIndex, columnIndex).type === 'checkbox') {
-              setRowsReadOnly(value, rowIndex, columnIndex);
-            }
-            else if(_hot.getCellMeta(rowIndex, columnIndex).data === 'WhyNotConsidered'){
-              var getText = _hot.getDataAtCell(rowIndex, columnIndex);
-              if(getText !== undefined && getText !== null && getText !== ''){
-                _hot.setCellMeta(rowIndex, columnIndex, 'className', defaultClassName);
-                //_hot.setCellMetaObject(rowIndex, columnIndex, defaultMetaObject);
-                removeError(rowIndex);
-              }
-              else {
-                _hot.setCellMeta(rowIndex, columnIndex, 'className', errorClassName);
-                //_hot.setCellMetaObject(rowIndex, columnIndex, errorMetaObject);
-                addError(rowIndex, `Why not Considered is required field at row ${rowIndex+1} <br/>`);
-              }
-              _hot.render();
-              var errMesg = getErrors();
-              setErrorMessage(errMesg, 'Submit');
-            }
-        });
-    }
-  });
+     _hot.addHook('afterChange', (changes, source) => {       
+         if (source === 'edit') {           
+            changes.forEach(([rowIndex, prop, oldValue, value]) => {               
+                const columnIndex = _hot.propToCol(prop);
+                const colType = _hot.getCellMeta(rowIndex, columnIndex).type;
+
+                if (colType === 'checkbox' || colType === 'dropdown') {                 
+                        
+                    let valTemp = value;
+
+                    if(!isConsideredBool)
+                        valTemp = value === 'Considered' || !value ? '' : value;
+
+                    setRowsReadOnly(valTemp, rowIndex, columnIndex);
+                }
+                else if(_hot.getCellMeta(rowIndex, columnIndex).data === 'WhyNotConsidered'){
+                var getText = _hot.getDataAtCell(rowIndex, columnIndex);
+                if(getText !== undefined && getText !== null && getText !== ''){
+                    _hot.setCellMeta(rowIndex, columnIndex, 'className', defaultClassName);
+                    //_hot.setCellMetaObject(rowIndex, columnIndex, defaultMetaObject);
+                    removeError(rowIndex);
+                }
+                else {
+                    _hot.setCellMeta(rowIndex, columnIndex, 'className', errorClassName);
+                    //_hot.setCellMetaObject(rowIndex, columnIndex, errorMetaObject);
+                    addError(rowIndex, `Justification is required field at row ${rowIndex+1} <br/>`);
+                }
+                _hot.render();
+                var errMesg = getErrors();
+                setErrorMessage(errMesg, 'Submit');
+                }
+            });         
+
+            // 👇 Count null values in "Considered" column and toggle button state         
+            const ConsideredIndex = _hot.propToCol('Considered');
+            const ConsideredType = _hot.getCellMeta(0, ConsideredIndex)?.type;
+             
+            if (ConsideredType === 'dropdown') {
+                
+                let rowObjects = [];
+                for (let i = 0; i < _hot.countRows(); i++) {
+                    rowObjects.push(_hot.getSourceDataAtRow(i));
+                }
+
+                let nullConsideredCount = rowObjects.filter(row => row.Considered == null).length;             
+
+                if (nullConsideredCount > 0) {
+                    mesg = 'nullConsideredCount';
+                    setErrorMessage(mesg, 'Submit');
+                }
+            }  
+        }
+    });
+
+
+    // 👇 Hook to auto-open dropdown on single-click
+    _hot.addHook('afterOnCellMouseDown', function (event, coords, td) {
+        const colProp = _hot.colToProp(coords.col);
+        if (colProp === 'Considered' && coords.row >= 0) {
+            setTimeout(() => {
+                _hot.selectCell(coords.row, coords.col);
+                _hot.getActiveEditor().beginEditing(); // Force open the dropdown
+            }, 0); // slight delay to ensure focus
+        }
+    });
 }
 
 var setItemsforInsertion = async function(nextStatus){
@@ -944,7 +1063,7 @@ var setItemsforInsertion = async function(nextStatus){
     var statusExists = false;
 
     for (const column in columns) {
-          debugger;
+
           var value = columns[column];
           var internalName = mentaInfo[colIndex].data;
 
@@ -969,7 +1088,7 @@ var setItemsforInsertion = async function(nextStatus){
         _colType += 'String,'; // Assuming 'Status' is of type 'String', adjust if needed
         _objValue['Status'] = nextStatus !== undefined ? nextStatus : ''; // Assign nextStatus or default value
     }
-    
+
     if(doInsert){
       _columns = _columns.endsWith(',') ? _columns.slice(0, -1) : _columns;
       _colType = _colType.endsWith(',') ? _colType.slice(0, -1) : _colType;
@@ -987,7 +1106,7 @@ var setItemsforInsertion = async function(nextStatus){
 var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
   const list = pnp.sp.web.lists.getByTitle(_list);
   const batch = pnp.sp.createBatch();
-  
+
   var row = 0;
   var _columns, _colType;
 
@@ -997,7 +1116,7 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
     _columns = objColumns[row];
     _colType = objTypes[row];
 
-    const existingItems =  await list.items 
+    const existingItems =  await list.items
     .select("Id," + _columns)
     .filter(_query)
     .top(1)
@@ -1026,7 +1145,7 @@ var insertItemsInBatches = async function(itemsToInsert, objColumns, objTypes) {
         list.items.getById(_item.Id).inBatch(batch).update(item);
     }
     else list.items.inBatch(batch).add(item);
-    
+
      row++;
   }
   await batch.execute();
@@ -1042,7 +1161,7 @@ var getUserTrade = async function(){
   let userGroups = await _web.siteUsers.getById(user.Id).groups.get();
   if(isChamp)
     userGroups = userGroups.filter(group=> group.Title !== DTRDC)
-  
+
    for (let trade of items){
       let matchingGroup = userGroups.find(group => group.Title === trade.Title);
         if (matchingGroup) {
@@ -1096,10 +1215,10 @@ var setSearchField = async function(){
       var _cols = _hot.getSettings().columns;
       _hot.updateSettings({
           data: _data.filter((row, rowIndex) => {
-            //debugger;
+
           if(rowIndex === 0)
           _searchResultCount = 0;
-          
+
            let found = false;
             for (let col = 0; col < colCount; col++) {
               var colTitle = _cols[col].data;
@@ -1135,7 +1254,7 @@ var setSearchField = async function(){
           var mesg = _searchResultCount + ' rows found';
           if(_searchResultCount === 1)
            mesg = _searchResultCount + ' row found';
-          
+
           if(searchResult !== '' && searchResult !== null && searchResult !== undefined){
               if ($(id).length === 0) {
                   var label = $('<label>', {
@@ -1143,8 +1262,8 @@ var setSearchField = async function(){
                       text: mesg
                   });
                   label.css('color', '#3CDBC0');
-                  label.css('width', '350px'); 
-                  
+                  label.css('width', '350px');
+
                   $('#search_field').after(label);
                   label.before('<br>');
               }
@@ -1165,11 +1284,11 @@ var setSearchField = async function(){
               $(id).remove();
           }
       }
-      setTimeout(()=>{ 
-            _hot.render()}, 
+      setTimeout(()=>{
+            _hot.render()},
             300);
   });
-  
+
 }
 
 // Custom cell renderer function with highlighting
@@ -1178,7 +1297,7 @@ function rowRenderer_notused(hotInstance, col, rowIndex, cellValue, searchResult
   let highlightedCellValue = highlightSearchResult(cellValue, searchResult);
   // Set the highlighted value back to the cell
   hotInstance.setDataAtCell(rowIndex, col, highlightedCellValue);
-  
+
   // for (let col = 0; col < colCount; col++) {
   //   var colTitle = _cols[col].data;
   //   if (colTitle === 'attachment' || colTitle === 'Considered') continue;
@@ -1198,7 +1317,7 @@ function highlightSearchResult_notused(cellValue, searchResult) {
 //#region COMPARE TRADES FROM PMIS
 const bindTrades = async function(){
   //if(isSentToChampion){
-    
+
     let webMetaInfo = await _web.select("Title,Url").get();
     let projNo = webMetaInfo.Url.includes('db-sp') || webMetaInfo.Url.includes('Dtemp22') ? 'AN21146-0100R' : webMetaInfo.Title;
     console.log(`projNo = ${projNo}`);
@@ -1211,7 +1330,7 @@ const bindTrades = async function(){
     let commonTrades = pmisTrades.filter(trade => rootsiteTrades.includes(trade));
     missingTrades = commonTrades.filter(trade => !submittedTrades.includes(trade) && !PendingChampTrades.includes(trade));
 
-     
+
      addkeyValTextCtlr('Submitted Trades:', submittedTrades, '120px', 'green');
      addkeyValTextCtlr('Pending Champion Approval:', PendingChampTrades, '90px', 'orange');
      addkeyValTextCtlr('Missing Trades:', missingTrades, '40px', 'red');
@@ -1224,8 +1343,8 @@ const bindTrades = async function(){
   //}
 }
 
-var getPMISProjectDepartments = async function(ProjectNo) 
-{ 
+var getPMISProjectDepartments = async function(ProjectNo)
+{
   var serviceUrl = _webUrl+ "/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=GetProjectDepartments&ProjectNo="+encodeURIComponent(ProjectNo);
   let xmlDoc = await getSoapResponse1('POST', serviceUrl, true, '', 'GetProjectDepartmentsResult');
 
@@ -1242,7 +1361,7 @@ const addkeyValTextCtlr = async function(key, value, padding, color){
   let html = `<label style="padding-left: ${padding}; color: #4e778f; font-weight:bold;">
                 <span class="overflow-hidden fd-title-wrap">${key}</span>
               </label>
-                  
+
               <label class="fd-field-control col-sm" style='color: ${color}'><div class="fd-sp-field-text col-form-label">
                  ${value}
               </label>`;
@@ -1261,7 +1380,7 @@ const getDistinctTrades_From_RootSite = async function(isRoot, status){
 
   await rootWeb.lists.getByTitle(_list).items.filter(filter).select('LeadDiscipline').getAll()
   .then(async function(items) {
-     
+
     for(let item of items){
        let discipline = item.LeadDiscipline;
 
@@ -1326,11 +1445,17 @@ const setStatuses = async function(){
 
   if(!isChamp){
     let mesg = '';
-    if( status === 'Sent to Champion')
-      mesg = 'items already sent to champ';
-    else if(status === 'Completed')
-      mesg = 'items already Completed';
-  
+      if (status === 'Sent to Champion') {
+          mesg = 'items already sent to champ';
+          if (_isDTRDL)
+              mesg = 'No items have been validated by the DRD Champion yet.';
+      }
+      else if (status === 'Completed') {
+          mesg = 'items already Completed';
+          if (_isDTRDL)
+              mesg = 'The following items have been validated by the DRD Champion.';
+      }
+
       if(mesg !== ''){
         setErrorMessage(mesg, 'Submit');
         dimSubmit = true;

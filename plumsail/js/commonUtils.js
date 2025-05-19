@@ -1110,7 +1110,6 @@ var getSoapResponse1 = async function(method, serviceUrl, isAsync, soapContent, 
 
 function setPSErrorMesg(errMesg, removeAlertHeadingText){
 
-
 	function checkForErrors() {
 
 	  var errorElement = $('.errors[data-v-386d995a]');
@@ -1291,15 +1290,86 @@ function disableRichTextField(fieldname){
 	})
 }
 
-
-function setPSHeaderMessage(newText) {
+function setPSHeaderMessage(newText, marginTop = '-36px', marginTopfluid = '10px') {
 
 	document.querySelectorAll('.alert-heading').forEach(el => {
 		el.style.display = 'block'; // Remove display: none
-		if (newText && el.textContent.includes("Oops! There seem to be some errors below:")) {
-            el.textContent = newText;
+		if (el.textContent.includes("Oops! There seem to be some errors below:")) {
+            el.textContent = newText ? newText : "*";
         }
     });
 
-	document.querySelector('.fd-grid.container-fluid').style.setProperty('margin-top', '5px', 'important');
+    let checkElement = setInterval(() => {
+        let customErrorId = document.querySelector("p#customErrorId");
+        if (customErrorId) {
+            clearInterval(checkElement); // Stop checking once found
+            let alertHeading = customErrorId.previousSibling;
+
+            if (alertHeading && alertHeading.nodeType === Node.TEXT_NODE) {
+                alertHeading.textContent = alertHeading.textContent.trim() + " " + customErrorId.textContent.trim();
+            } else if (alertHeading) {
+                alertHeading.innerHTML += " " + customErrorId.textContent.trim();
+            }
+
+            customErrorId.remove(); // Remove the extra <p> to prevent layout issues
+            // //document.querySelector('.fd-grid.container-fluid.divGrid').style.setProperty('margin-top', '22px', 'important');
+            // $('.fd-grid.container-fluid.divGrid').attr("style", "margin-top: 22px !important;");
+
+            const grid = document.querySelector('.fd-grid.container-fluid');
+            if (grid) {
+                grid.style.setProperty('margin-top', marginTopfluid);
+                grid.style.setProperty('padding', '10px');
+            }
+
+            document.querySelectorAll('.border-title').forEach(el => {
+                el.style.marginTop = marginTop;
+                el.style.marginLeft = '20px';
+            });
+
+        }
+    }, 100); // Check every 500ms
+}
+
+async function getDarSPGroup() {
+    var IsTMUser = "";
+    try{
+         await pnp.sp.web.currentUser.get()
+         .then(async function(user){
+            await pnp.sp.web.siteUsers.getById(user.Id).groups.get()
+             .then(async function(groupsData){
+                 for (var i = 0; i < groupsData.length; i++){
+                     let groupName = groupsData[i].Title;
+                     if (groupName === "PM" || groupName === "AR" || groupName === "EC" || groupName === "EL" || groupName === "GE" ||
+                         groupName === "LAD" || groupName === "ME" || groupName === "PMC" || groupName === "PUD" || groupName === "TR") {
+
+                       IsTMUser = groupName;
+                       break;
+                    }
+                    else if(groupName === "WE" || groupName === "RE")
+                    {
+                       IsTMUser = "WE";
+                       break;
+                    }
+                    else if(groupName === "SB" || groupName === "ST")
+                    {
+                       IsTMUser = "SB";
+                       break;
+                    }
+                }
+            });
+         });
+    }
+    catch(e){alert(e);}
+    return IsTMUser;
+}
+
+async function isFieldExists(listTitle, fieldInternalName) {
+  try {
+    const field = await pnp.sp.web.lists.getByTitle(listTitle).fields.getByInternalNameOrTitle(fieldInternalName)();
+    console.log("Field exists:", field.Title);
+    return true;
+  } catch (error) {
+    console.log("Field does not exist or error occurred.");
+    return false;
+  }
 }

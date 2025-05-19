@@ -266,10 +266,11 @@ var onRender = async function (moduleName){
 
                 if(url.toLowerCase().includes('d24117') || url.toLowerCase().includes('ami-02')){
                     projectNumbers = ['D24117-General', 'D24117-0100D', 'D24117-0200D', 'D24117-0300D', 'D24117-Online'];
-                }
-                appBarItems = getAppBarItemsForProjects(projectNumbers, customAppBarItems, commonAppBarItems);
 
-                appBar();
+                    //appBarItems = getAppBarItemsForProjects(projectNumbers, customAppBarItems, commonAppBarItems);
+                }                
+
+                //appBar();
 
                 // #region Design Projects MENU BAR
                 if(_WorkType.toLowerCase() === 'design'){

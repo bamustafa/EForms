@@ -2,7 +2,9 @@ var _layout = "/_layouts/15/PCW/General/EForms";
 var _ListInternalName = _spPageContextInfo.serverRequestPath.split('/')[5];
 var _ListFullUrl = _spPageContextInfo.webAbsoluteUrl + "/Lists/" + _ListInternalName;
 
-var _modulename = "", _formType = "",  _AssignedTo = "";
+var _modulename = "", _formType = "", _AssignedTo = "";
+
+let _isMember = false;
 
 var _isExist = false;
 let CurrentUser;
@@ -133,9 +135,10 @@ var Compliance_editForm = async function(){
 
     if(_status === "Assigned")
     {            
-        var isUserAllowed = await CheckUserInAssignedColumn(AssignedToLoginName);
+        let isUserAllowed = await CheckUserInAssignedColumn(AssignedToLoginName);
+        _isMember = await CheckifUserinSPGroup();
         
-        if(!isUserAllowed && !isSiteAdmin)
+        if(!isUserAllowed && !isSiteAdmin && !_isMember)
     	{
     		alert("Apologies, but this task has not been assigned to you. Name: " + AssignedToLoginName + " Assign to: " + _AssignedTo);
     		fd.close();
@@ -674,4 +677,24 @@ var getSoapResponse = async function(method, serviceUrl, isAsync, soapContent, g
 	if(soapContent !== '')
       xhr.send(soapContent);
 	else xhr.send();
+}
+
+async function CheckifUserinSPGroup() {
+  try{
+       await pnp.sp.web.currentUser.get()
+       .then(async function(user){
+          await pnp.sp.web.siteUsers.getById(user.Id).groups.get()
+           .then(async function(groupsData){
+              for (var i = 0; i < groupsData.length; i++) {               
+                  if(groupsData[i].Title === "Security Perfomance Metric Members")
+                  {                   
+                     _isMember = true;
+                     break;
+                  }                                        
+              }               
+          });
+       });
+  }
+  catch(e){alert(e);}
+  return _isMember;                 
 }
