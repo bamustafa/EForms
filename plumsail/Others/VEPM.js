@@ -281,7 +281,7 @@ var handleEditForm = async function () {
         },
     };
 
-    const transition = transitions[_status]; //ok
+    const transition = transitions[_status]; //ok 2
 
     if (transition && transition.roles.includes(GroupName)) {        
 
