@@ -8,7 +8,7 @@ const greenColor = '#5FC9B3', redColor = '#F28B82', yellowColor = '#6c757d', sav
 const itemsToRemove = ['WorkflowStatus', 'Discipline', 'Reference'];
 let _nextStatus = '', _schema = '', _emailBody = '', _VEPSchema = '';
 let _status = 'IDEA Submitted', _Originator = '', _Reference = '', _VEPReference = '',_code = '', _reviewFlow = '', _ideaOrigin = '', _parentID = '', _titleforEmail = '', ProjectNumber = '';
-let _notReadyButtonName = 'Save Draft';
+let _notReadyButtonName = 'Save Draft', _SelectCompanyForReview = '', _companyType = '', _companyGroupName = '';
 
 let groupMap = {};
 
@@ -33,6 +33,7 @@ var onRender = async function (relativeLayoutPath, moduleName, formType) {
             Importance: fd.field('Importance'),
             Satisfaction: fd.field('Satisfaction'),
             RoughOrder: fd.field('RoughOrder'),
+            IdeaOrigin: fd.field('IdeaOrigin'),
 
             UniformatLevel1: fd.field('UniformatLevel1'),
             UniformatLevel2: fd.field('UniformatLevel2'),
@@ -154,20 +155,22 @@ var handleNewForm = async function () {
 
     //_HideFormFields([_formFields.Answer], true);
     _setFieldsDisabled([_formFields.Reference, _formFields.Originator], true);  
-    _HideFormFields([_formFields.Code, _formFields.ReasonofRejection], true);
+    _HideFormFields([_formFields.Code, _formFields.ReasonofRejection, _formFields.SelectCompanyForReview], true);
 
     _Originator = await CheckifUserinSPGroup();
-    _formFields.Originator.value = _Originator; 
+    _formFields.Originator.value = _Originator;
+    _formFields.IdeaOrigin.value = _Originator;
     
     //Title Limit Character Counter  
     var titleField = _formFields.Title;
     const maxLength = titleField.maxLength;
     var counter = document.createElement('div');
     counter.id = 'charCount';
-    counter.style.marginTop = '8px';
+    counter.style.marginTop = '2px';
     counter.style.fontSize = '11px';
     counter.style.color = '#6b7280';
     counter.style.fontStyle = 'italic';
+    counter.style.marginBottom = '-15px';
     titleField.$el.appendChild(counter);
     if (counter) {
         const updateCounter = (value) => {
@@ -184,10 +187,31 @@ var handleNewForm = async function () {
             updateCounter(value);
         });
     }
-    
-    await HandleCascadedLookup();
 
-    await HandleCascadedUniformatLevels();
+
+    // Create the display div
+    let numberField = _formFields.RoughOrder; // replace with your actual field     
+    let formatDiv = document.createElement('div');
+    formatDiv.id = 'formattedNumber';
+    formatDiv.style.marginTop = '2px';
+    formatDiv.style.fontSize = '11px';
+    formatDiv.style.color = '#6b7280';
+    formatDiv.style.fontStyle = 'italic';
+    formatDiv.style.marginBottom = '-20px';
+    numberField.$el.appendChild(formatDiv);
+    updateFormatted(formatDiv, numberField.value);
+    let origInput = $(_formFields.RoughOrder.$el).find('.k-input');
+    origInput.on('input', (event) => {
+        let thisVal = event.target.value;
+        updateFormatted(formatDiv, thisVal);
+    });
+    
+    
+    //await HandleCascadedLookup();
+
+    //await HandleCascadedUniformatLevels();    
+
+    await HandleUnifiedCascade();
 
     _schema = await getAutReferenceFormat();
     
@@ -214,6 +238,8 @@ var handleEditForm = async function () {
     _setFieldsDisabled([_formFields.Title, _formFields.Reference, _formFields.Discipline, _formFields.Originator, _formFields.Category, _formFields.ProjectComponent,
     _formFields.UniformatLevel1, _formFields.UniformatLevel2, _formFields.UniformatLevel3, _formFields.RoughOrder], true); 
     disableRichTextFieldColumn(_formFields.Question);
+
+    _HideFormFields([_formFields.SelectCompanyForReview], true);
     
     _Originator = _formFields.Originator.value;
     _status = _formFields.WorkflowStatus.value; 
@@ -221,11 +247,16 @@ var handleEditForm = async function () {
     
     const matrixbtn = document.getElementById("open-matrix-btn");    
     
-    let GroupName = await CheckifUserinGroup();    
+    let GroupName = await CheckifUserinGroup(); 
+    console.log("GroupName: ", GroupName);    
+
+    const companyDetails = await GetCompanyDetails(_Originator);
+    const _companyType = companyDetails.CompanyType;
+    const _companyGroupName = companyDetails.SpGroup;
 
     const transitions = {
         'IDEA Submitted': {
-            roles: ['VEPM_Reviewer', 'Admin'],
+            roles: ['VEPM_Reviewer', 'Client', 'Admin'],
             nextStatus: {
                 'Rejected': {
                     status: 'Rejected',
@@ -239,12 +270,12 @@ var handleEditForm = async function () {
             errorMessage: 'Kindly review the current form'           
         },
         'Request for Details': {
-            roles: [_Originator, 'Admin'],
+            roles: [_companyGroupName, 'Client', 'VEPM_Reviewer', 'Admin'],
             nextStatus: 'Details Submitted',
             errorMessage: 'Please provide the required idea details'
         },
         'Revise After Rejection': {
-            roles: [_Originator, 'Admin'],
+            roles: [_companyGroupName, 'Client', 'VEPM_Reviewer', 'Admin'],
             nextStatus: 'Details Submitted',
             errorMessage: 'Please provide the required idea details'
         },
@@ -279,33 +310,41 @@ var handleEditForm = async function () {
             else
                 _formFields.Code.value = 'Rejected';
 
-            updateSubmitButtonState(transition);
+            await updateSubmitButtonState(transition);
 
             if (matrixbtn) {        
                 await loadMatrix(matrixbtn, transition);                
             }
+
+            if (_companyType === 'Client' || _companyType === 'PMC') {
+                _HideFormFields([_formFields.SelectCompanyForReview], false);
+                _isRequiredFields([_formFields.SelectCompanyForReview], true);
+
+                await _formFields.SelectCompanyForReview.ready();
+                _formFields.SelectCompanyForReview.filter = `CompanyType eq 'Consultant' or CompanyType eq 'Contractor'`;
+                _formFields.SelectCompanyForReview.refresh();                               
+            }   
         }
-        else if (_status === 'Request for Details') {          
+        else if (_status === 'Request for Details') {         
 
             _nextStatus = transition.nextStatus;
-            _setFieldsDisabled([_formFields.Code, _formFields.VEPReference, _formFields.Savings, _formFields.SelectCompanyForReview, _formFields.ReviewedDate], true);
-            disableRichTextFieldColumn(_formFields.Notes);
+            _setFieldsDisabled([_formFields.Code, _formFields.Discipline, _formFields.VEPReference, _formFields.Savings, _formFields.SelectCompanyForReview, _formFields.ReviewedDate], true);
+            disableRichTextFieldColumn(_formFields.Notes);           
 
             if (matrixbtn) {        
                 await readonlyloadMatrix(matrixbtn);
             }
 
-            _HideFormFields([_formFields.UniformatLevel1, _formFields.UniformatLevel2, _formFields.UniformatLevel3, _formFields.Category,
-            _formFields.ProjectComponent, _formFields.Notes, _formFields.CoordinationCompleted], true);
+            _HideFormFields([_formFields.Notes, _formFields.CoordinationCompleted], true);
 
-            const matrixdialog = document.getElementById('matrix-dialog-wrapper'); 
-            if (matrixdialog)
-                matrixdialog.style.display = 'none';            
+            // const matrixdialog = document.getElementById('matrix-dialog-wrapper'); 
+            // if (matrixdialog)
+            //     matrixdialog.style.display = 'none';         
           
             _VEPReference = _formFields.VEPReference.value;
+            _VEPSchema = await getAutReferenceFormat(true);
 
-            if (_VEPReference === '') {
-                _VEPSchema = await getAutReferenceFormat(true);
+            if (_VEPReference === '') {                
                 _formFields.VEPReference.value = await parseRefFormat(_VEPSchema);
                 _formFields.ReviewedDate.value = new Date();
             }   
@@ -332,8 +371,63 @@ var handleEditForm = async function () {
             _formFields.CoordinationRequired.$on('change', async function (value) {
                 await toggleCoordinationCompleted(value);
             });
+            
+            _setFieldsDisabled([_formFields.UniformatLevel3], false); 
+            await HandleLevel3CascadedLookup();           
+          
+            let IdeaOrigin = _formFields.IdeaOrigin.value;
+
+            if (IdeaOrigin === 'DAR' || IdeaOrigin === 'UDL') {
+                _setFieldsDisabled([_formFields.Discipline, _formFields.Category, _formFields.ProjectComponent, _formFields.UniformatLevel1, _formFields.UniformatLevel2, _formFields.UniformatLevel3], false);
+                // await HandleCascadedLookup();
+                // await HandleCascadedUniformatLevels();
+
+                await HandleUnifiedCascade();
+            }
         }
-        else {
+        else if (_status === 'Revise After Rejection') {          
+
+            _nextStatus = transition.nextStatus;
+            _setFieldsDisabled([_formFields.Code, _formFields.VEPReference, _formFields.Savings, _formFields.SelectCompanyForReview, _formFields.ReviewedDate], true);
+            disableRichTextFieldColumn(_formFields.Notes);
+
+            if (matrixbtn) {        
+                await readonlyloadMatrix(matrixbtn);
+            }
+
+            _HideFormFields([_formFields.UniformatLevel1, _formFields.UniformatLevel2, _formFields.UniformatLevel3, _formFields.Category,
+            _formFields.ProjectComponent, _formFields.Notes, _formFields.CoordinationCompleted], true);
+
+            const matrixdialog = document.getElementById('matrix-dialog-wrapper'); 
+            if (matrixdialog)
+                matrixdialog.style.display = 'none';         
+          
+            _VEPReference = _formFields.VEPReference.value;              
+            
+            _isRequiredFields([_formFields.OriginalDesign, _formFields.ProposedDesign, _formFields.PerformanceBenefits, _formFields.OriginalCost,
+            _formFields.ProposedCost, _formFields.TimeImpact], true);
+
+            let origInput = $(_formFields.OriginalCost.$el).find('.k-input');
+            let propInput = $(_formFields.ProposedCost.$el).find('.k-input');
+
+            updateSavings(origInput.val(), propInput.val());
+
+            origInput.on('input', (event) => {           
+                const thisVal = event.target.value;
+                updateSavings(thisVal, propInput.val());
+            });
+
+            propInput.on('input', (event) => { 
+                const thisVal = event.target.value;
+                updateSavings(origInput.val(), thisVal);
+            }); 
+            
+            await toggleCoordinationCompleted(_formFields.CoordinationRequired.value);      
+            _formFields.CoordinationRequired.$on('change', async function (value) {
+                await toggleCoordinationCompleted(value);
+            });
+        }
+        else {            
             _nextStatus = transition.nextStatus;
             _setFieldsDisabled(_formFields.Code, true);
             disableRichTextFieldColumn(_formFields.Notes);
@@ -341,6 +435,8 @@ var handleEditForm = async function () {
             if (matrixbtn) {        
                 await readonlyloadMatrix(matrixbtn);
             }
+
+            disableVEPSection();
         }
         
     } else {
@@ -357,7 +453,9 @@ var handleEditForm = async function () {
 
         if (matrixbtn) {        
             await readonlyloadMatrix(matrixbtn);
-        }
+        } 
+        
+        disableVEPSection();
     }
 }
 
@@ -404,9 +502,8 @@ var handleTasksEditForm = async function () {
     hideHideSection(true);    
 
     _setFieldsDisabled([_formFields.Title, _formFields.Reference, _formFields.Discipline, _formFields.Originator, _formFields.Category, _formFields.ProjectComponent], true); 
-    disableRichTextFieldColumn(_formFields.Question);
-    
-    debugger;
+    disableRichTextFieldColumn(_formFields.Question);    
+
     _Originator = _formFields.Originator.value;
     _status = _formFields.WorkflowStatus.value; 
     _Reference = _formFields.Reference.value;
@@ -426,8 +523,8 @@ var handleTasksEditForm = async function () {
                     status: 'Completed',
                     showReasonField: true
                 },
-                'Approved': {
-                    status: 'No Objection',
+                'No Objection': {
+                    status: 'Completed',
                     showReasonField: false
                 }
             }           
@@ -443,9 +540,9 @@ var handleTasksEditForm = async function () {
 
         if (_status === 'Open') {
             _setFieldsDisabled(transition.disableFields, true);
-            updateSubmitButtonState(transition);
-            _formFields.Code.$on('change', function (value) {
-                updateSubmitButtonState(transition);
+            await updateSubmitButtonState(transition);
+            _formFields.Code.$on('change', async function (value) {
+                await updateSubmitButtonState(transition);
             });
         }
         else {
@@ -494,6 +591,22 @@ var loadMatrix = async function (btn, transition) {
     dialog.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
     dialog.style.borderRadius = "8px";   
 
+    // Add close (X) button
+    const closeButton = document.createElement("span");
+    closeButton.textContent = "×";
+    closeButton.style.position = "absolute";
+    closeButton.style.top = "5px";
+    closeButton.style.right = "10px";
+    closeButton.style.cursor = "pointer";
+    closeButton.style.fontSize = "20px";
+    closeButton.style.fontWeight = "bold";
+    closeButton.style.color = "#888";
+    closeButton.addEventListener("click", () => {
+        dialog.style.display = "none";                
+        hidePreloader();
+    });
+    dialog.appendChild(closeButton);
+
     // Table element
     const table = document.createElement("table");
     table.style.borderCollapse = "collapse";
@@ -533,7 +646,7 @@ var loadMatrix = async function (btn, transition) {
             cell.title = `Importance: ${x}, Satisfaction: ${y}`;
             cell.style.backgroundColor = getColor(x, y);
 
-            cell.addEventListener("click", () => {
+            cell.addEventListener("click", async () => {
                 // Save to Plumsail fields
                 fd.field("Importance").value = x;
                 fd.field("Satisfaction").value = y;
@@ -557,7 +670,7 @@ var loadMatrix = async function (btn, transition) {
                     else
                         _formFields.Code.value = 'Rejected';
 
-                    updateSubmitButtonState(transition);
+                    await updateSubmitButtonState(transition);
                 }
             });
 
@@ -830,7 +943,7 @@ var GetVEPCompanies = async function(){
     const existingItems = await pnp.sp.web.lists.getByTitle(listTitle).getItemsByCAMLQuery({ ViewXml: camlFilter });
 
     existingItems.forEach(item => {        
-        if (item.SpGroup && item.Title) {
+        if (item.SpGroup && item.Title) {            
             groupMap[item.SpGroup] = item.Title;
         }
     }); 
@@ -840,8 +953,7 @@ var GetVEPCompanies = async function(){
 
 var HandleCascadedLookup = async function () {
     
-    (async () => {
-
+    // (async () => {
         try {
             
             await _formFields.ProjectComponent.ready();
@@ -887,7 +999,7 @@ var HandleCascadedLookup = async function () {
         } catch (error) {
             console.error("An error occurred during dynamic filtering setup:", error);
         }
-    })();
+    // })();
 }
 
 var HandleCascadedUniformatLevels = async function () {
@@ -941,6 +1053,139 @@ var HandleCascadedUniformatLevels = async function () {
     }
 };
 
+var HandleUnifiedCascade = async function () {
+
+    try {
+        if (_isNew) {
+
+            _formFields.Category.value = [];
+            _formFields.ProjectComponent.value = [];
+            _formFields.UniformatLevel1.value = [];
+            _formFields.UniformatLevel2.value = [];
+            _formFields.UniformatLevel3.value = [];
+        }        
+        // Get company ID based on Originator
+        const companiesList = await pnp.sp.web.lists
+            .getByTitle("VEPCompanies")
+            .items.select("Id", "Title")
+            .filter(`Title eq '${_Originator}'`)
+            .get();
+
+        if (companiesList.length === 0) {
+            console.warn(`Company '${_Originator}' not found in VEPCompanies list.`);
+            return;
+        }
+
+        const compId = companiesList[0].Id;
+
+        // Set up initial filters
+        await _formFields.Category.ready();
+        _formFields.Category.filter = `Companies/Id eq ${compId}`;
+        _formFields.Category.refresh();
+
+        await _formFields.ProjectComponent.ready();
+        _formFields.ProjectComponent.filter = `SubProjects/Id eq 0`;
+        _formFields.ProjectComponent.refresh();
+
+        await _formFields.UniformatLevel1.ready();
+        _formFields.UniformatLevel1.filter = `Scope/Id eq 0`;
+        _formFields.UniformatLevel1.refresh();
+
+        await _formFields.UniformatLevel2.ready();
+        _formFields.UniformatLevel2.filter = `UniformatLevel1/Id eq 0`;
+        _formFields.UniformatLevel2.refresh();
+
+        await _formFields.UniformatLevel3.ready();
+        _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq 0`;
+        _formFields.UniformatLevel3.refresh();
+
+        // On Category change
+        _formFields.Category.$on('change', async function (categoryValue) {       
+            _formFields.ProjectComponent.value = [];
+            _formFields.UniformatLevel1.value = [];
+            _formFields.UniformatLevel2.value = [];
+            _formFields.UniformatLevel3.value = [];
+
+            if (!categoryValue || !categoryValue.LookupId) {
+                console.warn("No Category selected.");
+                _formFields.ProjectComponent.filter = `SubProjects/Id eq 0`;
+                _formFields.UniformatLevel1.filter = `Scope/Id eq 0`;
+            } else {
+                const catId = categoryValue.LookupId;
+                _formFields.ProjectComponent.filter = `SubProjects/Id eq ${catId} and Companies/Id eq ${compId}`;
+                _formFields.UniformatLevel1.filter = `Scope/Id eq ${catId}`;
+            }
+
+            _formFields.ProjectComponent.refresh();
+            _formFields.UniformatLevel1.refresh();
+
+            _formFields.UniformatLevel2.filter = `UniformatLevel1/Id eq 0`;
+            _formFields.UniformatLevel2.refresh();
+
+            _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq 0`;
+            _formFields.UniformatLevel3.refresh();
+        });
+
+        _formFields.ProjectComponent.$on('change', async function (projectComponentValue) {           
+            _formFields.UniformatLevel1.value = [];
+            _formFields.UniformatLevel2.value = [];
+            _formFields.UniformatLevel3.value = [];
+
+            if (!projectComponentValue || !projectComponentValue.LookupId) {
+                console.warn("No ProjectComponent selected.");
+                _formFields.UniformatLevel1.filter = `Scope/Id eq 0`;
+            } else {
+                const pcId = projectComponentValue.LookupId;
+                _formFields.UniformatLevel1.filter = `Scope/Id eq ${pcId}`;
+            }
+
+            _formFields.UniformatLevel1.refresh();
+
+            _formFields.UniformatLevel2.filter = `UniformatLevel1/Id eq 0`;
+            _formFields.UniformatLevel2.refresh();
+
+            _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq 0`;
+            _formFields.UniformatLevel3.refresh();
+        });
+        
+        _formFields.UniformatLevel1.$on('change', async function (level1Value) {       
+            _formFields.UniformatLevel2.value = [];
+            _formFields.UniformatLevel3.value = [];
+
+            if (!level1Value || !level1Value.LookupId) {
+                console.warn("No UniformatLevel1 selected.");
+                _formFields.UniformatLevel2.filter = `UniformatLevel1/Id eq 0`;
+            } else {
+                const level1Id = level1Value.LookupId;
+                _formFields.UniformatLevel2.filter = `UniformatLevel1/Id eq ${level1Id}`;
+            }
+
+            _formFields.UniformatLevel2.refresh();
+
+            _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq 0`;
+            _formFields.UniformatLevel3.refresh();
+        });
+
+        // On UniformatLevel2 change
+        _formFields.UniformatLevel2.$on('change', async function (level2Value) {         
+            _formFields.UniformatLevel3.value = [];
+
+            if (!level2Value || !level2Value.LookupId) {
+                console.warn("No UniformatLevel2 selected.");
+                _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq 0`;
+            } else {
+                const level2Id = level2Value.LookupId;
+                _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq ${level2Id}`;
+            }
+
+            _formFields.UniformatLevel3.refresh();
+        });
+
+    } catch (error) {
+        console.error("Error during unified cascaded filtering:", error);
+    }
+};
+
 function updateSavings(original, proposed) {
 
     let originalVal = parseFloat(original);
@@ -987,6 +1232,46 @@ async function updateButtonVisibility(isCompleted, submitBtn, notReadyBtn) {
     }    
 }
 
+function disableVEPSection() {
+    let divGridVPMEl = document.querySelectorAll('.divGrid.VPM');
+    if (divGridVPMEl) {
+        _setFieldsDisabled([_formFields.VEPReference, _formFields.CoordinationRequired, _formFields.CoordinationCompleted,
+            _formFields.OriginalCost, _formFields.ProposedCost, _formFields.Savings,
+            _formFields.TimeImpact, _formFields.ReviewedDate, _formFields.SelectCompanyForReview], true);
+        disableRichTextFieldColumn(_formFields.OriginalDesign);
+        disableRichTextFieldColumn(_formFields.ProposedDesign);
+        disableRichTextFieldColumn(_formFields.PerformanceBenefits);
+        disableRichTextFieldColumn(_formFields.Comments);
+    }
+}
+
+function formatNumberWithCommas(value) {
+    if (!value || isNaN(value)) return '';
+    return parseFloat(value).toLocaleString(); // adds commas
+}
+
+function updateFormatted(formatDiv, value) {
+    const formatted = formatNumberWithCommas(value);
+    formatDiv.textContent = formatted ? `Formatted: ${formatted}` : '';
+}
+
+var HandleLevel3CascadedLookup = async function () {
+    
+    // (async () => {
+        try {           
+            
+            await _formFields.UniformatLevel2.ready();
+            let UniformatLevel2value = _formFields.UniformatLevel2.value.LookupId;         
+            
+            await _formFields.UniformatLevel3.ready();
+            _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq ${UniformatLevel2value}`;
+            _formFields.UniformatLevel3.refresh();           
+
+        } catch (error) {
+            console.error("An error occurred during dynamic filtering setup:", error);
+        }
+    // })();
+}
 //#endregion
 
 //#region General
@@ -1294,9 +1579,9 @@ async function CheckifUserinGroup() {
 			await pnp.sp.web.siteUsers.getById(user.Id).groups.get()
 			 .then(async function(groupsData){
 				for (var i = 0; i < groupsData.length; i++) {				
-					const title = groupsData[i].Title;
-                    if (groupMap.hasOwnProperty(title)) {
-                        IsTMUser = groupMap[title];
+                    const title = groupsData[i].Title;                    
+                    if (groupMap.hasOwnProperty(title)) {                        
+                        IsTMUser = title;                        
                         break;
                     } 
 				}				
@@ -1310,6 +1595,24 @@ async function CheckifUserinGroup() {
 		IsTMUser = "Admin";
 		
 	return IsTMUser;				
+}
+
+async function GetCompanyDetails(key) {
+	let result = "";
+    await pnp.sp.web.lists
+        .getByTitle("VEPCompanies")
+        .items
+        .select("Title,CompanyType,SpGroup")
+        .filter(`Title eq '${  key  }'`)
+        .get()
+        .then((items) => {
+            if(items.length > 0)
+                result = {
+                    CompanyType: items[0].CompanyType,
+                    SpGroup: items[0].SpGroup
+                }; 
+            });
+    return result;			
 }
 
 function SetAttachmentToReadOnly(){
@@ -1378,11 +1681,7 @@ const setButtonActions = async function(icon, text, bgColor){
 
                 if (fd.isValid) {
                     showPreloader();
-                    _nextStatus = _notReadyButtonName;
-                    if (_VEPReference === '') {
-                        _VEPReference = await parseRefFormat(_VEPSchema, true);
-                        _formFields.VEPReference.value = _VEPReference;
-                    }    
+                    _nextStatus = _notReadyButtonName;                        
                     fd.save();
                 }
             }
@@ -1395,8 +1694,7 @@ const setButtonActions = async function(icon, text, bgColor){
                     _titleforEmail = _formFields.Title.value;
                     
                     const entries = Object.entries(_emailFields);
-                    _emailBody = entries.map(([key, val], index) => {                         
-                        debugger;
+                    _emailBody = entries.map(([key, val], index) => {                    
                         const isLast = index === entries.length - 1;
                         let displayValue = (val?.value.LookupValue ?? val?.value) || ''; // Default to an empty string if value is undefined
                         if (key === 'WorkflowStatus') 
@@ -1421,15 +1719,28 @@ const setButtonActions = async function(icon, text, bgColor){
                         _formFields.WorkflowStatus.value = _nextStatus;                       
                         fd.save();                    
                     } 
+                    else if (_nextStatus === 'Details Submitted') {
+                        
+                        if (_status !== 'Revise After Rejection') {
+                            _VEPReference = await parseRefFormat(_VEPSchema, true);
+                            _formFields.VEPReference.value = _VEPReference;
+                        }
+                        _formFields.WorkflowStatus.value = _nextStatus;
+                        fd.field('OMDate').value = new Date();
+                        fd.save();                    
+                    }                        
                     else {
 
                         if (_nextStatus === 'Rejected' || _nextStatus === 'Request for Details')
-                            fd.field('CMDate').value = new Date();
-
-                        else if (_nextStatus === 'Details Submitted')
-                            fd.field('OMDate').value = new Date();
+                            fd.field('CMDate').value = new Date();                     
+                        
+                        if (_nextStatus === 'Request for Details' && _formFields.SelectCompanyForReview.value) {
+                            _formFields.Originator.value = _formFields.SelectCompanyForReview.value.LookupValue;
+                            _SelectCompanyForReview = _formFields.SelectCompanyForReview.value.LookupValue;
+                        }
                             
-                        _formFields.WorkflowStatus.value = _nextStatus;                       
+                        _formFields.WorkflowStatus.value = _nextStatus;   
+                        
                         fd.save();                    
                     }
                 }
@@ -1468,7 +1779,8 @@ function formatingButtonsBar(titelValue){
     document.querySelector('.col-sm-12').style.setProperty('padding-top', '0px', 'important'); 
     $('.col-sm-12').attr("style", "display: block !important;justify-content:end;");   
     $('.fd-grid.container-fluid').attr("style", "margin-top: 10px !important; padding: 10px;");
-    $('.fd-form-container.container-fluid').attr("style", "margin-top: -22px !important;");   
+    const marginTopValue = _webUrl.includes("db-sp") ? "-22px" : "-10px";
+    $('.fd-form-container.container-fluid').css("margin-top", marginTopValue);        
 
     const iconPath = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/Images/animdarlogo1.png';
     const linkElement = `<a href="${_spPageContextInfo.webAbsoluteUrl}" style="text-decoration: none; color: inherit; display: flex; align-items: center; font-size: 18px;">
@@ -1477,6 +1789,16 @@ function formatingButtonsBar(titelValue){
 
     $('.o365cs-base.o365cs-topnavBGColor-2').css('background', 'linear-gradient(to bottom, #808080, #4d4d4d, #1a1a1a, #000000, #1a1a1a, #4d4d4d, #808080)');
 
+    // setTimeout(function () {
+    //     $('input[id^="fd-field-"]:disabled').css({
+    //         'background-color': 'transparent',
+    //         'opacity': '1',
+    //         'border': 'none',
+    //         'pointer-events': 'none', // Optional: disables interaction
+    //         'color': '#495057'        // Optional: normal text color
+    //     });
+    // }, 300); // delay in milliseconds
+    
     // $('.border-title').each(function() {
     //     $(this).css({          
     //         'margin-top': '-35px', /* Adjust the position to sit on the border */
@@ -1568,7 +1890,7 @@ function toggleToolbarButton(label, shouldDisable) {
     }
 }
 
-function updateSubmitButtonState(transition) {
+async function updateSubmitButtonState(transition) {
     let showReasonField = false;
     _code = _formFields.Code.value;
     if(_module === 'VEPMTasks')
@@ -1583,9 +1905,25 @@ function updateSubmitButtonState(transition) {
         if (!showReasonField) {
             _formFields.ReasonofRejection.value = ''; // or '' depending on your form setup
             _formFields.ReasonofRejection.required = false; 
+            
+            if (_companyType === 'Client' || _companyType === 'PMC') {
+                _HideFormFields([_formFields.SelectCompanyForReview], false);
+                _isRequiredFields([_formFields.SelectCompanyForReview], true);
+
+                await _formFields.SelectCompanyForReview.ready();
+                _formFields.SelectCompanyForReview.filter = `CompanyType eq 'Consultant' or CompanyType eq 'Contractor'`;
+                _formFields.SelectCompanyForReview.refresh();                               
+            }
         }
-        else
-            _formFields.ReasonofRejection.required = true; 
+        else {
+            _formFields.ReasonofRejection.required = true;        
+
+            if (_formFields.SelectCompanyForReview) {
+                _formFields.SelectCompanyForReview.value = null; // or '' depending on your form setup
+                _formFields.SelectCompanyForReview.required = false;
+                _HideFormFields([_formFields.SelectCompanyForReview], true);
+            }
+        }
     }
     else {
         _formFields.ReasonofRejection.value = '';
@@ -1640,7 +1978,7 @@ fd.spSaved(async function(result) {
                 Subject = `(Company: ${_Originator}) IDEA Approved by PM / Client - (Title: ${_titleforEmail}) - (Ref: ${_Reference})`;
                 DearTo = `Dear ${_Originator},`;
             } else if (_nextStatus === 'Details Submitted') {
-                Subject = `(Company: ${_Originator}) Details Submitted - (Title: ${_titleforEmail}) - (Ref: ${_Reference})`;
+                Subject = `(Company: ${_Originator}) Details Submitted - (Title: ${_titleforEmail}) - (Ref: ${_Reference}) - (VEP Ref: ${_VEPReference})`;
             } else {
                 Subject = `(Company: ${_Originator}) New IDEA Submission - (Title: ${_titleforEmail}) - (Ref: ${_Reference})`;
                 DearTo = 'Dear PM,';
@@ -1671,20 +2009,31 @@ fd.spSaved(async function(result) {
                     `
                     : `
                         ${_reviewFlow
-                        ? `<p>Click <a href="${linkURL}" class="link">here</a> to ${_reviewFlow === 'Rejected'
+                        ? `<p>Click <a href="${linkURL}" class="link">here</a> to ${_reviewFlow === 'Objection'
                             ? 'view the review decision and comments'
-                            : _reviewFlow === 'Approved'
+                            : _reviewFlow === 'No Objection'
                                 ? 'view the final approval and review outcome'
                                 : 'view the review status'
-                        }.</p><br />`
-                        : `<p>Click <a href="${linkURL}" class="link">here</a> to ${_nextStatus === 'Rejected'
-                            ? 'view the details'
-                            : _nextStatus === 'Request for Details'
-                                ? 'submit VEP details'
-                                : 'take the necessary action'
-                        }.</p><br />`
-                    }
-                    `
+                        }.</p><div id="detailsSubmittedPlaceholder"></div><br />`
+                        : _nextStatus === 'Request for Details' && _SelectCompanyForReview
+                            ? `
+                                Dear ${_SelectCompanyForReview},<br /><br />
+                                <p>
+                                Click <a href="${linkURL}" class="link">here</a> to submit VEP details.
+                                </p><br />
+                            `
+                            : `
+                                <p>
+                                Click <a href="${linkURL}" class="link">here</a> to ${
+                                    _nextStatus === 'Rejected'
+                                    ? 'view the details'
+                                    : _nextStatus === 'Request for Details'
+                                        ? 'submit VEP details'
+                                        : 'take the necessary action'
+                                }.
+                                </p><br />
+                            `                            
+                        }`
                 }           
             <table style="width: 65%; border-collapse: collapse; font-family: Segoe UI, sans-serif; font-size: 13px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 ${_emailBody}

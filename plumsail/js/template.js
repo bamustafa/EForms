@@ -203,7 +203,8 @@ function formatingButtonsBar(titelValue){
     document.querySelector('.col-sm-12').style.setProperty('padding-top', '0px', 'important'); 
     $('.col-sm-12').attr("style", "display: block !important;justify-content:end;");   
     $('.fd-grid.container-fluid').attr("style", "margin-top: -15px !important; padding: 10px;");
-    $('.fd-form-container.container-fluid').attr("style", "margin-top: -22px !important;");   
+    const marginTopValue = _webUrl.includes("db-sp") ? "-22px" : "-10px";
+    $('.fd-form-container.container-fluid').css("margin-top", marginTopValue);   
 
     const iconPath = _spPageContextInfo.webAbsoluteUrl + '/_layouts/15/Images/animdarlogo1.png';
     const linkElement = `<a href="${_spPageContextInfo.webAbsoluteUrl}" style="text-decoration: none; color: inherit; display: flex; align-items: center; font-size: 18px;">

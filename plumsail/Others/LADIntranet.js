@@ -2,7 +2,9 @@ var _layout = '/_layouts/15/PCW/General/EForms',
     _siteUrl = _spPageContextInfo.siteAbsoluteUrl,
     _ImageUrl = _siteUrl + '/Style%20Library/tooltip.png',
     _ListInternalName = _spPageContextInfo.serverRequestPath.split('/')[5],
-    _ListFullUrl = _siteUrl + '/Lists/' + _ListInternalName;    
+    _ListFullUrl = _siteUrl + '/Lists/' + _ListInternalName; 
+    
+//_siteUrl = _siteUrl.replace("https://insidar.dar.com", "https://insidar22.dar.com");
 
 var _modulename = "", _formType = "";
 let _proceed = false;
@@ -20,6 +22,10 @@ let _Email, _Notification = '';
 const itemsToRemove = ['Status', 'State', 'Code', 'WorkflowStatus'];
 
 const blueColor = '#6ca9d5', greenColor = '#5FC9B3', yellowColor = '#F7D46D', redColor = '#F28B82';
+
+let disableField = (field) => fd.field(field).disabled = true;
+let enableField = (field) => fd.field(field).disabled = false;
+let clearField = (field) => fd.field(field).value = '';
 
 var onRender = async function (moduleName, formType){    
 	try { 
@@ -75,25 +81,42 @@ var onLADTaskRender = async function (formType) {
     }    
 }
 
-var LADTask_newForm = async function () {  
-    
-    debugger;
-    
-    fd.toolbar.buttons[0].style = "display: none;";   
-	fd.toolbar.buttons[1].style = "display: none;";   
-	
-    await loadingButtons();  
-    
-    const disableField = (field) => fd.field(field).disabled = true;
-    const enableField = (field) => fd.field(field).disabled = false;
-    const clearField = (field) => fd.field(field).value = '';
-    ['Country', 'Client'].forEach(disableField);
-    ['Country', 'Client', 'PM'].forEach(clearField);
-    
-    fd.field('isAvailable').value = true;
-    
-    fd.field('isAvailable').$on('change', async function(value)	{
-        if(value){
+var LADTask_newForm = async function () {    
+  
+    try {
+
+        fd.toolbar.buttons[0].style = "display: none;";   
+        fd.toolbar.buttons[1].style = "display: none;";   
+        
+        await loadingButtons();         
+
+        ['Country', 'Client'].forEach(disableField);
+        ['Country', 'Client'].forEach(clearField);
+        
+        fd.field('isAvailable').value = true;
+        
+        fd.field('isAvailable').$on('change', async function(value)	{
+            if(value){
+                fd.field('JobNo').required = false;
+                $(fd.field('JobNo').$parent.$el).hide(); 
+                $(fd.field('Reference').$parent.$el).show(); 
+                $(fd.field('YearDropDown').$parent.$el).show(); 
+                fd.field('Reference').required = true;
+                fd.field('YearDropDown').required = true;
+            }
+            else {
+                $(fd.field('JobNo').$parent.$el).show(); 
+                fd.field('JobNo').required = true;
+                fd.field('Reference').required = false;
+                fd.field('YearDropDown').required = false;
+                $(fd.field('Reference').$parent.$el).hide(); 
+                $(fd.field('YearDropDown').$parent.$el).hide(); 
+                ['Country', 'Client'].forEach(clearField);          
+            }
+        });	
+
+        let isAvailable = fd.field('isAvailable').value;
+        if(isAvailable){
             fd.field('JobNo').required = false;
             $(fd.field('JobNo').$parent.$el).hide(); 
             $(fd.field('Reference').$parent.$el).show(); 
@@ -108,100 +131,89 @@ var LADTask_newForm = async function () {
             fd.field('YearDropDown').required = false;
             $(fd.field('Reference').$parent.$el).hide(); 
             $(fd.field('YearDropDown').$parent.$el).hide(); 
-            ['Country', 'Client'].forEach(clearField);          
+            ['Country', 'Client'].forEach(clearField);            
         }
-    });	
 
-    let isAvailable = fd.field('isAvailable').value;
-    if(isAvailable){
-        fd.field('JobNo').required = false;
-        $(fd.field('JobNo').$parent.$el).hide(); 
-        $(fd.field('Reference').$parent.$el).show(); 
-        $(fd.field('YearDropDown').$parent.$el).show(); 
-        fd.field('Reference').required = true;
-        fd.field('YearDropDown').required = true;
-    }
-    else {
-        $(fd.field('JobNo').$parent.$el).show(); 
-        fd.field('JobNo').required = true;
-        fd.field('Reference').required = false;
-        fd.field('YearDropDown').required = false;
-        $(fd.field('Reference').$parent.$el).hide(); 
-        $(fd.field('YearDropDown').$parent.$el).hide(); 
-        ['Country', 'Client'].forEach(clearField);            
-    }
+        let currentYear = new Date().getFullYear();
+        let yearArr = [];  
 
-    let currentYear = new Date().getFullYear();
-    let yearArr = [];  
+        for (let i = 0; i <= 20; i++) {
+            yearArr.push(currentYear - i);
+        }   
 
-    for (let i = 0; i <= 20; i++) {
-        yearArr.push(currentYear - i);
-    }   
+        fd.field('YearDropDown').widget.setDataSource({
+            data: yearArr
+        });   
 
-    fd.field('YearDropDown').widget.setDataSource({
-        data: yearArr
-    });
+        let ProjectYear = currentYear;
+        fd.field('YearDropDown').value = ProjectYear;     
 
-    let ProjectYear = currentYear;
-    fd.field('YearDropDown').value = ProjectYear;     
-
-    fd.field('Reference').widget.dataSource.data(['Please wait while retreiving ...']);
-    await GetProjectListALLP(ProjectYear);             		
-    
-    fd.field('Reference').addValidator({
-        name: 'Array Count',
-        error: 'Only one JobNo can be selected per form.',
-        validate: function(value) {
-            if(fd.field('Reference').value && fd.field('Reference').value.length > 1) {
-                return false;
-            }
-            return true;
-        }
-    });        
-
-    fd.field('YearDropDown').$on('change', async function(value)
-	{
-        ProjectYear = value;
+        fd.field('Reference').widget.dataSource.data(['Please wait while retreiving ...']);
+        await GetProjectListALLP(ProjectYear);   
         
-        ['Reference', 'Country', 'Client', 'PM'].forEach(clearField);
-
-        if(ProjectYear){            
-            
-            ['Reference'].forEach(enableField); 
-
-            fd.field('Reference').widget.dataSource.data(['Please wait while retreiving ...']);
-            await GetProjectListALLP(ProjectYear);             		
-            
-            fd.field('Reference').addValidator({
-                name: 'Array Count',
-                error: 'Only one JobNo can be selected per form.',
-                validate: function(value) {
-                    if(fd.field('Reference').value.length > 1) {
-                        return false;
-                    }
-                    return true;
+        fd.field('Reference').addValidator({
+            name: 'Array Count',
+            error: 'Only one JobNo can be selected per form.',
+            validate: function(value) {
+                if(fd.field('Reference').value && fd.field('Reference').value.length > 1) {
+                    return false;
                 }
-            });
-        }                    
-        else{  
-            ['Reference'].forEach(disableField);             
-        }
-	});   
-	
-	fd.field('Reference').$on('change', async function(value)
-	{        
-        if(value.length > 0)
-            await GetProjectList(ProjectYear, value[0]);        
-        else{
+                return true;
+            }
+        });        
 
-            $(fd.field('JobNo').$parent.$el).show();	
-            fd.field('JobNo').value  = '';
-            $(fd.field('JobNo').$parent.$el).hide();
-            fd.field('Reference').value  = '';
+        fd.field('YearDropDown').$on('change', async function(value)
+        {
+            ProjectYear = value;
             
-            ['Country', 'Client', 'PM'].forEach(clearField);
-        }
-	});	     
+            //['Reference', 'Country', 'Client', 'PM'].forEach(clearField);
+            fd.field('Title').value = '';
+            fd.field('Country').value = '';
+            fd.field('Client').value = '';
+            fd.field('PM').value = null;
+
+            if(ProjectYear){            
+                
+                ['Reference'].forEach(enableField); 
+
+                fd.field('Reference').widget.dataSource.data(['Please wait while retreiving ...']);
+                await GetProjectListALLP(ProjectYear);             		
+                
+                fd.field('Reference').addValidator({
+                    name: 'Array Count',
+                    error: 'Only one JobNo can be selected per form.',
+                    validate: function (value) {                    
+                        if(fd.field('Reference').value.length > 1) {
+                            return false;
+                        }
+                        return true;
+                    }
+                });
+            }                    
+            else{  
+                ['Reference'].forEach(disableField);             
+            }
+        });   
+        
+        fd.field('Reference').$on('change', async function(value)
+        {   
+            debugger;
+
+            if (value.length > 0) {
+                await GetProjectList(ProjectYear, value[0]);
+            }            
+            else {
+                $(fd.field('JobNo').$parent.$el).show();	
+                fd.field('JobNo').value  = '';
+                $(fd.field('JobNo').$parent.$el).hide();
+                //fd.field('Reference').value  = '';                
+                ['Country', 'Client'].forEach(clearField);
+            }
+        });
+
+    } catch (error) {
+        console.error("Error during Uniformat cascade setup:", error);
+    }    
 }
 
 var LADTask_editForm = async function(){    
@@ -224,77 +236,62 @@ var LADTask_displayForm = async function(){
     fd.toolbar.buttons[0].style = `background-color:${greenColor}; color:white;`;        
 }
 
-fd.spBeforeSave(function(spForm){					
-	return fd._vue.$nextTick();
-});
-
 //#region General Functions
 
 async function GetProjectListALLP(ProjectYear) 
-{ 
-    projectArr = JSON.parse(localStorage.getItem(`${ProjectYear}LADTaskProjects`)) || [];   
-
+{    
     if(projectArr.length > 0){        
         setTimeout(function() {
             fd.field('Reference').widget.setDataSource({
                 data: projectArr
             });
         }, 1400);
-    }
-
-    var xhr = new XMLHttpRequest();
-    var restURL = _siteUrl+ "/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=withfilters&ProjectYear="+encodeURIComponent(ProjectYear)+"&ProjectType=all&JobType=PrQ";
-    xhr.open("GET", restURL, true);
-
-    xhr.onreadystatechange = async function () {
-        if (xhr.readyState == 4) { 
-            
-            try {
-
-                if(xhr.status == 200) { 
-
-                    const obj = JSON.parse(this.responseText);                                 
-                    localStorage.setItem(`${ProjectYear}LADTaskResponseArray`, JSON.stringify(obj));                     
-                    const newProjectArr = obj.map(d => d.ProjectCode.trim()); 
-                    
-                    const diff2 = newProjectArr.filter(x => !projectArr.includes(x));
-
-                    if (diff2.length > 0) {                        
-                        localStorage.setItem(`${ProjectYear}LADTaskProjects`, JSON.stringify(newProjectArr));                       
-                        fd.field('Reference').widget.setDataSource({
-                            data: newProjectArr.sort()
-                        });
-                    } else {
-                        if(projectArr.length === 0){                        
-                            fd.field('Reference').widget.setDataSource({
-                                data: projectArr
-                            });
-                        }
-                    }
-                }
-            }  
-            catch(err) 
-            {
-                console.log(err);				
-            } 
-        }
     } 
+    
+    try {
+        let queryParams = new URLSearchParams({
+            command: "withfilters",
+            ProjectYear, //ProjectYear
+            ProjectType: "all",
+            JobType: "PrQ"
+        });
 
-    xhr.send();
+        //let restURL = `${_siteUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?command=withfilters&ProjectYear=${ProjectYear}&ProjectType=all&JobType=PrQ`; 
+        let restURL = `${_siteUrl}/_layouts/15/NewsLetter/HSEIncidentForm.aspx?${queryParams.toString()}`;        
+    
+        let response = await fetch(restURL, {
+            headers: {
+                "Accept": "application/json"
+            }
+        });                 
+
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        const data = await response.json();
+        responseArray = data;        
+
+        const newProjectArr = data.map(item => item.ProjectCode.trim());
+        const sortedProjects = [...new Set(newProjectArr)].sort();
+        fd.field('Reference').widget.setDataSource({ data: sortedProjects });
+    }
+    catch (error)
+    {
+        console.error("Error loading project list:", error);
+    }
 }
 
 function GetProjectList(ProjectYear, ProjectName) 
-{
-    responseArray = JSON.parse(localStorage.getItem(`${ProjectYear}LADTaskResponseArray`)) || [];
-
+{  
     if (ProjectName !== '') {
+
         let projectMetaInfo = responseArray.find(project => project.ProjectCode === ProjectName);
         
         if (projectMetaInfo) {  // Check if a matching project is found
+            ['Country', 'Client'].forEach(enableField);
             fd.field('Country').value = projectMetaInfo.AreaName;	
             fd.field('Client').value = projectMetaInfo.ClientName;
-            fd.field('PM').value = projectMetaInfo.ProjectManagers;  // Assuming you want the Project Manager's name
-            fd.field('JobNoName').value = projectMetaInfo.ProjectName;  
+            ['Country', 'Client'].forEach(disableField);
+            fd.field('PM').value = projectMetaInfo.ProjectManagers;  // Assuming you want the Project Manager's name             
+            fd.field('Title').value = projectMetaInfo.ProjectName;  
 
             $(fd.field('JobNo').$parent.$el).show();	
             fd.field('JobNo').value  = projectMetaInfo.ProjectCode;
@@ -352,7 +349,8 @@ async function loadingButtons(){
 	        click: async function() {	                             
 
 	        if(fd.isValid){
-                showPreloader();               
+                showPreloader();   
+                debugger;
                 fd.save();                
             }
 	    }	     

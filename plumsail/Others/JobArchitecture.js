@@ -103,11 +103,13 @@ var JobAr_newForm = async function(){
         var noteDiv = document.getElementById('noteDiv');
         var noteD2 = document.getElementById('noteD2');   
         
-        let user = await pnp.sp.web.currentUser.get();
-        let { Title: CurrentUser, Email: realEmail } = user;
+        let user = await pnp.sp.web.currentUser.get();      
 
-        console.log(`Current User: ${CurrentUser}`);
-        console.log(`Email: ${realEmail}`);          
+        realEmail = user.Email;
+        CurrentUser = user.Title;     
+       
+        console.log(`✅ User: ${CurrentUser}`);
+        console.log(`📧 Email: ${realEmail}`);          
         
         const emailMappings = {           
             'Ahmed.AhmedSalem@dar.com': 'ahmed.hishamsalem@dar.com',
@@ -131,8 +133,8 @@ var JobAr_newForm = async function(){
             'SeifEl-Din.SayedHassanien@dar.com': 'seifel-din.sayed@dar.com',
             'Mohamed.MohamedHarfoush@dar.com': 'mohamed.harfoush2@dar.com',
             'Ahmed.ZaafanHassan@dar.com': 'Ahmed.Zaafan@dar.com'
-        };
-        
+        };        
+     
         realEmail = emailMappings[realEmail] || realEmail;
 
         const HRAdmin = await CheckifUserinSPGroup();
@@ -187,6 +189,7 @@ var JobAr_newForm = async function(){
                         if (value) { 
                             
                             realDisplayName = value.DisplayText;
+                            realDisplayName = toSafeFolderName(realDisplayName);
                             realEmail = value.EntityData.Email; 
                             
                             console.log(`DisplayName: ${realDisplayName}`);
@@ -274,7 +277,7 @@ var JobAr_newForm = async function(){
             });
         }
         else
-            spanPDElement.style.display = 'none';             
+            spanPDElement.style.display = 'none';         
     }    
     catch (err) {
         
@@ -975,7 +978,7 @@ async function loadingButtons(){
         click: async function() {  	
             if(fd.isValid){
 
-                showPreloader();
+                showPreloader();               
 
                 AcknowledgeDate = new Date().toISOString();
 
@@ -1082,7 +1085,7 @@ async function loadingButtons(){
                 let encodedSubject = htmlEncode(Subject); 
                 let letterHTML = getLetterasHTML();
                 let encodedBody = htmlEncode(letterHTML);
-                let encodedBodyEmail = htmlEncode(BodyEmail);
+                let encodedBodyEmail = htmlEncode(BodyEmail);               
                 let pdfAttName = `${EmployeeID} - ${realDisplayName} - ${formatAckDate} - Confirmation Letter.pdf`;
                 
                 await _sendEmail('JobArch', encodedSubject + '|' + encodedBodyEmail+ '|' + encodedBody + '|' + pdfAttName, '', realEmail, '', '');            
@@ -2281,6 +2284,29 @@ var postRestfulResult = async function(apiUrl, updateData) {
     }
 }
 
+function toSafeFolderName(name) {
+    const map = {
+        'ç': 'c', 'Ç': 'C',
+        'ğ': 'g', 'Ğ': 'G',
+        'ı': 'i', 'İ': 'I',
+        'ö': 'o', 'Ö': 'O',
+        'ş': 's', 'Ş': 'S',
+        'ü': 'u', 'Ü': 'U'
+    };
+
+    // Replace Turkish characters
+    let safeName = name.replace(/[çÇğĞıİöÖşŞüÜ]/g, char => map[char] || char);
+
+    // Remove characters invalid in SharePoint folder names: ~ " # % & * : < > ? / \ { | }.
+    safeName = safeName.replace(/[~"#%&*:<>?/\\{|}]/g, '');
+
+    // Optionally, trim and replace spaces with underscores or dashes
+    safeName = safeName.trim().replace(/\s+/g, '_');
+    safeName = safeName.replace('_', ' ');
+
+    return safeName;
+}
+
 var handleAchknowledge = async function(realEmail){
 
     // ${_currentUser.Email}`;   
@@ -2328,6 +2354,7 @@ var handleAchknowledge = async function(realEmail){
         //var isSiteAdmin = _spPageContextInfo.isSiteAdmin;       
 
         realDisplayName = EmployeeName;
+        realDisplayName = toSafeFolderName(realDisplayName);
     
         var content = `
         <div style="max-width: 50%; width: 100%; font-size: ${fontSize}; text-align: left;" class="responsive-text">
@@ -2404,7 +2431,7 @@ var handleAchknowledge = async function(realEmail){
         $('#jobLegend').append(legendTbl);
     
         var buttons = fd.toolbar.buttons;
-        var acknowledgeButton = buttons.find(button => button.text === 'Acknowledge');
+        var acknowledgeButton = buttons.find(button => button.text === 'Acknowledge');       
 
         if (Acknowledged && Acknowledged.toLowerCase() === "yes") {
             acknowledgeButton.disabled = true;
