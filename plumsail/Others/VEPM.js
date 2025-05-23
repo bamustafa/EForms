@@ -90,8 +90,8 @@ var onRender = async function (relativeLayoutPath, moduleName, formType) {
 
             if (moduleName === 'VEPM') {
 
-                if (_isEdit)
-                    await handleEditForm();
+                if (_isEdit) 
+                    await handleEditForm();                
             
                 else if (_isNew)
                     await handleNewForm();
@@ -245,14 +245,15 @@ var handleEditForm = async function () {
     _status = _formFields.WorkflowStatus.value; 
     _Reference = _formFields.Reference.value;    
     
-    const matrixbtn = document.getElementById("open-matrix-btn");    
+    const matrixbtn = document.getElementById("open-matrix-btn"); 
+    const divGridVPMEl = document.querySelectorAll('.divGrid.VPM');
     
     let GroupName = await CheckifUserinGroup(); 
     console.log("GroupName: ", GroupName);    
 
     const companyDetails = await GetCompanyDetails(_Originator);
-    const _companyType = companyDetails.CompanyType;
-    const _companyGroupName = companyDetails.SpGroup;
+    _companyType = companyDetails.CompanyType;
+    _companyGroupName = companyDetails.SpGroup;
 
     const transitions = {
         'IDEA Submitted': {
@@ -296,8 +297,7 @@ var handleEditForm = async function () {
             if (spaceElement) {
                 spaceElement.style.display = "none";
             }
-
-            const divGridVPMEl = document.querySelectorAll('.divGrid.VPM');
+            
             divGridVPMEl.forEach(el => {
                 el.style.display = 'none';
             });
@@ -323,7 +323,7 @@ var handleEditForm = async function () {
                 await _formFields.SelectCompanyForReview.ready();
                 _formFields.SelectCompanyForReview.filter = `CompanyType eq 'Consultant' or CompanyType eq 'Contractor'`;
                 _formFields.SelectCompanyForReview.refresh();                               
-            }   
+            }            
         }
         else if (_status === 'Request for Details') {         
 
@@ -372,13 +372,13 @@ var handleEditForm = async function () {
                 await toggleCoordinationCompleted(value);
             });
             
-            _setFieldsDisabled([_formFields.UniformatLevel3], false); 
-            await HandleLevel3CascadedLookup();           
+            // _setFieldsDisabled([_formFields.UniformatLevel3], false); 
+            // await HandleLevel3CascadedLookup();           
           
             let IdeaOrigin = _formFields.IdeaOrigin.value;
 
             if (IdeaOrigin === 'DAR' || IdeaOrigin === 'UDL') {
-                _setFieldsDisabled([_formFields.Discipline, _formFields.Category, _formFields.ProjectComponent, _formFields.UniformatLevel1, _formFields.UniformatLevel2, _formFields.UniformatLevel3], false);
+                _setFieldsDisabled([_formFields.Category, _formFields.ProjectComponent, _formFields.UniformatLevel1, _formFields.UniformatLevel2, _formFields.UniformatLevel3], false);
                 // await HandleCascadedLookup();
                 // await HandleCascadedUniformatLevels();
 
@@ -437,6 +437,13 @@ var handleEditForm = async function () {
             }
 
             disableVEPSection();
+
+            if (_formFields.VEPReference.value) {
+                
+                divGridVPMEl.forEach(el => {
+                    el.style.display = 'none';
+                });                
+            }
         }
         
     } else {
@@ -1056,6 +1063,7 @@ var HandleCascadedUniformatLevels = async function () {
 var HandleUnifiedCascade = async function () {
 
     try {
+
         if (_isNew) {
 
             _formFields.Category.value = [];
@@ -1063,8 +1071,8 @@ var HandleUnifiedCascade = async function () {
             _formFields.UniformatLevel1.value = [];
             _formFields.UniformatLevel2.value = [];
             _formFields.UniformatLevel3.value = [];
-        }        
-        // Get company ID based on Originator
+        }      
+       
         const companiesList = await pnp.sp.web.lists
             .getByTitle("VEPCompanies")
             .items.select("Id", "Title")
@@ -1078,29 +1086,32 @@ var HandleUnifiedCascade = async function () {
 
         const compId = companiesList[0].Id;
 
-        // Set up initial filters
         await _formFields.Category.ready();
         _formFields.Category.filter = `Companies/Id eq ${compId}`;
         _formFields.Category.refresh();
-
+    
         await _formFields.ProjectComponent.ready();
-        _formFields.ProjectComponent.filter = `SubProjects/Id eq 0`;
+        const SubProId = _formFields.Category?.value?.LookupId ?? 0;
+        _formFields.ProjectComponent.filter = `SubProjects/Id eq ${SubProId}`;
         _formFields.ProjectComponent.refresh();
-
+      
         await _formFields.UniformatLevel1.ready();
-        _formFields.UniformatLevel1.filter = `Scope/Id eq 0`;
+        const ScopeId = _formFields.ProjectComponent?.value?.LookupId ?? 0;
+        _formFields.UniformatLevel1.filter = `Scope/Id eq ${ScopeId}`;
         _formFields.UniformatLevel1.refresh();
 
         await _formFields.UniformatLevel2.ready();
-        _formFields.UniformatLevel2.filter = `UniformatLevel1/Id eq 0`;
+        const UniformatLevel1Id = _formFields.UniformatLevel1?.value?.LookupId ?? 0;
+        _formFields.UniformatLevel2.filter = `UniformatLevel1/Id eq ${UniformatLevel1Id}`;
         _formFields.UniformatLevel2.refresh();
 
         await _formFields.UniformatLevel3.ready();
-        _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq 0`;
+        const UniformatLevel2Id = _formFields.UniformatLevel2?.value?.LookupId ?? 0;
+        _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq ${UniformatLevel2Id}`;
         _formFields.UniformatLevel3.refresh();
-
-        // On Category change
-        _formFields.Category.$on('change', async function (categoryValue) {       
+       
+        _formFields.Category.$on('change', async function (categoryValue) { 
+            
             _formFields.ProjectComponent.value = [];
             _formFields.UniformatLevel1.value = [];
             _formFields.UniformatLevel2.value = [];
@@ -1165,8 +1176,7 @@ var HandleUnifiedCascade = async function () {
             _formFields.UniformatLevel3.filter = `UniformatLevel2/Id eq 0`;
             _formFields.UniformatLevel3.refresh();
         });
-
-        // On UniformatLevel2 change
+       
         _formFields.UniformatLevel2.$on('change', async function (level2Value) {         
             _formFields.UniformatLevel3.value = [];
 
@@ -1890,7 +1900,8 @@ function toggleToolbarButton(label, shouldDisable) {
     }
 }
 
-async function updateSubmitButtonState(transition) {
+async function updateSubmitButtonState(transition) { 
+
     let showReasonField = false;
     _code = _formFields.Code.value;
     if(_module === 'VEPMTasks')

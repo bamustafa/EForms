@@ -1,0 +1,66 @@
+# Azure DevOps equivalent of PR Review Flow
+
+trigger:
+  branches:
+    include:
+      - '*'
+
+pr:
+  branches:
+    include:
+      - '*'
+
+variables:
+  SENIOR_USERNAME: 'bamustafa'
+  JUNIOR_USERNAMES: 'hanatarek96,oalqatawnh,zainshahbaz786,ahsprog'
+
+jobs:
+- job: HandlePR
+  displayName: 🚦 Handle Pull Request Events
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+    - checkout: self
+
+    - task: PowerShell@2
+      displayName: 🧐 Process PR Creation/Update
+      condition: eq(variables['Build.Reason'], 'PullRequest')
+      inputs:
+        targetType: 'inline'
+        script: |
+          $env:SENIOR_USERNAME = '$(SENIOR_USERNAME)'
+          $env:JUNIOR_USERNAMES = '$(JUNIOR_USERNAMES)'
+
+          $uri = "https://dev.azure.com/$(System.CollectionUri)$(System.TeamProject)/_apis/git/repositories/$(Build.Repository.Name)/pullRequests/$(System.PullRequest.PullRequestId)?api-version=6.0"
+          $pr = Invoke-RestMethod -Uri $uri -Headers @{Authorization = "Bearer $env:SYSTEM_ACCESSTOKEN"} -Method Get
+          $author = $pr.createdBy.uniqueName.Split('@')[0]
+          $senior = $env:SENIOR_USERNAME
+          $juniors = $env:JUNIOR_USERNAMES.Split(',')
+
+          $role = "Contributor"
+          if ($author -eq $senior) {
+            $role = "Senior Developer"
+          } elseif ($juniors -contains $author) {
+            $role = "Junior Developer"
+          }
+
+          Write-Host "Author: $author"
+          Write-Host "Role: $role"
+
+          # Example logic to assign reviewer (requires Azure DevOps REST API for adding reviewers)
+          if ($role -eq "Junior Developer") {
+            Write-Host "Assigning PR to senior developer: $senior"
+            # Note: Actual reviewer assignment requires additional API permissions and setup
+          } elseif ($role -eq "Senior Developer") {
+            Write-Host "Senior developer PR. Ready for self-review or merge."
+          }
+
+- job: HandleReviews
+  displayName: ✅ Handle PR Review Submissions
+  pool:
+    vmImage: 'ubuntu-latest'
+  dependsOn: HandlePR
+  condition: eq(variables['Build.Reason'], 'PullRequest')
+  steps:
+    - checkout: self
+
